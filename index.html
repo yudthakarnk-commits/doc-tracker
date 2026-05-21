@@ -6,6 +6,7 @@
 <title>DOC Tracker — Planning vs Actual</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAUhhYNKE4iEd3iXgt3SOpZDqB3_D6x7pk&libraries=places" async defer></script>
 <style>
   :root{--bg:#f3f4f6;--card:#fff;--text:#111827;--muted:#6b7280;--border:#e5e7eb;--primary:#2563eb;--primary-dark:#1d4ed8;--direct:#dbeafe;--direct-text:#1e40af;--contract:#fed7aa;--contract-text:#9a3412;--company:#bbf7d0;--company-text:#166534;--unsexed:#e9d5ff;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04)}
   *{box-sizing:border-box} body{margin:0;font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5} .hidden{display:none !important} button{font-family:inherit;cursor:pointer} input,select,textarea{font-family:inherit;font-size:14px}
@@ -26,15 +27,12 @@
   table{width:100%;border-collapse:collapse;font-size:13px} th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--border);white-space:nowrap} th{background:#f9fafb;font-weight:600;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;position:sticky;top:0;z-index:1} tbody tr:hover{background:#f9fafb} .num{text-align:right;font-variant-numeric:tabular-nums}
   .ctype-direct{background:var(--direct);color:var(--direct-text);padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;display:inline-block} .ctype-contract{background:var(--contract);color:var(--contract-text);padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;display:inline-block} .ctype-company{background:var(--company);color:var(--company-text);padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;display:inline-block} .unsexed-cell{background:var(--unsexed)} .breed-chip{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:10px;font-size:11px;font-weight:600;color:#fff} .breed-chip.cobb{background:#3b82f6} .breed-chip.ross{background:#dc2626} .breed-stripe-cobb{border-left:3px solid #3b82f6} .breed-stripe-ross{border-left:3px solid #dc2626}
   .diff-pos{color:var(--success);font-weight:600} .diff-neg{color:var(--danger);font-weight:600} .diff-zero{color:var(--muted)} .table-wrap{overflow-x:auto;max-height:600px;overflow-y:auto} .table-action{background:none;border:none;padding:3px 6px;color:var(--muted);border-radius:4px;font-size:14px;cursor:pointer} .table-action:hover{background:var(--bg);color:var(--text)} .empty-state{text-align:center;padding:50px 20px;color:var(--muted)}
-  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:50;padding:14px} .modal{background:#fff;border-radius:12px;max-width:680px;width:100%;max-height:92vh;overflow-y:auto} .modal-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center} .modal-header h2{margin:0;font-size:17px} .modal-close{background:none;border:none;font-size:22px;color:var(--muted);line-height:1} .modal-body{padding:18px 20px} .modal-footer{padding:12px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:50;padding:14px} .modal{background:#fff;border-radius:12px;max-width:750px;width:100%;max-height:92vh;overflow-y:auto} .modal-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center} .modal-header h2{margin:0;font-size:17px} .modal-close{background:none;border:none;font-size:22px;color:var(--muted);line-height:1} .modal-body{padding:18px 20px} .modal-footer{padding:12px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
   .form-row{margin-bottom:11px} .form-row label{display:block;font-weight:500;margin-bottom:4px;font-size:13px;color:#374151} .form-row input,.form-row select,.form-row textarea{width:100%;padding:8px 11px;border:1px solid var(--border);border-radius:7px} .form-row input:focus,.form-row select:focus{outline:none;border-color:var(--primary)} .form-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px} .form-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px} .form-grid-4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px} .section-label{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin:14px 0 6px} .btn-secondary{background:#fff;color:var(--text);border:1px solid var(--border);padding:8px 14px;border-radius:7px;font-weight:500} .btn-secondary:hover{background:var(--bg)} .btn-danger{background:var(--danger);color:#fff;border:none;padding:8px 14px;border-radius:7px;font-weight:500}
   .summary-section{margin-bottom:20px} .summary-title{font-size:13px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;background:#f3f4f6;padding:8px 12px;border-radius:6px} .matrix{width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden;box-shadow:var(--shadow)} .matrix th,.matrix td{padding:8px 12px;border:1px solid var(--border);text-align:right;font-variant-numeric:tabular-nums;font-size:13px} .matrix th:first-child,.matrix td:first-child{text-align:left} .matrix thead th{background:#374151;color:#fff;font-weight:600} .matrix .row-direct{background:#eff6ff} .matrix .row-contract{background:#fff7ed} .matrix .row-company{background:#f0fdf4} .matrix .row-total{background:#1f2937;color:#fff;font-weight:700} .matrix .row-total td{border-color:#374151} .matrix .col-total{font-weight:700;background:#f3f4f6} .matrix .row-target{background:#fef3c7;font-weight:600} .matrix .row-diff{font-weight:600} .matrix .row-diff.pos{background:#d1fae5} .matrix .row-diff.neg{background:#fee2e2}
   .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px} @media(max-width:1024px){.summary-grid{grid-template-columns:1fr}} .trend-grid{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:14px} @media(max-width:1024px){.trend-grid{grid-template-columns:1fr}} .chart-card{background:#fff;border-radius:10px;box-shadow:var(--shadow);padding:14px} .chart-card h4{margin:0 0 10px;font-size:13px;color:#374151} .chart-card canvas{max-height:280px}
   .toast{position:fixed;bottom:20px;right:20px;padding:11px 18px;border-radius:7px;color:#fff;font-size:13px;z-index:100;box-shadow:0 10px 25px rgba(0,0,0,.2);animation:slideIn .25s} .toast.success{background:var(--success)} .toast.error{background:var(--danger)} .toast.info{background:var(--primary)} @keyframes slideIn{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
-  .sortable{cursor:pointer;user-select:none;position:relative} .sortable:hover{background:#e5e7eb} .sort-ind{display:inline-block;width:12px;font-size:10px;color:var(--muted);margin-left:4px} .sortable.sort-asc .sort-ind::before{content:'▲';color:var(--primary)} .sortable.sort-desc .sort-ind::before{content:'▼';color:var(--primary)}
-  .show-more-link{text-align:center;padding:8px;color:var(--primary);font-size:13px;cursor:pointer;background:#f9fafb;border-top:1px solid var(--border)} .show-more-link:hover{background:#eff6ff} .perm-hatchery-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px} .perm-hatchery-grid label{display:flex;align-items:center;gap:6px;padding:6px 8px;background:#f9fafb;border-radius:5px;font-size:12px;cursor:pointer}
   .lang-toggle{display:inline-flex;border:1px solid var(--border);border-radius:6px;overflow:hidden;font-size:12px;font-weight:600} .lang-toggle button{background:#fff;border:none;padding:5px 10px;color:var(--muted);cursor:pointer;transition:all .15s} .lang-toggle button.active{background:var(--primary);color:#fff} .lang-toggle button:not(.active):hover{background:var(--bg)} .lang-toggle-floating{position:absolute;top:18px;right:18px;z-index:10}
-  @media print{ .topbar,.nav-tabs,.toolbar,.btn-add,.table-action,.user-info,.lang-toggle{display:none !important} .container{padding:0} .card,.matrix{box-shadow:none;border:1px solid #999} }
 </style>
 </head>
 <body>
@@ -42,7 +40,7 @@
 <div id="setupScreen" class="center-screen hidden">
   <div class="lang-toggle lang-toggle-floating"><button data-lang="th" onclick="setLanguage('th')">ไทย</button><button data-lang="en" onclick="setLanguage('en')">EN</button></div>
   <div class="auth-card">
-    <h1 data-i18n="setupTitle">ตั้งค่า Supabase</h1><p class="sub" data-i18n="setupSub">กรอก URL + anon key</p>
+    <h1 data-i18n="setupTitle">ตั้งค่า Supabase</h1>
     <div class="form-row"><label data-i18n="supabaseUrl">Supabase URL</label><input id="setupUrl" type="text" placeholder="https://xxxxx.supabase.co"/></div>
     <div class="form-row"><label data-i18n="supabaseAnonKey">Supabase anon key</label><input id="setupKey" type="text" placeholder="eyJ..."/></div>
     <button class="btn btn-primary" onclick="saveSetup()" data-i18n="save">บันทึก</button>
@@ -53,17 +51,13 @@
   <div class="lang-toggle lang-toggle-floating"><button data-lang="th" onclick="setLanguage('th')">ไทย</button><button data-lang="en" onclick="setLanguage('en')">EN</button></div>
   <div class="auth-card">
     <h1 id="loginTitle" data-i18n="signIn">เข้าสู่ระบบ</h1><p class="sub">DOC Tracker</p>
-    <button class="btn-google" onclick="loginGoogle()">
-      <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.7-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 18.9 13 24 13c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2c-2 1.5-4.5 2.4-7.2 2.4-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.1 5.6l6.2 5.2c-.4.4 6.6-4.8 6.6-14.8 0-1.3-.1-2.7-.4-3.5z"/></svg>
-      <span data-i18n="loginGoogle">เข้าสู่ระบบด้วย Google</span>
-    </button>
+    <button class="btn-google" onclick="loginGoogle()"><span data-i18n="loginGoogle">เข้าสู่ระบบด้วย Google</span></button>
     <div class="divider"><span data-i18n="or">หรือ</span></div>
     <label data-i18n="email">อีเมล</label><input id="loginEmail" type="email" placeholder="you@example.com"/>
     <label data-i18n="password">รหัสผ่าน</label><input id="loginPassword" type="password"/>
     <button class="btn btn-primary" id="loginSubmitBtn" onclick="loginEmail()" data-i18n="signIn">เข้าสู่ระบบ</button>
     <p class="login-link"><span id="loginSwitchText" data-i18n="noAccount">ยังไม่มีบัญชี?</span> <a id="loginSwitchLink" onclick="toggleLoginMode()" data-i18n="signUp">สมัครใช้งาน</a></p>
     <div id="loginAlert" class="alert hidden"></div>
-    <p id="resetSetupLink" class="login-link hidden" style="margin-top:18px;font-size:12px;color:var(--muted)"><a onclick="resetSetup()" style="color:var(--muted)" data-i18n="changeSupabase">⚙️ เปลี่ยน Supabase URL / key</a></p>
   </div>
 </div>
 
@@ -74,7 +68,7 @@
       <div class="lang-toggle"><button data-lang="th" onclick="setLanguage('th')">ไทย</button><button data-lang="en" onclick="setLanguage('en')">EN</button></div>
       <span class="live-status"><span class="live-dot"></span><span data-i18n="realtime">Real-time</span></span>
       <span id="userEmail"></span><span id="userBadge" class="badge"></span>
-      <button class="btn-secondary" onclick="logout()" data-i18n="logout">ออกจากระบบ</button>
+      <button class="btn-secondary" onclick="logout()" data-i18n="logout">Logout</button>
     </div>
   </div>
 
@@ -96,14 +90,8 @@
       <div class="toolbar">
         <select id="fWeek" onchange="renderEntry()"><option value="" data-i18n="allWeeks">สัปดาห์ทั้งหมด</option></select>
         <select id="fHatchery" onchange="renderEntry()"><option value="" data-i18n="allHatcheries">โรงฟักทั้งหมด</option><option>Chengkau</option><option>Kluang</option><option>K.Kangsar</option><option>Sg. Sayong</option><option>Kota</option><option>External</option></select>
-        <select id="fCType" onchange="renderEntry()"><option value="" data-i18n="allCustomerTypes">ประเภทลูกค้าทั้งหมด</option><option>Customer (Direct)</option><option>Contract Farm</option><option>Company Farm</option></select>
-        <select id="fBreed" onchange="renderEntry()"><option value="" data-i18n="allBreeds">สายพันธุ์ทั้งหมด</option><option>COBB</option><option>ROSS</option></select>
-        <input type="search" id="fSearch" data-i18n-placeholder="searchCustomer" placeholder="🔍 ค้นหาชื่อลูกค้า/ฟาร์ม" oninput="renderEntry()"/>
-        
+        <input type="search" id="fSearch" data-i18n-placeholder="searchCustomer" placeholder="🔍 ค้นหาชื่อลูกค้า/ฟาร์ม..." oninput="renderEntry()"/>
         <button class="btn-secondary" onclick="exportEntryExcel()" data-i18n="exportExcelBtn">📊 Export Excel</button>
-        <button class="btn-secondary" onclick="document.getElementById('csvInput').click()" data-i18n="btnImportCSV">📥 Import CSV</button>
-        <input type="file" id="csvInput" accept=".csv, .xlsx" class="hidden" onchange="handleImportCSV(event)"/>
-        <button class="btn-secondary" onclick="downloadCSVTemplate()" data-i18n="btnLoadTemplate">📄 โหลด Template</button>
         <button class="btn-add" onclick="openAddModal()" data-i18n="addRecord">+ เพิ่มรายการ</button>
       </div>
       <div class="card">
@@ -113,12 +101,13 @@
             <thead>
               <tr>
                 <th>Wk</th><th>Date</th><th>Day</th><th>Hatchery</th><th>Customer Type</th><th>Customer/Farm</th><th>Breed</th>
-                <th class="num">M Ord</th><th class="num">F Ord</th><th class="num">U Ord</th><th class="num" style="background:#dbeafe">Total Ord</th>
-                <th class="num">M Act</th><th class="num">F Act</th><th class="num">U Act</th><th class="num" style="background:#d1fae5">Total Act</th>
-                <th class="num">Diff</th><th class="num">Diff %</th><th class="num">Unit Price</th><th data-i18n="lblEggAgeAndVac">Egg Age / Vaccine</th><th></th>
+                <th class="num">M Ord</th><th class="num">F Ord</th><th class="num">U Ord</th><th class="num">Total Ord</th>
+                <th class="num">M Act</th><th class="num">F Act</th><th class="num">U Act</th><th class="num">Total Act</th>
+                <th class="num">Diff</th><th class="num">Diff %</th><th data-i18n="lblEggAgeAndVac">WOP / Vaccine</th>
+                <th data-i18n="lblTruckPlate">Truck</th><th data-i18n="th_depTime">Time</th><th data-i18n="th_location">Location</th><th></th>
               </tr>
             </thead>
-            <tbody id="entryTbody"><tr><td colspan="20" class="empty-state" data-i18n="loading">กำลังโหลด...</td></tr></tbody>
+            <tbody id="entryTbody"><tr><td colspan="22" class="empty-state" data-i18n="loading">กำลังโหลด...</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -128,613 +117,196 @@
       <div class="toolbar">
         <select id="sumMode" onchange="renderSummary()"><option value="week" data-i18n="byWeek">📅 By Week</option><option value="day" data-i18n="byDay">📆 By Day</option></select>
         <select id="sumWeek" onchange="renderSummary()"></select><input type="date" id="sumDate" onchange="renderSummary()" class="hidden"/>
-        <button class="btn-secondary" onclick="openCustomizeModal()" data-i18n="customizeBtn">⚙️ Customize</button>
-        <button class="btn-secondary" onclick="window.print()" data-i18n="printBtn">🖨️ พิมพ์</button>
-        <button class="btn-secondary" onclick="exportSummaryExcel()" data-i18n="exportExcelBtn">📊 Export Excel</button>
         <button class="btn-add" onclick="exportPDF()" data-i18n="exportPdfBtn">📥 Export PDF</button>
       </div>
-      <div class="trend-grid" data-section="charts1"><div class="chart-card"><h4 data-i18n="chartTrend">📈 แนวโน้มรายสัปดาห์</h4><canvas id="trendLine"></canvas></div><div class="chart-card"><h4 data-i18n="chartBreed">🐔 แยกตามสายพันธุ์</h4><canvas id="trendBreed"></canvas></div></div>
-      <div class="trend-grid" data-section="charts2"><div class="chart-card"><h4 data-i18n="chartHatchery">🏭 ยอด Actual ต่อโรงฟัก</h4><canvas id="trendHatchery"></canvas></div><div class="chart-card"><h4 data-i18n="chartCType">👥 ยอดต่อประเภทลูกค้า</h4><canvas id="trendCType"></canvas></div></div>
-      <div class="summary-section" data-section="deliveryReport"><div class="summary-title" data-i18n="deliveryReportSection">CUSTOMER DELIVERY REPORT</div><div class="table-wrap" style="max-height: 400px; overflow-y: auto;"><table class="matrix" id="deliveryReportTable" style="text-align:left;"><thead><tr><th style="text-align:left;">Date</th><th style="text-align:left;">Hatchery</th><th style="text-align:left;">Customer</th><th style="text-align:left;">Breed</th><th style="text-align:left;" data-i18n="lblTruckPlate">Truck Plate</th><th style="text-align:left;">Avg Wgt (M/F/U)</th><th style="text-align:right;">Actual Delivered</th></tr></thead><tbody id="deliveryReportTbody"></tbody></table></div></div>
-      <div class="summary-grid" data-section="matrices"><div><div class="summary-title"><span data-i18n="orderPlanning">ORDER PLANNING FROM SALES</span> <span id="sumScopeLabel1"></span></div><table class="matrix" id="planMatrix"></table></div><div><div class="summary-title"><span data-i18n="actualDist">ACTUAL DOC DISTRIBUTED</span> <span id="sumScopeLabel2"></span></div><table class="matrix" id="actualMatrix"></table></div></div>
-      <div class="summary-section" data-section="targetVsActual"><div class="summary-title" data-i18n="targetVsActualSection">TARGET vs ACTUAL</div><table class="matrix" id="bookingTargetMatrix"></table></div>
-      <div class="summary-section" data-section="hatcheryFunnel"><div class="summary-title" data-i18n="hatcheryFunnelSection">3-STAGE TRACKING</div><table class="matrix" id="hatcheryFunnelMatrix"></table></div>
-      <div class="summary-section" data-section="sexHatchery"><div class="summary-title" data-i18n="sexHatcherySection">ACTUAL CHICKS BY SEX × HATCHERY</div><div class="trend-grid" style="grid-template-columns:2fr 1fr"><div class="chart-card"><h4 data-i18n="chartSexHatchery">📊 ลูกไก่ตามเพศ × โรงฟัก</h4><canvas id="trendSexHatchery"></canvas></div><div class="chart-card"><h4 data-i18n="chartMFRatio">⚖️ M:F Ratio รวม</h4><canvas id="trendMFRatio"></canvas></div></div><table class="matrix" id="sexHatcheryMatrix"></table></div>
-      <div class="summary-section" data-section="topCustomers"><div class="summary-title" data-i18n="topCustomersSection">TOP CUSTOMERS</div><table class="matrix" id="topCustomersMatrix"></table></div>
-      <div class="summary-section" data-section="difference"><div class="summary-title" data-i18n="diffSection">DIFFERENCE (ACTUAL − ORDER)</div><table class="matrix" id="diffMatrix"></table></div>
-    </div>
-
-    <div id="tab-admin" class="hidden">
-      <div class="card"><div class="card-header"><span class="card-title" data-i18n="manageUsers">จัดการผู้ใช้</span></div><div class="table-wrap"><table><thead><tr><th data-i18n="th_email">อีเมล</th><th data-i18n="th_name">ชื่อ</th><th data-i18n="th_role">Role</th><th data-i18n="th_registered">สมัครเมื่อ</th><th data-i18n="th_perms">สิทธิ์</th><th></th></tr></thead><tbody id="adminTbody"></tbody></table></div></div>
-      <div class="card" style="margin-top:14px"><div class="card-header"><span class="card-title" data-i18n="bookingTargetsTitle">Booking Targets</span><div style="display:flex;gap:8px;align-items:center"><select id="targetsViewSelect" onchange="setTargetsView(this.value)"><option value="week" data-i18n="byWeek">📅 รายสัปดาห์</option><option value="day" data-i18n="byDay">📆 รายวัน</option></select><button class="btn-add" onclick="openTargetModal()" data-i18n="addTarget">+ ตั้งเป้าหมาย</button></div></div><div class="table-wrap" id="targetsTableWrap"></div></div>
-      <div class="card" style="margin-top:14px"><div class="card-header"><span class="card-title" data-i18n="hatcheryEstTitle">Hatchery Estimate</span><div style="display:flex;gap:8px;align-items:center"><select id="estimatesViewSelect" onchange="setEstimatesView(this.value)"><option value="week" data-i18n="byWeek">📅 รายสัปดาห์</option><option value="day" data-i18n="byDay">📆 รายวัน</option></select><button class="btn-add" onclick="openEstimateModal()" data-i18n="addEstimate">+ เพิ่ม Estimate</button></div></div><div class="table-wrap" id="estimatesTableWrap"></div></div>
+      <div class="trend-grid">
+        <div class="chart-card"><h4 data-i18n="chartHatchery">🏭 ยอด Actual ต่อโรงฟัก</h4><canvas id="trendHatchery"></canvas></div>
+        <div class="chart-card"><h4 data-i18n="chartBreed">🐔 แยกตามสายพันธุ์ (%)</h4><canvas id="trendBreed"></canvas></div>
+      </div>
+      <div class="trend-grid">
+        <div class="chart-card"><h4 data-i18n="chartCType">👥 ยอดต่อประเภทลูกค้า</h4><canvas id="trendCType"></canvas></div>
+        <div class="chart-card"><h4 data-i18n="chartMFRatio">⚖️ M:F Ratio รวม (%)</h4><canvas id="trendMFRatio"></canvas></div>
+      </div>
+      <div class="summary-section"><div class="summary-title" data-i18n="sexHatcherySection">ACTUAL CHICKS BY SEX × HATCHERY (%)</div><div class="chart-card" style="height:350px"><canvas id="trendSexHatchery"></canvas></div></div>
+      <div class="summary-grid">
+        <div><div class="summary-title" data-i18n="orderPlanning">PLAN</div><table class="matrix" id="planMatrix"></table></div>
+        <div><div class="summary-title" data-i18n="actualDist">ACTUAL</div><table class="matrix" id="actualMatrix"></table></div>
+      </div>
     </div>
   </div>
 </div>
 
 <div id="recordModal" class="modal-overlay hidden">
   <div class="modal">
-    <div class="modal-header"><h2 id="modalTitle" data-i18n="addRecordTitle">เพิ่มรายการ</h2><button class="modal-close" onclick="closeModal()">&times;</button></div>
+    <div class="modal-header"><h2 id="modalTitle">Add Record</h2><button onclick="closeModal()" style="border:none;background:none;font-size:24px">&times;</button></div>
     <div class="modal-body">
       <input type="hidden" id="rId"/>
       <div class="form-grid-3">
         <div class="form-row"><label data-i18n="lblDate">Date</label><input id="rDate" type="date" required onchange="updateDayName()"/></div>
-        <div class="form-row"><label data-i18n="lblWeek">Week No.</label><input id="rWeek" type="number" min="1" max="53" readonly style="background:#f3f4f6"/></div>
-        <div class="form-row"><label data-i18n="lblDay">Day</label><input id="rDay" type="text" readonly style="background:#f3f4f6"/></div>
+        <div class="form-row"><label data-i18n="lblWeek">Wk</label><input id="rWeek" type="number" readonly style="background:#eee"/></div>
+        <div class="form-row"><label data-i18n="lblDay">Day</label><input id="rDay" type="text" readonly style="background:#eee"/></div>
       </div>
       <div class="form-grid-2">
-        <div class="form-row"><label data-i18n="lblHatchery">Hatchery</label>
-          <select id="rHatchery" required onchange="onHatcheryChange()"><option value="" data-i18n="chooseOption">-- เลือก --</option><option value="Chengkau">Chengkau</option><option value="Kluang">Kluang</option><option value="K.Kangsar">K.Kangsar</option><option value="Sg. Sayong">Sg. Sayong</option><option value="Kota">Kota</option><option value="External">🛒 External (Buy-in)</option></select>
-        </div>
-        <div class="form-row"><label data-i18n="lblCType">Customer Type</label>
-          <select id="rCType" required><option value="" data-i18n="chooseOption">-- เลือก --</option><option value="Customer (Direct)">Customer (Direct)</option><option value="Contract Farm">Contract Farm</option><option value="Company Farm">Company Farm</option></select>
-        </div>
+        <div class="form-row"><label data-i18n="lblHatchery">Hatchery</label><select id="rHatchery" required onchange="onHatcheryChange()"><option value="" data-i18n="chooseOption"></option><option>Chengkau</option><option>Kluang</option><option>K.Kangsar</option><option>Sg. Sayong</option><option>Kota</option><option value="External">External</option></select></div>
+        <div class="form-row"><label data-i18n="lblCType">Customer Type</label><select id="rCType" required><option value="" data-i18n="chooseOption"></option><option>Customer (Direct)</option><option>Contract Farm</option><option>Company Farm</option></select></div>
       </div>
+      <div class="form-row"><label data-i18n="lblCustomer">Customer Name</label><input id="rCustomer" type="text" required/></div>
       <div class="form-grid-2">
-        <div class="form-row"><label data-i18n="lblCustomer">Customer / Farm Name</label><input id="rCustomer" type="text" required/></div>
-        <div class="form-row"><label data-i18n="lblBreed">Breed</label><select id="rBreed"><option value="" data-i18n="chooseOption">-- เลือก --</option><option value="COBB">COBB</option><option value="ROSS">ROSS</option></select></div>
-      </div>
-      <div class="form-row hidden" id="rExternalSourceRow"><label data-i18n="lblExternalSource">🛒 ซื้อจากที่ไหน (ระบุชื่อบริษัท/แหล่งซื้อ)</label><input id="rExternalSource" type="text"/></div>
-      
-      <div class="section-label" data-i18n="orderSection">Order (Planned)</div>
-      <div class="form-grid-3">
-        <div class="form-row"><label>M Ordered</label><input id="rMOrd" type="number" min="0"/></div>
-        <div class="form-row"><label>F Ordered</label><input id="rFOrd" type="number" min="0"/></div>
-        <div class="form-row"><label>Unsexed Ordered</label><input id="rUOrd" type="number" min="0" style="background:#faf5ff"/></div>
+        <div class="form-row"><label data-i18n="lblBreed">Breed</label><select id="rBreed"><option value="" data-i18n="chooseOption"></option><option>COBB</option><option>ROSS</option></select></div>
+        <div class="form-row"><label data-i18n="lblEggAge">Week of Production (WOP)</label><select id="rEggAge"></select></div>
       </div>
 
-      <div class="section-label" data-i18n="actualSection">Actual (Delivered)</div>
+      <div class="section-label">Ordered / Actual</div>
       <div class="form-grid-3">
-        <div class="form-row"><label>M Actual</label><input id="rMAct" type="number" min="0"/></div>
-        <div class="form-row"><label>F Actual</label><input id="rFAct" type="number" min="0"/></div>
-        <div class="form-row"><label>Unsexed Actual</label><input id="rUAct" type="number" min="0" style="background:#faf5ff"/></div>
+        <div class="form-row"><label>M Ordered</label><input id="rMOrd" type="number"/></div>
+        <div class="form-row"><label>F Ordered</label><input id="rFOrd" type="number"/></div>
+        <div class="form-row"><label>U Ordered</label><input id="rUOrd" type="number"/></div>
       </div>
-
       <div class="form-grid-3">
-        <div class="form-row">
-          <label data-i18n="lblEggAge">อายุไข่ฟัก (สัปดาห์)</label>
-          <select id="rEggAge" style="width:100%"></select>
-        </div>
+        <div class="form-row"><label>M Actual</label><input id="rMAct" type="number"/></div>
+        <div class="form-row"><label>F Actual</label><input id="rFAct" type="number"/></div>
+        <div class="form-row"><label>U Actual</label><input id="rUAct" type="number"/></div>
       </div>
 
       <div class="section-label" data-i18n="lblVaccineHeader">Vaccination</div>
-      <div class="form-row" style="background:#f9fafb; padding:12px; border-radius:6px; margin-bottom:10px;">
-        <label style="color:var(--primary);font-weight:600; margin-bottom:10px; font-size: 14px;" data-i18n="lblVaccineSC">วัคซีนใต้ผิวหนัง</label>
-        <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:center;">
-          <label style="display:flex;align-items:center;gap:6px;font-weight:500;cursor:pointer;white-space:nowrap;margin:0;"><input type="checkbox" name="vacSC" value="ND-K"/> ND-K</label>
-          <label style="display:flex;align-items:center;gap:6px;font-weight:500;cursor:pointer;white-space:nowrap;margin:0;"><input type="checkbox" name="vacSC" value="IBD"/> IBD</label>
-        </div>
+      <div class="form-row" style="background:#f9fafb;padding:12px;border-radius:6px;margin-bottom:8px">
+        <label data-i18n="lblVaccineSC" style="font-weight:600;color:var(--primary);margin-bottom:8px;display:block">S/C</label>
+        <div style="display:flex;gap:20px;flex-wrap:wrap"><label style="display:flex;align-items:center;gap:6px"><input type="checkbox" name="vacSC" value="ND-K"> ND-K</label><label style="display:flex;align-items:center;gap:6px"><input type="checkbox" name="vacSC" value="IBD"> IBD</label></div>
       </div>
-      <div class="form-row" style="background:#f9fafb; padding:12px; border-radius:6px;">
-        <label style="color:var(--primary);font-weight:600; margin-bottom:10px; font-size: 14px;" data-i18n="lblVaccineSpray">วัคซีนสเปรย์</label>
-        <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:center;">
-          <label style="display:flex;align-items:center;gap:6px;font-weight:500;cursor:pointer;white-space:nowrap;margin:0;"><input type="checkbox" name="vacSpray" value="Cevac Vitabron L"/> Cevac Vitabron L</label>
-          <label style="display:flex;align-items:center;gap:6px;font-weight:500;cursor:pointer;white-space:nowrap;margin:0;"><input type="checkbox" name="vacSpray" value="Cevac IBird"/> Cevac IBird</label>
-          <label style="display:flex;align-items:center;gap:6px;font-weight:500;cursor:pointer;white-space:nowrap;margin:0;"><input type="checkbox" name="vacSpray" value="Avinew+H120"/> Avinew+H120</label>
-          <label style="display:flex;align-items:center;gap:6px;font-weight:500;cursor:pointer;white-space:nowrap;margin:0;"><input type="checkbox" name="vacSpray" value="Gallivac IB88"/> Gallivac IB88</label>
-        </div>
+      <div class="form-row" style="background:#f9fafb;padding:12px;border-radius:6px">
+        <label data-i18n="lblVaccineSpray" style="font-weight:600;color:var(--primary);margin-bottom:8px;display:block">Spray</label>
+        <div style="display:flex;gap:20px;flex-wrap:wrap"><label style="display:flex;align-items:center;gap:6px"><input type="checkbox" name="vacSpray" value="Cevac Vitabron L"> Cevac Vitabron L</label><label style="display:flex;align-items:center;gap:6px"><input type="checkbox" name="vacSpray" value="Cevac IBird"> Cevac IBird</label><label style="display:flex;align-items:center;gap:6px"><input type="checkbox" name="vacSpray" value="Avinew+H120"> Avinew+H120</label><label style="display:flex;align-items:center;gap:6px"><input type="checkbox" name="vacSpray" value="Gallivac IB88"> Gallivac IB88</label></div>
       </div>
 
-      <div class="section-label" data-i18n="lblLogisticsWeight">Logistics & Weight</div>
+      <div class="section-label">Logistics</div>
       <div class="form-grid-3">
-        <div class="form-row"><label data-i18n="lblTruckPlate">ทะเบียนรถ</label><input id="rTruckPlate" type="text"/></div>
+        <div class="form-row"><label data-i18n="lblTruckPlate">Truck Plate</label><input id="rTruckPlate" type="text"/></div>
+        <div class="form-row"><label data-i18n="lblDepartureTime">Dep. Time</label><input id="rDepartureTime" type="time"/></div>
+        <div class="form-row"><label data-i18n="lblLocation">Location</label><input id="rLocation" type="text" data-i18n-placeholder="lblLocationPlaceholder"/></div>
       </div>
-      <div class="form-grid-3">
-        <div class="form-row"><label data-i18n="lblAvgWeightM">Avg Weight (M) กรัม</label><input id="rWeightM" type="number" step="0.01"/></div>
-        <div class="form-row"><label data-i18n="lblAvgWeightF">Avg Weight (F) กรัม</label><input id="rWeightF" type="number" step="0.01"/></div>
-        <div class="form-row"><label data-i18n="lblAvgWeightMixed">Avg Weight (Mixed) กรัม</label><input id="rWeightMixed" type="number" step="0.01"/></div>
-      </div>
-      <div class="section-label" data-i18n="pricingSection">Pricing (ไม่บังคับ)</div>
-      <div class="form-grid-2">
-        <div class="form-row"><label data-i18n="lblPrice">ราคา / หน่วย</label><input id="rPrice" type="number" step="0.01" min="0"/></div>
-        <div class="form-row"><label data-i18n="lblTotalAmount">Total Amount</label><input id="rTotalAmount" type="text" readonly style="background:#f3f4f6"/></div>
-      </div>
-      <div class="form-row"><label data-i18n="lblNotes">Notes</label><textarea id="rNotes" rows="2"></textarea></div>
     </div>
-    <div class="modal-footer"><button class="btn-danger hidden" id="rDeleteBtn" onclick="deleteRecord()" data-i18n="delete">ลบ</button><button class="btn-secondary" onclick="closeModal()" data-i18n="cancel">ยกเลิก</button><button class="btn-add" onclick="saveRecord()" data-i18n="save">บันทึก</button></div>
+    <div class="modal-footer"><button class="btn-danger hidden" id="rDeleteBtn" onclick="deleteRecord()">Delete</button><button class="btn-secondary" onclick="closeModal()">Cancel</button><button class="btn-primary" onclick="saveRecord()">Save</button></div>
   </div>
 </div>
 
-<div id="targetModal" class="modal-overlay hidden"><div class="modal" style="max-width:520px"><div class="modal-header"><h2 data-i18n="setTargetTitle">ตั้งเป้าหมาย Booking</h2><button class="modal-close" onclick="closeTargetModal()">&times;</button></div><div class="modal-body"><div class="form-row"><label data-i18n="lblPeriodType">ประเภทระยะเวลา</label><select id="tPeriodType" onchange="togglePeriodFields()"><option value="day" data-i18n="byDay">📆 รายวัน</option><option value="week" data-i18n="byWeek">📅 รายสัปดาห์</option></select></div><div class="form-row" id="tDateRow"><label data-i18n="lblDate">วันที่</label><input id="tDate" type="date"/></div><div class="form-row hidden" id="tWeekRow"><label data-i18n="lblWeek">สัปดาห์</label><input id="tWeek" type="number" min="1" max="53"/></div><div class="form-row"><label data-i18n="lblCType">ประเภทลูกค้า</label><select id="tCustomerType"><option value="" data-i18n="chooseOption">-- เลือก --</option><option value="Customer (Direct)">Customer (Direct)</option><option value="Contract Farm">Contract Farm</option><option value="Company Farm">Company Farm</option></select></div><div class="form-row"><label data-i18n="lblBooking">Booking (จำนวนที่จอง)</label><input id="tBooking" type="number" min="0"/></div></div><div class="modal-footer"><button class="btn-secondary" onclick="closeTargetModal()" data-i18n="cancel">ยกเลิก</button><button class="btn-add" onclick="saveTarget()" data-i18n="save">บันทึก</button></div></div></div>
-
-<div id="customizeModal" class="modal-overlay hidden"><div class="modal" style="max-width:520px"><div class="modal-header"><h2 data-i18n="customizeTitle">⚙️ ปรับแต่งการแสดงผล</h2><button class="modal-close" onclick="closeCustomizeModal()">&times;</button></div><div class="modal-body"><div class="section-label" data-i18n="customSectionsLabel">เลือก section ที่ต้องการแสดง</div><div id="customSectionsList" style="display:grid;grid-template-columns:1fr;gap:6px;font-size:13px"></div><div class="section-label" style="margin-top:16px" data-i18n="customDisplayLabel">รูปแบบค่าที่แสดง (Diff)</div><div style="display:flex;gap:6px;flex-wrap:wrap"><label style="flex:1;min-width:90px;display:flex;align-items:center;gap:6px;padding:8px;background:var(--bg);border-radius:6px;cursor:pointer"><input type="radio" name="diffMode" value="number"> <span data-i18n="modeNumber">ตัวเลข</span></label><label style="flex:1;min-width:90px;display:flex;align-items:center;gap:6px;padding:8px;background:var(--bg);border-radius:6px;cursor:pointer"><input type="radio" name="diffMode" value="percent"> <span data-i18n="modePercent">เปอร์เซ็นต์</span></label><label style="flex:1;min-width:90px;display:flex;align-items:center;gap:6px;padding:8px;background:var(--bg);border-radius:6px;cursor:pointer"><input type="radio" name="diffMode" value="both" checked> <span data-i18n="modeBoth">ทั้งสองอย่าง</span></label></div><div class="section-label" style="margin-top:16px" data-i18n="customThemeLabel">สี Theme หลัก</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="theme-btn" onclick="setTheme('blue')" data-theme="blue" style="flex:1;min-width:80px;padding:8px;background:#2563eb;color:white;border:none;border-radius:6px;font-weight:600;cursor:pointer">Blue</button><button class="theme-btn" onclick="setTheme('green')" data-theme="green" style="flex:1;min-width:80px;padding:8px;background:#16a34a;color:white;border:none;border-radius:6px;font-weight:600;cursor:pointer">Green</button><button class="theme-btn" onclick="setTheme('purple')" data-theme="purple" style="flex:1;min-width:80px;padding:8px;background:#7c3aed;color:white;border:none;border-radius:6px;font-weight:600;cursor:pointer">Purple</button><button class="theme-btn" onclick="setTheme('orange')" data-theme="orange" style="flex:1;min-width:80px;padding:8px;background:#ea580c;color:white;border:none;border-radius:6px;font-weight:600;cursor:pointer">Orange</button><button class="theme-btn" onclick="setTheme('slate')" data-theme="slate" style="flex:1;min-width:80px;padding:8px;background:#475569;color:white;border:none;border-radius:6px;font-weight:600;cursor:pointer">Slate</button></div></div><div class="modal-footer"><button class="btn-danger" onclick="resetCustomize()" data-i18n="resetDefault">รีเซ็ต</button><button class="btn-secondary" onclick="closeCustomizeModal()" data-i18n="close">ปิด</button></div></div></div>
-
-<div id="permModal" class="modal-overlay hidden"><div class="modal" style="max-width:560px"><div class="modal-header"><h2 data-i18n="permissionsTitle">จัดการสิทธิ์ผู้ใช้</h2><button class="modal-close" onclick="closePermModal()">&times;</button></div><div class="modal-body"><div id="permUserInfo" style="padding:10px 12px;background:var(--bg);border-radius:8px;margin-bottom:14px;font-size:13px"></div><div class="form-row"><label data-i18n="th_role">Role</label><select id="permRole"><option value="user" data-i18n="role_user">User</option><option value="admin" data-i18n="role_admin">Admin</option></select><p style="font-size:12px;color:var(--muted);margin:6px 0 0" data-i18n="permRoleHint">Admin = default ได้ทุกสิทธิ์</p></div><div class="section-label" data-i18n="permsLabel">สิทธิ์เฉพาะ (override)</div><div id="permsGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px"></div><div class="section-label" data-i18n="permHatcheriesLabel">โรงฟักที่อนุญาตให้แก้ไข</div><p style="font-size:12px;color:var(--muted);margin:0 0 6px" data-i18n="permHatcheriesHint">ไม่ติ๊กเลย = ได้ทุกโรงฟัก</p><div id="permHatcheriesGrid" class="perm-hatchery-grid"></div></div><div class="modal-footer"><button class="btn-secondary" onclick="closePermModal()" data-i18n="cancel">ยกเลิก</button><button class="btn-add" onclick="savePerm()" data-i18n="save">บันทึก</button></div></div></div>
-
-<div id="estimateModal" class="modal-overlay hidden"><div class="modal" style="max-width:520px"><div class="modal-header"><h2 data-i18n="setEstimateTitle">ตั้งประมาณการ Hatchery</h2><button class="modal-close" onclick="closeEstimateModal()">&times;</button></div><div class="modal-body"><div class="form-row"><label data-i18n="lblPeriodType">ประเภทระยะเวลา</label><select id="eePeriodType" onchange="toggleEstimatePeriodFields()"><option value="week" data-i18n="byWeek">📅 รายสัปดาห์</option><option value="day" data-i18n="byDay">📆 รายวัน</option></select></div><div class="form-row hidden" id="eeDateRow"><label data-i18n="lblDate">วันที่</label><input id="eeDate" type="date"/></div><div class="form-row" id="eeWeekRow"><label data-i18n="lblWeek">สัปดาห์</label><input id="eeWeek" type="number" min="1" max="53"/></div><div class="form-row"><label data-i18n="lblHatchery">โรงฟัก</label><select id="eeHatchery"><option value="" data-i18n="chooseOption">-- เลือก --</option><option value="Chengkau">Chengkau</option><option value="Kluang">Kluang</option><option value="K.Kangsar">K.Kangsar</option><option value="Sg. Sayong">Sg. Sayong</option><option value="Kota">Kota</option></select></div><div class="form-row"><label data-i18n="lblEstimateTotal">Estimate Total</label><input id="eeTotal" type="number" min="0"/></div><div class="form-row"><label data-i18n="lblNotes">หมายเหตุ</label><input id="eeNotes" type="text"/></div></div><div class="modal-footer"><button class="btn-secondary" onclick="closeEstimateModal()" data-i18n="cancel">ยกเลิก</button><button class="btn-add" onclick="saveEstimate()" data-i18n="save">บันทึก</button></div></div></div>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
 <script>
-// ===========================================================
-// CONFIG 
-// ===========================================================
 const CONFIG_SUPABASE_URL = 'https://ncnppcmlxdaabuwkcbtm.supabase.co';
 const CONFIG_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5jbnBwY21seGRhYWJ1d2tjYnRtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxNjg3NTEsImV4cCI6MjA5Mjc0NDc1MX0.bfUzVo4WvMdjAtZl9NdCf8Q7CScghg-oWTRFLlhHaTs';
 
-const HATCHERIES = ['Chengkau','Kluang','K.Kangsar','Sg. Sayong','Kota','External'];
-const CTYPES = ['Customer (Direct)','Contract Farm','Company Farm'];
-const CTYPE_CLASS = {'Customer (Direct)':'ctype-direct','Contract Farm':'ctype-contract','Company Farm':'ctype-company'};
-const ROW_CLASS = {'Customer (Direct)':'row-direct','Contract Farm':'row-contract','Company Farm':'row-company'};
+Chart.register(ChartDataLabels);
+let sb=null, currentUser=null, currentProfile=null, allRecords=[], charts={};
 
-const I18N = {
-  th: {
-    chooseOption:'-- เลือก --', lblEggAge:'อายุไข่ฟัก (สัปดาห์)', lblVaccineHeader:'การทำวัคซีน (Vaccination)', lblVaccineSC:'💉 วัคซีนใต้ผิวหนัง', lblVaccineSpray:'💦 วัคซีนสเปรย์', lblEggAgeAndVac:'อายุไข่ / วัคซีน',
-    setupTitle:'ตั้งค่า Supabase', setupSub:'กรอก URL + anon key', supabaseUrl:'URL', supabaseAnonKey:'Anon key', save:'บันทึก', cancel:'ยกเลิก', delete:'ลบ',
-    signIn:'เข้าสู่ระบบ', signUp:'สมัครใช้งาน', loginGoogle:'เข้าสู่ระบบด้วย Google', or:'หรือ', email:'อีเมล', password:'รหัสผ่าน',
-    noAccount:'ยังไม่มีบัญชี?', haveAccount:'มีบัญชีแล้ว?', changeSupabase:'⚙️ เปลี่ยน Supabase URL / key', realtime:'Real-time', logout:'ออกจากระบบ',
-    tabEntry:'📋 Order Entry', tabSummary:'📊 Summarize', tabAdmin:'⚙️ Admin',
-    kpiTotal:'รายการทั้งหมด', kpiOrdered:'ยอดสั่ง (ตัว)', kpiActual:'ยอดส่งจริง (ตัว)', kpiDiff:'ส่วนต่าง', kpiDiffPct:'% ส่วนต่าง',
-    allWeeks:'สัปดาห์ทั้งหมด', allHatcheries:'โรงฟักทั้งหมด', allCustomerTypes:'ประเภทลูกค้าทั้งหมด', allBreeds:'สายพันธุ์ทั้งหมด', searchCustomer:'🔍 ค้นหาชื่อลูกค้า/ฟาร์ม',
-    addRecord:'+ เพิ่มรายการ', orderTable:'ตารางข้อมูล Order', byWeek:'📅 รายสัปดาห์', byDay:'📆 รายวัน', printBtn:'🖨️ พิมพ์',
-    chartTrend:'📈 แนวโน้มรายสัปดาห์', chartBreed:'🐔 แยกตามสายพันธุ์', chartHatchery:'🏭 ยอด Actual ต่อโรงฟัก', chartCType:'👥 ยอดต่อประเภทลูกค้า',
-    orderPlanning:'ORDER PLANNING FROM SALES', actualDist:'ACTUAL DOC DISTRIBUTED', deliveryReportSection:'CUSTOMER DELIVERY REPORT',
-    diffSection:'ส่วนต่าง (ACTUAL − ORDER)', targetVsActualSection:'TARGET vs ACTUAL', th_target:'Target', th_diff:'Diff', th_diffPct:'Diff %', noTargetSet:'(ยังไม่ตั้งเป้าหมาย)',
-    hatcheryFunnelSection:'3-STAGE TRACKING ต่อโรงฟัก', sexHatcherySection:'ACTUAL CHICKS BY SEX × HATCHERY', chartSexHatchery:'📊 ลูกไก่ตามเพศ × โรงฟัก', chartMFRatio:'⚖️ M:F Ratio รวม',
-    th_male:'Male', th_female:'Female', th_unsexed:'Unsexed', th_mfRatio:'M:F Ratio', th_total:'Total', customizeBtn:'⚙️ Customize', customizeTitle:'⚙️ ปรับแต่งการแสดงผล',
-    customSectionsLabel:'เลือก section ที่แสดง', customDisplayLabel:'รูปแบบค่า (Diff)', customThemeLabel:'สี Theme', modeNumber:'ตัวเลข', modePercent:'เปอร์เซ็นต์', modeBoth:'ทั้งสองอย่าง',
-    resetDefault:'รีเซ็ต', close:'ปิด', topCustomersSection:'TOP CUSTOMERS', th_hatchery:'โรงฟัก', th_hEstimate:'H.Estimate', th_order:'Order', th_actual:'Actual',
-    th_bToH:'B→H %', th_hToO:'H→O %', th_oToA:'O→A %', th_fulfill:'Fulfill %', th_status:'สถานะ', th_customer:'ลูกค้า', th_notes:'หมายเหตุ',
-    exportPdfBtn:'📥 Export PDF', exportExcelBtn:'📊 Export Excel', btnImportCSV:'📥 Import CSV', btnLoadTemplate:'📄 โหลด Template',
-    hatcheryEstTitle:'Hatchery Estimate', addEstimate:'+ เพิ่ม Estimate', setEstimateTitle:'ตั้งประมาณการ Hatchery', lblEstimateTotal:'Estimate Total', confirmDeleteEst:'ลบประมาณการนี้?',
-    pdfReportTitle:'DOC Tracker — Summary Report', permissionsTitle:'จัดการสิทธิ์ผู้ใช้', permsLabel:'สิทธิ์เฉพาะ (override)', th_perms:'สิทธิ์', permRoleHint:'Admin = default ได้ทุกสิทธิ์',
-    role_user:'User', role_admin:'Admin', perm_manage_users:'จัดการ User', perm_manage_targets:'จัดการ Targets', perm_manage_estimates:'จัดการ Estimates',
-    perm_edit_all_records:'แก้ไข Records คนอื่น', perm_export_pdf:'Export PDF', perm_view_admin_tab:'เห็นแท็บ Admin', permHatcheriesLabel:'โรงฟักที่อนุญาต', permHatcheriesHint:'ไม่ติ๊ก = ได้ทุกโรงฟัก',
-    th_createdAt:'สร้างเมื่อ', showAll:'แสดงทั้งหมด', show10Latest:'แสดง 10 ล่าสุด', lblExternalSource:'🛒 ซื้อจากที่ไหน', manageUsers:'จัดการผู้ใช้',
-    th_email:'อีเมล', th_name:'ชื่อ', th_role:'สิทธิ์', th_registered:'สมัครเมื่อ', th_changeRole:'เปลี่ยนสิทธิ์', bookingTargetsTitle:'Booking Targets', addTarget:'+ ตั้งเป้าหมาย',
-    th_periodType:'ประเภท', th_period:'วัน/สัปดาห์', th_customerType:'ประเภทลูกค้า', lblPeriodType:'ประเภทระยะเวลา', addRecordTitle:'เพิ่มรายการ', editRecordTitle:'แก้ไขรายการ',
-    lblWeek:'สัปดาห์', lblDate:'วันที่', lblDay:'วัน', lblHatchery:'โรงฟัก', lblCType:'ประเภทลูกค้า', lblCustomer:'ชื่อลูกค้า / ฟาร์ม', lblBreed:'สายพันธุ์',
-    lblLogisticsWeight: 'Logistics & Weight', lblTruckPlate: 'ทะเบียนรถ', lblAvgWeightM: 'Avg Weight (M)', lblAvgWeightF: 'Avg Weight (F)', lblAvgWeightMixed: 'Avg Weight (Mixed)',
-    lblBooking:'Booking', booking:'Booking', selectOption:'-- เลือก --', orderSection:'Order (วางแผน)', actualSection:'Actual (ส่งจริง)', pricingSection:'ราคา (ไม่บังคับ)',
-    lblPrice:'ราคา / หน่วย', lblTotalAmount:'มูลค่ารวม', lblNotes:'หมายเหตุ', setTargetTitle:'ตั้งเป้าหมาย Booking', s_pending:'รอ', s_in_progress:'กำลังทำ', s_done:'เสร็จ', s_cancelled:'ยกเลิก',
-    toastNew:'มีรายการใหม่', toastSaved:'บันทึกสำเร็จ', toastUpdated:'อัพเดทสำเร็จ', toastDeleted:'ลบสำเร็จ', toastRequiredFields:'กรุณากรอกข้อมูลให้ครบ', confirmDelete:'ลบรายการนี้?', confirmDeleteTarget:'ลบเป้าหมายนี้?',
-    confirmReset:'ล้างค่า Supabase?', requiredFill:'กรุณากรอกครบ', noData:'ยังไม่มีข้อมูล', noResult:'ไม่พบข้อมูล', noTargets:'ยังไม่มีเป้าหมาย', loading:'กำลังโหลด...', records:'รายการ',
-    signupSuccess:'สมัครสำเร็จ! ตรวจสอบอีเมล', fillEmailPwd:'กรุณากรอกอีเมลและรหัสผ่าน'
-  },
-  en: {
-    chooseOption:'-- Choose --', lblEggAge:'Week of Production (WOP)', lblVaccineHeader:'Vaccination', lblVaccineSC:'💉 Subcutaneous Vaccine (S/C)', lblVaccineSpray:'💦 Coarse Spray Vaccine', lblEggAgeAndVac:'WOP / Vaccine',
-    setupTitle:'Setup Supabase', setupSub:'Enter URL + anon key', supabaseUrl:'URL', supabaseAnonKey:'Anon key', save:'Save', cancel:'Cancel', delete:'Delete',
-    signIn:'Sign In', signUp:'Sign Up', loginGoogle:'Sign in with Google', or:'or', email:'Email', password:'Password',
-    noAccount:"Don't have account?", haveAccount:'Have account?', changeSupabase:'⚙️ Change Supabase', realtime:'Real-time', logout:'Logout',
-    tabEntry:'📋 Order Entry', tabSummary:'📊 Summarize', tabAdmin:'⚙️ Admin',
-    kpiTotal:'Total', kpiOrdered:'Ordered', kpiActual:'Actual', kpiDiff:'Diff', kpiDiffPct:'Diff %',
-    allWeeks:'All Weeks', allHatcheries:'All Hatcheries', allCustomerTypes:'All Customer Types', allBreeds:'All Breeds', searchCustomer:'🔍 Search',
-    addRecord:'+ Add Record', orderTable:'Order Records', byWeek:'📅 By Week', byDay:'📆 By Day', printBtn:'🖨️ Print',
-    chartTrend:'📈 Trend', chartBreed:'🐔 By Breed', chartHatchery:'🏭 By Hatchery', chartCType:'👥 By Customer Type',
-    orderPlanning:'ORDER PLANNING', actualDist:'ACTUAL DISTRIBUTED', deliveryReportSection:'DELIVERY REPORT',
-    diffSection:'DIFFERENCE', targetVsActualSection:'TARGET vs ACTUAL', th_target:'Target', th_diff:'Diff', th_diffPct:'Diff %', noTargetSet:'(no target)',
-    hatcheryFunnelSection:'3-STAGE TRACKING', sexHatcherySection:'CHICKS BY SEX', chartSexHatchery:'📊 Sex × Hatchery', chartMFRatio:'⚖️ M:F Ratio',
-    th_male:'Male', th_female:'Female', th_unsexed:'Unsexed', th_mfRatio:'M:F Ratio', th_total:'Total', customizeBtn:'⚙️ Customize', customizeTitle:'⚙️ Customize',
-    customSectionsLabel:'Sections', customDisplayLabel:'Diff Format', customThemeLabel:'Theme Color', modeNumber:'Number', modePercent:'Percent', modeBoth:'Both',
-    resetDefault:'Reset', close:'Close', topCustomersSection:'TOP CUSTOMERS', th_hatchery:'Hatchery', th_hEstimate:'H.Est', th_order:'Order', th_actual:'Actual',
-    th_bToH:'B→H %', th_hToO:'H→O %', th_oToA:'O→A %', th_fulfill:'Fulfill %', th_status:'Status', th_customer:'Customer', th_notes:'Notes',
-    exportPdfBtn:'📥 Export PDF', exportExcelBtn:'📊 Export Excel', btnImportCSV:'📥 Import CSV', btnLoadTemplate:'📄 Load Template',
-    hatcheryEstTitle:'Hatchery Estimate', addEstimate:'+ Add Estimate', setEstimateTitle:'Set Estimate', lblEstimateTotal:'Estimate Total', confirmDeleteEst:'Delete?',
-    pdfReportTitle:'DOC Tracker Summary', permissionsTitle:'Permissions', permsLabel:'Permissions (override)', th_perms:'Perms', permRoleHint:'Admin = all perms',
-    role_user:'User', role_admin:'Admin', perm_manage_users:'Manage Users', perm_manage_targets:'Manage Targets', perm_manage_estimates:'Manage Estimates',
-    perm_edit_all_records:'Edit All Records', perm_export_pdf:'Export PDF', perm_view_admin_tab:'View Admin Tab', permHatcheriesLabel:'Allowed Hatcheries', permHatcheriesHint:'None = all',
-    th_createdAt:'Created', showAll:'Show All', show10Latest:'Show 10 Latest', lblExternalSource:'🛒 Buy-in source', manageUsers:'Manage Users',
-    th_email:'Email', th_name:'Name', th_role:'Role', th_registered:'Registered', th_changeRole:'Change Role', bookingTargetsTitle:'Booking Targets', addTarget:'+ Add Target',
-    th_periodType:'Type', th_period:'Day/Week', th_customerType:'Customer Type', lblPeriodType:'Period Type', addRecordTitle:'Add Record', editRecordTitle:'Edit Record',
-    lblWeek:'Week', lblDate:'Date', lblDay:'Day', lblHatchery:'Hatchery', lblCType:'Customer Type', lblCustomer:'Customer', lblBreed:'Breed',
-    lblLogisticsWeight: 'Logistics', lblTruckPlate: 'Truck Plate', lblAvgWeightM: 'Weight (M)', lblAvgWeightF: 'Weight (F)', lblAvgWeightMixed: 'Weight (Mixed)',
-    lblBooking:'Booking', booking:'Booking', selectOption:'-- Select --', orderSection:'Order', actualSection:'Actual', pricingSection:'Pricing',
-    lblPrice:'Unit Price', lblTotalAmount:'Total Amount', lblNotes:'Notes', setTargetTitle:'Set Target', s_pending:'Pending', s_in_progress:'Progress', s_done:'Done', s_cancelled:'Cancel',
-    toastNew:'New record', toastSaved:'Saved', toastUpdated:'Updated', toastDeleted:'Deleted', toastRequiredFields:'Fill required fields', confirmDelete:'Delete?', confirmDeleteTarget:'Delete target?',
-    confirmReset:'Reset Supabase?', requiredFill:'Required', noData:'No data', noResult:'No results', noTargets:'No targets', loading:'Loading...', records:'records',
-    signupSuccess:'Signup success', fillEmailPwd:'Fill email/pwd'
-  }
-};
+function setLanguage(l){ localStorage.setItem('LANG',l); location.reload(); }
+function t(k){ return (I18N[currentLang] && I18N[currentLang][k]) || (I18N.th[k]) || k; }
 
-let currentLang = localStorage.getItem('LANG') || 'th';
-function t(key){ return (I18N[currentLang]&&I18N[currentLang][key]) || (I18N.th[key]) || key; }
-function setLanguage(lang){ currentLang=lang; localStorage.setItem('LANG',lang); document.documentElement.lang=lang; location.reload(); }
 function applyLanguage(){
-  document.querySelectorAll('[data-i18n]').forEach(el=>{ const v=t(el.dataset.i18n); if(v) el.textContent=v; });
-  document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>{ const v=t(el.getAttribute('data-i18n-placeholder')); if(v) el.placeholder=v; });
-  document.querySelectorAll('.lang-toggle button').forEach(b=>{ b.classList.toggle('active', b.dataset.lang===currentLang); });
-  populateEggAgeOptions();
-}
-
-function populateEggAgeOptions() {
-  const select = document.getElementById('rEggAge');
-  if(!select) return;
-  const currentVal = select.value;
-  select.innerHTML = `<option value="" data-i18n="chooseOption">${t('chooseOption')}</option>`;
-  for (let i = 1; i <= 50; i++) {
-    select.innerHTML += `<option value="${i}">${i}</option>`;
+  document.querySelectorAll('[data-i18n]').forEach(el=>el.textContent=t(el.getAttribute('data-i18n')));
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>el.placeholder=t(el.getAttribute('data-i18n-placeholder')));
+  const sel=document.getElementById('rEggAge');
+  if(sel){
+    sel.innerHTML=`<option value="">${t('chooseOption')}</option>`;
+    for(let i=1;i<=50;i++) sel.innerHTML+=`<option value="${i}">${i}</option>`;
   }
-  if(currentVal) select.value = currentVal;
 }
-
-let sb=null, currentUser=null, currentProfile=null;
-let allRecords=[], allProfiles=[], allTargets=[], allEstimates=[];
-let realtimeChannel=null, isSignupMode=false;
 
 function init(){
-  applyLanguage(); applySavedCustomize();
-  const url = CONFIG_SUPABASE_URL || localStorage.getItem('SUPABASE_URL');
-  const key = CONFIG_SUPABASE_ANON_KEY || localStorage.getItem('SUPABASE_ANON_KEY');
-  const resetLink = document.getElementById('resetSetupLink');
-  if(resetLink) resetLink.classList.toggle('hidden', !!(CONFIG_SUPABASE_URL && CONFIG_SUPABASE_ANON_KEY));
-  if(!url||!key){show('setupScreen');return}
-  try{ sb=window.supabase.createClient(url,key); }catch(e){show('loginScreen');showAuth(e.message,'error');return;}
+  applyLanguage();
+  const url=CONFIG_SUPABASE_URL, key=CONFIG_SUPABASE_ANON_KEY;
+  sb=window.supabase.createClient(url,key);
   show('loginScreen');
-  sb.auth.getSession().then(({data,error})=>{
-    if(error){showAuth(error.message,'error');return}
-    if(data?.session) onLogin(data.session.user);
-  });
-  sb.auth.onAuthStateChange((evt,session)=>{if(evt==='SIGNED_IN'&&session) onLogin(session.user); if(evt==='SIGNED_OUT') location.reload();});
+  sb.auth.getSession().then(({data})=>{if(data?.session)onLogin(data.session.user)});
 }
-function show(id){['setupScreen','loginScreen','app'].forEach(x=>document.getElementById(x).classList.toggle('hidden',x!==id))}
-function saveSetup(){const u=document.getElementById('setupUrl').value.trim(),k=document.getElementById('setupKey').value.trim();if(!u||!k)return;localStorage.setItem('SUPABASE_URL',u);localStorage.setItem('SUPABASE_ANON_KEY',k);location.reload();}
-function resetSetup(){if(confirm(t('confirmReset'))){localStorage.removeItem('SUPABASE_URL');localStorage.removeItem('SUPABASE_ANON_KEY');location.reload();}}
-function toggleLoginMode(){isSignupMode=!isSignupMode;document.getElementById('loginTitle').textContent=isSignupMode?t('signUp'):t('signIn');document.getElementById('loginSubmitBtn').textContent=isSignupMode?t('signUp'):t('signIn');document.getElementById('loginSwitchText').textContent=isSignupMode?t('haveAccount'):t('noAccount');document.getElementById('loginSwitchLink').textContent=isSignupMode?t('signIn'):t('signUp');}
-async function loginGoogle(){const {error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.href}});if(error) showAuth(error.message,'error');}
-async function loginEmail(){
-  const e=document.getElementById('loginEmail').value.trim(),p=document.getElementById('loginPassword').value;
-  if(!e||!p){showAuth(t('fillEmailPwd'),'error');return}
-  if(isSignupMode){const {error}=await sb.auth.signUp({email:e,password:p});if(error) showAuth(error.message,'error'); else showAuth(t('signupSuccess'),'success');}
-  else{const {error}=await sb.auth.signInWithPassword({email:e,password:p});if(error) showAuth(error.message,'error');}
-}
-function showAuth(m,type){const el=document.getElementById('loginAlert');el.className='alert alert-'+type;el.textContent=m;el.classList.remove('hidden')}
-async function logout(){if(realtimeChannel) sb.removeChannel(realtimeChannel); await sb.auth.signOut()}
 
 async function onLogin(user){
   currentUser=user;
-  const {data:profile}=await sb.from('profiles').select('*').eq('id',user.id).single();
-  currentProfile=profile;
-  show('app');
-  document.getElementById('userEmail').textContent=profile?.email||user.email;
-  const badge=document.getElementById('userBadge');
-  if(profile?.role==='admin'){badge.className='badge badge-admin';badge.textContent='ADMIN'}else{badge.className='badge badge-user';badge.textContent='USER'}
-  await Promise.all([loadProfiles(),loadRecords(),loadTargets(),loadEstimates()]);
-  applyPermissionsToUI(); populateWeekFilters(); renderEntry(); renderSummary();
-  if(hasPermission('view_admin_tab')){renderAdminTable();renderTargetsTable();renderEstimatesTable();}
-  subscribeRealtime();
-}
-async function loadProfiles(){const {data}=await sb.from('profiles').select('*').order('created_at');allProfiles=data||[];}
-async function loadRecords(){const {data}=await sb.from('doc_records').select('*').order('record_date',{ascending:false}).order('created_at',{ascending:false});allRecords=data||[];}
-async function loadTargets(){const {data}=await sb.from('doc_targets').select('*').order('created_at',{ascending:false});allTargets=data||[];}
-async function loadEstimates(){const {data}=await sb.from('hatchery_estimates').select('*').order('created_at',{ascending:false});allEstimates=data||[];}
-
-function subscribeRealtime(){
-  realtimeChannel=sb.channel('doc-changes')
-    .on('postgres_changes',{event:'*',schema:'public',table:'doc_records'},(p)=>{
-      if(p.eventType==='INSERT'){allRecords.unshift(p.new);toast(t('toastNew'),'info')}
-      else if(p.eventType==='UPDATE'){const i=allRecords.findIndex(r=>r.id===p.new.id);if(i>=0)allRecords[i]=p.new}
-      else if(p.eventType==='DELETE'){allRecords=allRecords.filter(r=>r.id!==p.old.id)}
-      populateWeekFilters();renderEntry();renderSummary();
-    }).subscribe();
+  const {data:p}=await sb.from('profiles').select('*').eq('id',user.id).single();
+  currentProfile=p; show('app');
+  document.getElementById('userEmail').textContent=user.email;
+  document.getElementById('adminTab').classList.toggle('hidden',p?.role!=='admin');
+  await loadRecords(); populateWeekFilters(); renderEntry(); renderSummary();
+  if(window.google) new google.maps.places.Autocomplete(document.getElementById('rLocation'));
 }
 
-function switchTab(name){document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===name));['entry','summary','admin'].forEach(t=>document.getElementById('tab-'+t).classList.toggle('hidden',t!==name));}
-function populateWeekFilters(){
-  const weeks=[...new Set(allRecords.map(r=>r.week_no))].sort((a,b)=>b-a);
-  const fW=document.getElementById('fWeek'), sW=document.getElementById('sumWeek');
-  const prevFW=fW.value, prevSW=sW.value;
-  fW.innerHTML=`<option value="">${t('allWeeks')}</option>`+weeks.map(w=>`<option value="${w}">Week ${w}</option>`).join('');
-  sW.innerHTML=weeks.map(w=>`<option value="${w}">Week ${w}</option>`).join('');
-  if(weeks.includes(parseInt(prevFW))) fW.value=prevFW;
-  if(weeks.includes(parseInt(prevSW))) sW.value=prevSW;
-}
+async function loadRecords(){const {data}=await sb.from('doc_records').select('*').order('record_date',{ascending:false});allRecords=data||[];}
+function switchTab(n){document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===n));['entry','summary'].forEach(t=>document.getElementById('tab-'+t).classList.toggle('hidden',t!==n));}
+function populateWeekFilters(){const wks=[...new Set(allRecords.map(r=>r.week_no))].sort((a,b)=>b-a);const fW=document.getElementById('fWeek'),sW=document.getElementById('sumWeek'); fW.innerHTML=`<option value="">${t('allWeeks')}</option>`+wks.map(w=>`<option value="${w}">Week ${w}</option>`).join(''); sW.innerHTML=wks.map(w=>`<option value="${w}">Week ${w}</option>`).join('');}
 
 function renderEntry(){
-  const fw=document.getElementById('fWeek').value, fh=document.getElementById('fHatchery').value, fc=document.getElementById('fCType').value, fb=document.getElementById('fBreed').value, q=document.getElementById('fSearch').value.toLowerCase();
-  const rows=allRecords.filter(r=>{
-    if(fw && String(r.week_no)!==fw) return false; if(fh && r.hatchery!==fh) return false; if(fc && r.customer_type!==fc) return false; if(fb && r.breed!==fb) return false;
-    if(q && !(r.customer_name||'').toLowerCase().includes(q) && !(r.truck_plate||'').toLowerCase().includes(q)) return false; return true;
-  });
-  const totOrd=rows.reduce((s,r)=>s+(r.total_ordered||0),0), totAct=rows.reduce((s,r)=>s+(r.total_actual||0),0);
-  document.getElementById('kTotal').textContent=rows.length.toLocaleString(); document.getElementById('kOrdered').textContent=totOrd.toLocaleString(); document.getElementById('kActual').textContent=totAct.toLocaleString();
-  const diff=totAct-totOrd; document.getElementById('kDiff').textContent=(diff>=0?'+':'')+diff.toLocaleString(); document.getElementById('kDiff').className='kpi-value '+(diff>0?'kpi-green':diff<0?'kpi-red':'kpi-orange');
-  const diffPctVal = totOrd?(diff/totOrd*100):0; document.getElementById('kDiffPct').textContent=(diffPctVal>0?'+':'')+diffPctVal.toFixed(1)+'%'; document.getElementById('kDiffPct').className='kpi-value '+(diffPctVal>0?'kpi-green':diffPctVal<0?'kpi-red':'kpi-orange');
-  document.getElementById('entryCount').textContent=rows.length+' '+t('records');
-  const tbody=document.getElementById('entryTbody');
-  if(rows.length===0){tbody.innerHTML=`<tr><td colspan="20" class="empty-state">${t('noResult')}</td></tr>`;return}
-  tbody.innerHTML=rows.map(r=>{
-    const can = (r.user_id===currentUser.id||r.user_id==null) || (hasPermission('edit_all_records') && isHatcheryAllowed(r.hatchery));
-    const dCls=r.diff>0?'diff-pos':r.diff<0?'diff-neg':'diff-zero';
-    const rowPct=r.total_ordered?((r.diff||0)/r.total_ordered*100):null, pctStr=rowPct===null?'-':`${rowPct>0?'+':''}${rowPct.toFixed(1)}%`, pctCls=rowPct===null?'diff-zero':(rowPct>0?'diff-pos':rowPct<0?'diff-neg':'diff-zero');
-    const diffMode=getDiffMode(), diffStr=diffMode==='percent'?'':(r.diff>0?'+':'')+(r.diff||0).toLocaleString(), pctCell=diffMode==='number'?'':pctStr;
-    
-    let extInfo = [];
-    if(r.egg_age) extInfo.push(`🥚 ${esc(r.egg_age)} WOP`);
-    if(r.vaccine_sc) extInfo.push(`💉 ${esc(r.vaccine_sc)}`);
-    if(r.vaccine_spray) extInfo.push(`💦 ${esc(r.vaccine_spray)}`);
-    const extInfoHtml = extInfo.length>0 ? `<div style="font-size:11px;color:var(--muted);min-width:110px">${extInfo.join('<br>')}</div>` : '-';
-    
-    return `<tr class="${r.breed==='COBB'?'breed-stripe-cobb':r.breed==='ROSS'?'breed-stripe-ross':''}">
-      <td>${r.week_no}</td><td>${r.record_date}</td><td>${r.day_name||''}</td><td>${r.hatchery==='External'?`🛒 External <span style="font-size:11px;color:var(--muted)">(${esc(r.external_source)})</span>`:esc(r.hatchery)}</td>
-      <td><span class="${CTYPE_CLASS[r.customer_type]||''}">${esc(r.customer_type)}</span></td><td>${esc(r.customer_name)}</td><td>${r.breed?`<span class="breed-chip ${r.breed.toLowerCase()}">${r.breed}</span>`:''}</td>
-      <td class="num">${r.m_ordered?r.m_ordered.toLocaleString():''}</td><td class="num">${r.f_ordered?r.f_ordered.toLocaleString():''}</td><td class="num">${r.u_ordered?`<span class="unsexed-cell" style="padding:2px 6px;border-radius:3px">${r.u_ordered.toLocaleString()}</span>`:''}</td><td class="num" style="background:#eff6ff;font-weight:600">${r.total_ordered?r.total_ordered.toLocaleString():''}</td>
-      <td class="num">${r.m_actual?r.m_actual.toLocaleString():''}</td><td class="num">${r.f_actual?r.f_actual.toLocaleString():''}</td><td class="num">${r.u_actual?`<span class="unsexed-cell" style="padding:2px 6px;border-radius:3px">${r.u_actual.toLocaleString()}</span>`:''}</td><td class="num" style="background:#f0fdf4;font-weight:600">${r.total_actual?r.total_actual.toLocaleString():''}</td>
-      <td class="num ${dCls}">${diffStr||'-'}</td><td class="num ${pctCls}">${pctCell||'-'}</td><td class="num">${r.unit_price?Number(r.unit_price).toLocaleString('en-US',{minimumFractionDigits:2}):''}</td>
-      <td>${extInfoHtml}</td>
-      <td>${can?`<button class="table-action" onclick="openEditModal('${r.id}')">✏️</button>`:''}</td>
-    </tr>`;
-  }).join('');
+  const fw=document.getElementById('fWeek').value, q=document.getElementById('fSearch').value.toLowerCase();
+  const rows=allRecords.filter(r=>{ if(fw&&String(r.week_no)!==fw)return false; if(q&&!r.customer_name?.toLowerCase().includes(q))return false; return true;});
+  document.getElementById('kTotal').textContent=rows.length;
+  document.getElementById('entryTbody').innerHTML=rows.map(r=>`<tr><td>${r.week_no}</td><td>${r.record_date}</td><td>${r.day_name||''}</td><td>${r.hatchery}</td><td>${r.customer_type}</td><td>${r.customer_name}</td><td>${r.breed||''}</td><td class="num">${r.m_ordered||0}</td><td class="num">${r.f_ordered||0}</td><td class="num">${r.u_ordered||0}</td><td class="num">${r.total_ordered||0}</td><td class="num">${r.m_actual||0}</td><td class="num">${r.f_actual||0}</td><td class="num">${r.u_actual||0}</td><td class="num">${r.total_actual||0}</td><td class="num">${r.diff||0}</td><td class="num">${(r.total_ordered?r.diff/r.total_ordered*100:0).toFixed(1)}%</td><td>${r.egg_age?r.egg_age+' WOP':''}<br>${r.vaccine_sc||''}</td><td>${r.truck_plate||''}</td><td>${r.departure_time||''}</td><td>${r.location||''}</td><td><button onclick="openEditModal('${r.id}')">✏️</button></td></tr>`).join('');
 }
-
-function openAddModal(){
-  document.getElementById('modalTitle').textContent=t('addRecordTitle'); document.getElementById('rDeleteBtn').classList.add('hidden');
-  ['rId','rCustomer','rExternalSource','rMOrd','rFOrd','rUOrd','rMAct','rFAct','rUAct','rPrice','rTotalAmount','rNotes','rTruckPlate','rWeightM','rWeightF','rWeightMixed','rEggAge'].forEach(id=>{const el=document.getElementById(id); if(el) el.value='';});
-  document.querySelectorAll('input[name="vacSC"]').forEach(cb=>cb.checked=false); document.querySelectorAll('input[name="vacSpray"]').forEach(cb=>cb.checked=false);
-  document.getElementById('rDate').valueAsDate=new Date(); updateDayName(); ['rHatchery','rCType','rBreed'].forEach(id=>document.getElementById(id).value=''); document.getElementById('rExternalSourceRow').classList.add('hidden');
-  applyHatcheryRestrictionToForm(); document.getElementById('recordModal').classList.remove('hidden');
-}
-function applyHatcheryRestrictionToForm(){
-  const sel=document.getElementById('rHatchery'); if(!sel) return;
-  const allowed=currentProfile?.permissions?.allowed_hatcheries, showAll=!allowed||allowed.length===0;
-  [...sel.options].forEach(opt=>{ if(!opt.value) return; opt.hidden=!showAll&&!allowed.includes(opt.value); opt.disabled=opt.hidden; });
-}
-function openEditModal(id){
-  const r=allRecords.find(x=>x.id===id);if(!r) return;
-  document.getElementById('modalTitle').textContent=t('editRecordTitle'); applyHatcheryRestrictionToForm(); document.getElementById('rDeleteBtn').classList.toggle('hidden',!(currentProfile?.role==='admin'||r.user_id===currentUser.id));
-  document.getElementById('rId').value=r.id; document.getElementById('rWeek').value=r.week_no; document.getElementById('rDate').value=r.record_date; document.getElementById('rDay').value=r.day_name||'';
-  document.getElementById('rHatchery').value=r.hatchery; document.getElementById('rCType').value=r.customer_type; document.getElementById('rCustomer').value=r.customer_name; document.getElementById('rBreed').value=r.breed||'';
-  document.getElementById('rExternalSource').value=r.external_source||''; onHatcheryChange();
-  document.getElementById('rMOrd').value=r.m_ordered??''; document.getElementById('rFOrd').value=r.f_ordered??''; document.getElementById('rUOrd').value=r.u_ordered??'';
-  document.getElementById('rMAct').value=r.m_actual??''; document.getElementById('rFAct').value=r.f_actual??''; document.getElementById('rUAct').value=r.u_actual??'';
-  document.getElementById('rTruckPlate').value=r.truck_plate||''; document.getElementById('rWeightM').value=r.avg_weight_m??''; document.getElementById('rWeightF').value=r.avg_weight_f??''; document.getElementById('rWeightMixed').value=r.avg_weight_mixed??'';
-  document.getElementById('rEggAge').value=r.egg_age||'';
-  const scVals = r.vaccine_sc?r.vaccine_sc.split(', '):[]; document.querySelectorAll('input[name="vacSC"]').forEach(cb=>cb.checked=scVals.includes(cb.value));
-  const sprayVals = r.vaccine_spray?r.vaccine_spray.split(', '):[]; document.querySelectorAll('input[name="vacSpray"]').forEach(cb=>cb.checked=sprayVals.includes(cb.value));
-  document.getElementById('rPrice').value=r.unit_price??''; document.getElementById('rNotes').value=r.notes||''; computeAmountPreview(); document.getElementById('recordModal').classList.remove('hidden');
-}
-function computeAmountPreview(){const p=parseFloat(document.getElementById('rPrice').value)||0, m=parseFloat(document.getElementById('rMAct').value)||0, f=parseFloat(document.getElementById('rFAct').value)||0, u=parseFloat(document.getElementById('rUAct').value)||0; const amt=p*(m+f+u); document.getElementById('rTotalAmount').value=amt?amt.toLocaleString('en-US',{minimumFractionDigits:2}):'';}
-['rPrice','rMAct','rFAct','rUAct'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('input',computeAmountPreview);});
-function closeModal(){document.getElementById('recordModal').classList.add('hidden')}
-function updateDayName(){const d=document.getElementById('rDate').value;if(d){const dt=new Date(d);document.getElementById('rDay').value=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][dt.getDay()];document.getElementById('rWeek').value=getISOWeek(dt);}}
-function onHatcheryChange(){document.getElementById('rExternalSourceRow').classList.toggle('hidden',document.getElementById('rHatchery').value!=='External');}
-function getISOWeek(d){d=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));d.setUTCDate(d.getUTCDate()+4-(d.getUTCDay()||7));return Math.ceil((((d-new Date(Date.UTC(d.getUTCFullYear(),0,1)))/86400000)+1)/7)}
-
-async function saveRecord(){
-  const id=document.getElementById('rId').value, num=v=>v===''?null:parseInt(v), dec=v=>v===''?null:parseFloat(v);
-  const data={
-    week_no:parseInt(document.getElementById('rWeek').value), record_date:document.getElementById('rDate').value, day_name:document.getElementById('rDay').value,
-    hatchery:document.getElementById('rHatchery').value, customer_type:document.getElementById('rCType').value, customer_name:document.getElementById('rCustomer').value.trim(), breed:document.getElementById('rBreed').value||null,
-    external_source:document.getElementById('rHatchery').value==='External'?(document.getElementById('rExternalSource').value.trim()||null):null,
-    m_ordered:num(document.getElementById('rMOrd').value), f_ordered:num(document.getElementById('rFOrd').value), u_ordered:num(document.getElementById('rUOrd').value),
-    m_actual:num(document.getElementById('rMAct').value), f_actual:num(document.getElementById('rFAct').value), u_actual:num(document.getElementById('rUAct').value),
-    truck_plate:document.getElementById('rTruckPlate').value.trim()||null, avg_weight_m:dec(document.getElementById('rWeightM').value), avg_weight_f:dec(document.getElementById('rWeightF').value), avg_weight_mixed:dec(document.getElementById('rWeightMixed').value),
-    egg_age:document.getElementById('rEggAge').value.trim()||null,
-    vaccine_sc:Array.from(document.querySelectorAll('input[name="vacSC"]:checked')).map(c=>c.value).join(', ')||null,
-    vaccine_spray:Array.from(document.querySelectorAll('input[name="vacSpray"]:checked')).map(c=>c.value).join(', ')||null,
-    unit_price:dec(document.getElementById('rPrice').value), notes:document.getElementById('rNotes').value||null
-  };
-  if(!data.week_no||!data.record_date||!data.hatchery||!data.customer_type||!data.customer_name){toast(t('toastRequiredFields'),'error');return}
-  if(!isHatcheryAllowed(data.hatchery)){toast('🔒 Permission denied','error');return}
-  let error; if(id){({error}=await sb.from('doc_records').update(data).eq('id',id))}else{data.user_id=currentUser.id;({error}=await sb.from('doc_records').insert(data))}
-  if(error) return toast(error.message,'error'); toast(id?t('toastUpdated'):t('toastSaved'),'success'); closeModal();
-}
-async function deleteRecord(){const id=document.getElementById('rId').value;if(!id||!confirm(t('confirmDelete')))return;const {error}=await sb.from('doc_records').delete().eq('id',id);if(error) return toast(error.message,'error');toast(t('toastDeleted'),'success');closeModal();}
 
 function renderSummary(){
-  const mode=document.getElementById('sumMode').value, week=document.getElementById('sumWeek').value, date=document.getElementById('sumDate').value;
-  let rows=allRecords, scopeLabel='';
-  if(mode==='week'&&week){rows=rows.filter(r=>String(r.week_no)===week);scopeLabel=`Week ${week}`} else if(mode==='day'&&date){rows=rows.filter(r=>r.record_date===date);scopeLabel=date}
-  document.getElementById('sumScopeLabel1').textContent='— '+scopeLabel; document.getElementById('sumScopeLabel2').textContent='— '+scopeLabel;
+  const fw=document.getElementById('sumWeek').value, rows=fw?allRecords.filter(r=>String(r.week_no)===fw):allRecords;
+  
+  // Hatchery Bar
+  const hData={}; HATCHERIES.forEach(h=>hData[h]={a:0,o:0});
+  rows.forEach(r=>{if(hData[r.hatchery]){hData[r.hatchery].a+=(r.total_actual||0);hData[r.hatchery].o+=(r.total_ordered||0);}});
+  updateBarChart('trendHatchery', HATCHERIES, HATCHERIES.map(h=>hData[h].a), HATCHERIES.map(h=>hData[h].o));
 
-  renderDeliveryReport(rows);
-  const buildPivot=(getValue)=>{const p={};CTYPES.forEach(c=>p[c]=Object.fromEntries(HATCHERIES.map(h=>[h,0])));rows.forEach(r=>{if(p[r.customer_type])p[r.customer_type][r.hatchery]+=getValue(r)||0});return p;};
-  const planPivot=buildPivot(r=>r.total_ordered), actPivot=buildPivot(r=>r.total_actual);
-  const actByType=Object.fromEntries(CTYPES.map(c=>[c,0])); rows.forEach(r=>{if(actByType[r.customer_type]!==undefined)actByType[r.customer_type]+=(r.total_actual||0);});
-  const tgtByType=Object.fromEntries(CTYPES.map(c=>[c,0])); allTargets.forEach(tg=>{if((mode==='week'&&tg.period_type==='week'&&String(tg.target_week)===week)||(mode==='day'&&tg.period_type==='day'&&tg.target_date===date)) if(tgtByType[tg.customer_type]!==undefined) tgtByType[tg.customer_type]+=(tg.booking||0);});
-  const hOrd=Object.fromEntries(HATCHERIES.map(h=>[h,0])), hAct=Object.fromEntries(HATCHERIES.map(h=>[h,0])); rows.forEach(r=>{if(hOrd[r.hatchery]!==undefined){hOrd[r.hatchery]+=(r.total_ordered||0);hAct[r.hatchery]+=(r.total_actual||0);}});
-  const hEst=Object.fromEntries(HATCHERIES.map(h=>[h,0])); allEstimates.forEach(e=>{if((mode==='week'&&e.period_type==='week'&&String(e.target_week)===week)||(mode==='day'&&e.period_type==='day'&&e.target_date===date)) if(hEst[e.hatchery]!==undefined) hEst[e.hatchery]+=(e.estimate_total||0);});
-  const hM=Object.fromEntries(HATCHERIES.map(h=>[h,0])), hF=Object.fromEntries(HATCHERIES.map(h=>[h,0])), hU=Object.fromEntries(HATCHERIES.map(h=>[h,0])); rows.forEach(r=>{if(hM[r.hatchery]!==undefined){hM[r.hatchery]+=(r.m_actual||0);hF[r.hatchery]+=(r.f_actual||0);hU[r.hatchery]+=(r.u_actual||0);}});
+  // Customer Type Bar
+  const ctData={}; CTYPES.forEach(c=>ctData[c]={a:0,o:0});
+  rows.forEach(r=>{if(ctData[r.customer_type]){ctData[r.customer_type].a+=(r.total_actual||0);ctData[r.customer_type].o+=(r.total_ordered||0);}});
+  updateBarChart('trendCType', CTYPES, CTYPES.map(c=>ctData[c].a), CTYPES.map(c=>ctData[c].o));
 
-  document.getElementById('planMatrix').innerHTML=buildMatrix(planPivot,tgtByType,true); document.getElementById('actualMatrix').innerHTML=buildMatrix(actPivot,tgtByType,true,planPivot);
-  document.getElementById('bookingTargetMatrix').innerHTML=buildTargetVsActualMatrix(tgtByType,actByType,scopeLabel); document.getElementById('hatcheryFunnelMatrix').innerHTML=buildHatcheryFunnelMatrix(hEst,hOrd,hAct);
-  document.getElementById('sexHatcheryMatrix').innerHTML=buildSexHatcheryMatrix(hM,hF,hU); renderSexCharts(hM,hF,hU);
-  document.getElementById('topCustomersMatrix').innerHTML=buildTopCustomersMatrix(rows); document.getElementById('diffMatrix').innerHTML=buildDiffMatrix(planPivot,actPivot);
-  renderTrendCharts(rows);
-}
+  // Breed Donut
+  const br={COBB:0,ROSS:0}; rows.forEach(r=>{if(br[r.breed]!==undefined)br[r.breed]+=(r.total_actual||0)});
+  updateDonut('trendBreed', ['COBB','ROSS'], [br.COBB,br.ROSS]);
 
-function renderDeliveryReport(scopedRows) {
-  const drTbody = document.getElementById('deliveryReportTbody');
-  if(scopedRows.length===0){drTbody.innerHTML=`<tr><td colspan="7" class="empty-state" style="text-align:center;padding:20px">${t('noResult')}</td></tr>`;return;}
-  const sorted = [...scopedRows].sort((a,b)=> new Date(b.record_date) - new Date(a.record_date));
-  drTbody.innerHTML = sorted.map(r => `<tr><td style="border-bottom:1px solid var(--border);">${r.record_date||'-'}</td><td style="border-bottom:1px solid var(--border);">${esc(r.hatchery)}</td><td style="border-bottom:1px solid var(--border);">${esc(r.customer_name)}</td><td style="border-bottom:1px solid var(--border);">${esc(r.breed||'-')}</td><td style="border-bottom:1px solid var(--border);color:var(--primary);font-weight:600;">${esc(r.truck_plate||'-')}</td><td style="border-bottom:1px solid var(--border);font-size:11px;color:var(--muted);">M:${r.avg_weight_m?r.avg_weight_m+'g':'-'} / F:${r.avg_weight_f?r.avg_weight_f+'g':'-'} / U:${r.avg_weight_mixed?r.avg_weight_mixed+'g':'-'}</td><td style="border-bottom:1px solid var(--border);text-align:right;font-weight:600;color:var(--success);">${(r.total_actual||0).toLocaleString()}</td></tr>`).join('');
+  // M:F Ratio Donut
+  const sm=rows.reduce((s,r)=>s+(r.m_actual||0),0), sf=rows.reduce((s,r)=>s+(r.f_actual||0),0);
+  updateDonut('trendMFRatio', ['Male','Female'], [sm,sf]);
+
+  // Sex Hatchery Stacked
+  renderSexHatcheryStacked(rows);
 }
 
-let chartTrend=null,chartBreed=null,chartHat=null,chartCt=null,chartSexHat=null,chartMF=null;
-function renderTrendCharts(scopedRows){
-  const wTot={}; allRecords.forEach(r=>{if(!wTot[r.week_no])wTot[r.week_no]={o:0,a:0};wTot[r.week_no].o+=(r.total_ordered||0);wTot[r.week_no].a+=(r.total_actual||0);});
-  const weeks=Object.keys(wTot).map(Number).sort((a,b)=>a-b).slice(-8);
-  if(chartTrend) chartTrend.destroy(); chartTrend=new Chart(document.getElementById('trendLine'),{type:'line',data:{labels:weeks.map(w=>'W'+w),datasets:[{label:'Ordered',data:weeks.map(w=>wTot[w].o),borderColor:'#2563eb',backgroundColor:'rgba(37,99,235,.1)',fill:true,tension:.3},{label:'Actual',data:weeks.map(w=>wTot[w].a),borderColor:'#10b981',backgroundColor:'rgba(16,185,129,.1)',fill:true,tension:.3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{ticks:{callback:v=>v.toLocaleString()}}}}});
-  const bTot={COBB:0,ROSS:0}; scopedRows.forEach(r=>{if(r.breed&&(r.breed.toUpperCase()==='COBB'||r.breed.toUpperCase()==='ROSS'))bTot[r.breed.toUpperCase()]+=(r.total_actual||0);});
-  if(chartBreed) chartBreed.destroy(); chartBreed=new Chart(document.getElementById('trendBreed'),{type:'doughnut',data:{labels:['COBB','ROSS'],datasets:[{data:[bTot.COBB,bTot.ROSS],backgroundColor:['#3b82f6','#dc2626']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}});
-  const hAct=Object.fromEntries(HATCHERIES.map(h=>[h,0])); scopedRows.forEach(r=>{if(hAct[r.hatchery]!==undefined) hAct[r.hatchery]+=(r.total_actual||0);});
-  if(chartHat) chartHat.destroy(); chartHat=new Chart(document.getElementById('trendHatchery'),{type:'bar',data:{labels:HATCHERIES,datasets:[{label:'Actual',data:HATCHERIES.map(h=>hAct[h]),backgroundColor:'#2563eb',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>v.toLocaleString()}}}}});
-  const ctTot=Object.fromEntries(CTYPES.map(c=>[c,0])); scopedRows.forEach(r=>{if(ctTot[r.customer_type]!==undefined) ctTot[r.customer_type]+=(r.total_actual||0);});
-  if(chartCt) chartCt.destroy(); chartCt=new Chart(document.getElementById('trendCType'),{type:'bar',data:{labels:CTYPES,datasets:[{label:'Actual',data:CTYPES.map(c=>ctTot[c]),backgroundColor:['#3b82f6','#f59e0b','#10b981']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>v.toLocaleString()}}}}});
-}
-function renderSexCharts(hM,hF,hU){
-  if(chartSexHat) chartSexHat.destroy(); chartSexHat = new Chart(document.getElementById('trendSexHatchery'),{type:'bar',data:{labels:HATCHERIES,datasets:[{label:'Male',data:HATCHERIES.map(h=>hM[h]||0),backgroundColor:'#3b82f6'},{label:'Female',data:HATCHERIES.map(h=>hF[h]||0),backgroundColor:'#ec4899'},{label:'Unsexed',data:HATCHERIES.map(h=>hU[h]||0),backgroundColor:'#a855f7'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{x:{stacked:true},y:{stacked:true,ticks:{callback:v=>v.toLocaleString()}}}}});
-  const tM=HATCHERIES.reduce((s,h)=>s+(hM[h]||0),0), tF=HATCHERIES.reduce((s,h)=>s+(hF[h]||0),0);
-  if(chartMF) chartMF.destroy(); chartMF = new Chart(document.getElementById('trendMFRatio'),{type:'doughnut',data:{labels:['Male','Female'],datasets:[{data:[tM,tF],backgroundColor:['#3b82f6','#ec4899']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}});
+function updateBarChart(id, labels, act, ord){
+  if(charts[id]) charts[id].destroy();
+  charts[id]=new Chart(document.getElementById(id),{
+    type:'bar', data:{labels, datasets:[{label:'Actual',data:act,backgroundColor:'#2563eb'}]},
+    options:{ plugins:{ datalabels:{display:true,anchor:'end',align:'top',formatter:v=>v.toLocaleString()}, tooltip:{callbacks:{label:ctx=>{const i=ctx.dataIndex,a=act[i],o=ord[i],d=a-o;return[`Actual: ${a.toLocaleString()}`,`Order: ${o.toLocaleString()}`,`Diff: ${d.toLocaleString()}`,`%: ${(o?d/o*100:0).toFixed(1)}%`]}}} } }
+  });
 }
 
-function buildSexHatcheryMatrix(hM,hF,hU){
-  let html=`<thead><tr><th>Hatchery</th><th>Male</th><th>Female</th><th>Unsexed</th><th>Total</th><th>M %</th><th>F %</th><th>M:F</th></tr></thead><tbody>`;
-  let tm=0,tf=0,tu=0; HATCHERIES.forEach(h=>{const m=hM[h]||0,f=hF[h]||0,u=hU[h]||0,s=m+f,t=s+u;tm+=m;tf+=f;tu+=u;html+=`<tr><td><strong>${h}</strong></td><td>${m?m.toLocaleString():'-'}</td><td>${f?f.toLocaleString():'-'}</td><td>${u?u.toLocaleString():'-'}</td><td style="font-weight:600">${t?t.toLocaleString():'-'}</td><td>${s?(m/s*100).toFixed(1)+'%':'-'}</td><td>${s?(f/s*100).toFixed(1)+'%':'-'}</td><td>${s?`${Math.round(m/s*100)}:${Math.round(f/s*100)}`:'-'}</td></tr>`;});
-  const ts=tm+tf, tt=ts+tu; html+=`<tr class="row-total"><td>Total</td><td>${tm?tm.toLocaleString():'-'}</td><td>${tf?tf.toLocaleString():'-'}</td><td>${tu?tu.toLocaleString():'-'}</td><td>${tt?tt.toLocaleString():'-'}</td><td>${ts?(tm/ts*100).toFixed(1)+'%':'-'}</td><td>${ts?(tf/ts*100).toFixed(1)+'%':'-'}</td><td>${ts?`${Math.round(tm/ts*100)}:${Math.round(tf/ts*100)}`:'-'}</td></tr></tbody>`; return html;
-}
-function buildHatcheryFunnelMatrix(hE,hO,hA){
-  let html=`<thead><tr><th>Hatchery</th><th>Estimate</th><th>Order</th><th>Actual</th><th>H→O %</th><th>O→A %</th></tr></thead><tbody>`;
-  let te=0,to=0,ta=0; HATCHERIES.forEach(h=>{const e=hE[h]||0,o=hO[h]||0,a=hA[h]||0;te+=e;to+=o;ta+=a;const ho=o&&e?((o-e)/e*100):null, oa=a&&o?((a-o)/o*100):null; html+=`<tr><td><strong>${h}</strong></td><td>${e?e.toLocaleString():'-'}</td><td>${o?o.toLocaleString():'-'}</td><td>${a?a.toLocaleString():'-'}</td><td class="${ho===null?'diff-zero':ho>0?'diff-pos':'diff-neg'}">${ho===null?'-':(ho>0?'+':'')+ho.toFixed(1)+'%'}</td><td class="${oa===null?'diff-zero':oa>0?'diff-pos':'diff-neg'}">${oa===null?'-':(oa>0?'+':'')+oa.toFixed(1)+'%'}</td></tr>`;});
-  const tho=to&&te?((to-te)/te*100):null, toa=ta&&to?((ta-to)/to*100):null; html+=`<tr class="row-total"><td>Total</td><td>${te?te.toLocaleString():'-'}</td><td>${to?to.toLocaleString():'-'}</td><td>${ta?ta.toLocaleString():'-'}</td><td class="${tho===null?'':tho>0?'diff-pos':'diff-neg'}">${tho===null?'-':(tho>0?'+':'')+tho.toFixed(1)+'%'}</td><td class="${toa===null?'':toa>0?'diff-pos':'diff-neg'}">${toa===null?'-':(toa>0?'+':'')+toa.toFixed(1)+'%'}</td></tr></tbody>`; return html;
-}
-function buildTopCustomersMatrix(rows){
-  const bc={}; rows.forEach(r=>{const k=r.customer_name||'(unk)'; if(!bc[k])bc[k]={n:k,t:r.customer_type,o:0,a:0}; bc[k].o+=(r.total_ordered||0); bc[k].a+=(r.total_actual||0);});
-  const list=Object.values(bc).sort((a,b)=>b.o-a.o||b.a-a.a); if(!list.length)return '<tbody><tr><td class="empty-state">No data</td></tr></tbody>';
-  let html=`<thead><tr><th>#</th><th>Customer</th><th>Type</th><th>Order</th><th>Actual</th><th>Fulfill %</th><th>Status</th></tr></thead><tbody>`;
-  list.slice(0,20).forEach((c,i)=>{const f=c.o?(c.a/c.o*100):null; html+=`<tr><td>${i+1}</td><td>${esc(c.n)}</td><td><span class="${CTYPE_CLASS[c.t]||''}">${esc(c.t||'')}</span></td><td>${c.o?c.o.toLocaleString():'-'}</td><td>${c.a?c.a.toLocaleString():'-'}</td><td class="${f===null?'':f>=99&&f<=101?'diff-pos':f<90||f>110?'diff-neg':''}">${f===null?'-':f.toFixed(1)+'%'}</td><td>${f===null?'—':f>=99&&f<=101?'✅':f>=90&&f<=110?'⚠️':'❌'}</td></tr>`;});
-  if(list.length>20) html+=`<tr><td colspan="7" style="text-align:center;color:var(--muted);font-size:12px">… ${list.length-20} more</td></tr>`; html+='</tbody>'; return html;
-}
-function buildTargetVsActualMatrix(tg,act,sl){
-  let html=`<thead><tr><th>Type</th><th>Target</th><th>Actual</th><th>Diff</th><th>Diff %</th></tr></thead><tbody>`;
-  let tt=0,ta=0; CTYPES.forEach(c=>{const t=tg[c]||0,a=act[c]||0,d=a-t,p=t?(d/t*100):null; tt+=t;ta+=a; html+=`<tr class="${ROW_CLASS[c]}"><td>${c}</td><td>${t?t.toLocaleString():'-'}</td><td>${a?a.toLocaleString():'-'}</td><td class="${d>0?'diff-pos':d<0?'diff-neg':'diff-zero'}">${t?(d>0?'+':'')+d.toLocaleString():'-'}</td><td class="${p===null?'diff-zero':p>0?'diff-pos':'diff-neg'}">${p===null?'-':(p>0?'+':'')+p.toFixed(1)+'%'}</td></tr>`;});
-  const td=ta-tt,tp=tt?(td/tt*100):null; html+=`<tr class="row-total"><td>Total</td><td>${tt?tt.toLocaleString():'-'}</td><td>${ta?ta.toLocaleString():'-'}</td><td class="${td>0?'diff-pos':td<0?'diff-neg':'diff-zero'}">${tt?(td>0?'+':'')+td.toLocaleString():'-'}</td><td class="${tp===null?'':tp>0?'diff-pos':'diff-neg'}">${tp===null?'-':(tp>0?'+':'')+tp.toFixed(1)+'%'}</td></tr></tbody>`;
-  if(tt===0) html+=`<caption style="caption-side:bottom;padding:10px;color:var(--muted);font-size:12px;font-style:italic">No targets set</caption>`; return html;
-}
-function buildMatrix(piv,tg,showTgt,planPiv){
-  let html='<thead><tr><th>Type</th>'; HATCHERIES.forEach(h=>html+=`<th>${h}</th>`); html+='<th>Total</th>'+(showTgt?'<th>Target</th>':'')+'</tr></thead><tbody>';
-  let cs=Object.fromEntries(HATCHERIES.map(h=>[h,0])), g=0;
-  CTYPES.forEach(c=>{let rs=0; html+=`<tr class="${ROW_CLASS[c]}"><td>${c}</td>`; HATCHERIES.forEach(h=>{const v=piv[c][h];rs+=v;cs[h]+=v;html+=`<td>${v?v.toLocaleString():'-'}</td>`;}); g+=rs; html+=`<td class="col-total">${rs?rs.toLocaleString():'-'}</td>${showTgt?`<td>${tg[c]?tg[c].toLocaleString():'-'}</td>`:''}</tr>`;});
-  html+=`<tr class="row-total"><td>Total</td>`; let gt=0; HATCHERIES.forEach(h=>{html+=`<td>${cs[h]?cs[h].toLocaleString():'-'}</td>`;gt+=cs[h]}); html+=`<td>${gt?gt.toLocaleString():'-'}</td>${showTgt?`<td>${Object.values(tg).reduce((a,b)=>a+b,0).toLocaleString()}</td>`:''}</tr>`;
-  if(planPiv){
-    let td=0,tp=0; html+=`<tr class="row-target"><td>PLAN</td>`; HATCHERIES.forEach(h=>{const s=CTYPES.reduce((a,c)=>a+planPiv[c][h],0); tp+=s; html+=`<td>${s?s.toLocaleString():'-'}</td>`;}); html+=`<td>${tp?tp.toLocaleString():'-'}</td>${showTgt?'<td>-</td>':''}</tr><tr class="row-diff"><td>DIFF</td>`;
-    HATCHERIES.forEach(h=>{const d=CTYPES.reduce((a,c)=>a+piv[c][h],0)-CTYPES.reduce((a,c)=>a+planPiv[c][h],0); td+=d; html+=`<td class="${d>0?'diff-pos':d<0?'diff-neg':'diff-zero'}">${d>0?'+':''}${d?d.toLocaleString():'-'}</td>`;}); html+=`<td class="${td>0?'diff-pos':td<0?'diff-neg':'diff-zero'}">${td>0?'+':''}${td?td.toLocaleString():'-'}</td>${showTgt?'<td>-</td>':''}</tr><tr><td>%</td>`;
-    HATCHERIES.forEach(h=>{const a=CTYPES.reduce((s,c)=>s+piv[c][h],0), p=CTYPES.reduce((s,c)=>s+planPiv[c][h],0), pct=p?((a-p)/p*100):0; html+=`<td class="${pct>0?'diff-pos':pct<0?'diff-neg':'diff-zero'}">${pct.toFixed(1)}%</td>`;}); html+=`<td class="${(tp?td/tp*100:0)>0?'diff-pos':(tp?td/tp*100:0)<0?'diff-neg':'diff-zero'}">${tp?(td/tp*100).toFixed(1)+'%':'0.0%'}</td>${showTgt?'<td>-</td>':''}</tr>`;
-  } html+='</tbody>'; return html;
-}
-function buildDiffMatrix(pp,ap){
-  let html='<thead><tr><th>Type</th>'; HATCHERIES.forEach(h=>html+=`<th>${h}</th>`); html+='<th>Total</th></tr></thead><tbody>';
-  let cs=Object.fromEntries(HATCHERIES.map(h=>[h,0])), g=0; CTYPES.forEach(c=>{let rs=0; html+=`<tr class="${ROW_CLASS[c]}"><td>${c}</td>`; HATCHERIES.forEach(h=>{const d=ap[c][h]-pp[c][h];rs+=d;cs[h]+=d;html+=`<td class="${d>0?'diff-pos':d<0?'diff-neg':''}">${d===0?'-':(d>0?'+':'')+d.toLocaleString()}</td>`;}); g+=rs; html+=`<td class="col-total ${rs>0?'diff-pos':rs<0?'diff-neg':''}">${rs===0?'-':(rs>0?'+':'')+rs.toLocaleString()}</td></tr>`;});
-  html+=`<tr class="row-total"><td>Total</td>`; HATCHERIES.forEach(h=>html+=`<td>${cs[h]===0?'-':(cs[h]>0?'+':'')+cs[h].toLocaleString()}</td>`); html+=`<td>${g===0?'-':(g>0?'+':'')+g.toLocaleString()}</td></tr></tbody>`; return html;
+function updateDonut(id, labels, data){
+  if(charts[id]) charts[id].destroy();
+  charts[id]=new Chart(document.getElementById(id),{
+    type:'doughnut', data:{labels, datasets:[{data, backgroundColor:['#3b82f6','#dc2626']}]},
+    options:{ plugins:{ datalabels:{display:true,color:'#fff',formatter:(v,ctx)=>{const s=ctx.chart.data.datasets[0].data.reduce((a,b)=>a+b,0);return s?(v/s*100).toFixed(1)+'%':''}}, tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed.toLocaleString()} chicks`}}} }
+  });
 }
 
-// ===== Admin & Management =====
-function renderAdminTable(){
-  document.getElementById('adminTbody').innerHTML=allProfiles.map(p=>{
-    const pm=p.permissions||{}, cnt=Object.keys(pm).length, pl=cnt===0?'<span style="color:var(--muted);font-size:12px">—</span>':`<span style="color:var(--primary);font-size:12px;font-weight:600">${cnt} override</span>`;
-    return `<tr><td>${esc(p.email)}</td><td>${esc(p.full_name||'')}</td><td><span class="badge badge-${p.role}">${p.role.toUpperCase()}</span></td><td style="color:var(--muted);font-size:12px">${new Date(p.created_at).toLocaleDateString('th-TH')}</td><td>${pl}</td><td><button class="table-action" onclick="openPermModal('${p.id}')" ${p.id===currentUser.id?'disabled style="opacity:.4"':''}>⚙️</button></td></tr>`;
-  }).join('');
-}
-const PERM_KEYS=['manage_users','manage_targets','manage_estimates','edit_all_records','export_pdf','view_admin_tab'];
-function hasPermission(perm){if(!currentProfile)return false; const p=currentProfile.permissions||{}; return currentProfile.role==='admin'?p[perm]!==false:p[perm]===true;}
-function isHatcheryAllowed(h){if(!currentProfile)return false; const a=(currentProfile.permissions||{}).allowed_hatcheries; return !a||a.length===0||a.includes(h);}
-function canEditRecordHatchery(h){return isHatcheryAllowed(h);}
-
-let _permEditingId=null;
-function openPermModal(uid){
-  const p=allProfiles.find(x=>x.id===uid); if(!p)return; _permEditingId=uid;
-  document.getElementById('permUserInfo').innerHTML=`<strong>${esc(p.email)}</strong><br><span style="color:var(--muted)">${esc(p.full_name||'')}</span>`;
-  document.getElementById('permRole').value=p.role; const pm=p.permissions||{};
-  document.getElementById('permsGrid').innerHTML=PERM_KEYS.map(k=>`<label style="display:flex;align-items:center;gap:8px;padding:8px;background:var(--bg);border-radius:6px;cursor:pointer"><input type="checkbox" id="perm_${k}" data-key="${k}" ${pm[k]===true?'checked':''}><span>${t('perm_'+k)}</span></label>`).join('');
-  PERM_KEYS.forEach(k=>{const el=document.getElementById('perm_'+k); if(pm[k]===undefined) el.indeterminate=true;});
-  const ah=Array.isArray(pm.allowed_hatcheries)?pm.allowed_hatcheries:[];
-  document.getElementById('permHatcheriesGrid').innerHTML=HATCHERIES.map(h=>`<label><input type="checkbox" id="permHat_${h.replace(/[^a-zA-Z0-9]/g,'_')}" data-hatchery="${esc(h)}" ${ah.includes(h)?'checked':''}><span>${h}</span></label>`).join('');
-  document.getElementById('permModal').classList.remove('hidden');
-}
-function closePermModal(){document.getElementById('permModal').classList.add('hidden');_permEditingId=null;}
-async function savePerm(){
-  if(!_permEditingId)return; const nr=document.getElementById('permRole').value, fp={};
-  PERM_KEYS.forEach(k=>{const el=document.getElementById('perm_'+k);if(!el.indeterminate)fp[k]=el.checked;});
-  const aH=HATCHERIES.filter(h=>{const el=document.querySelector(`[data-hatchery="${h.replace(/"/g,'&quot;')}"]`);return el&&el.checked;}); if(aH.length>0&&aH.length<HATCHERIES.length)fp.allowed_hatcheries=aH;
-  const {error}=await sb.from('profiles').update({role:nr,permissions:fp}).eq('id',_permEditingId); if(error)return toast(error.message,'error'); toast(t('toastUpdated'),'success'); await loadProfiles(); renderAdminTable(); closePermModal();
-}
-function applyPermissionsToUI(){
-  const ad=document.getElementById('adminTab'); if(ad)ad.classList.toggle('hidden',!hasPermission('view_admin_tab'));
-  document.querySelectorAll('[onclick*="exportPDF"]').forEach(b=>b.style.display=hasPermission('export_pdf')?'':'none');
-  document.querySelectorAll('[onclick*="openTargetModal"]').forEach(b=>b.style.display=hasPermission('manage_targets')?'':'none');
-  document.querySelectorAll('[onclick*="openEstimateModal"]').forEach(b=>b.style.display=hasPermission('manage_estimates')?'':'none');
+function renderSexHatcheryStacked(rows){
+  const id='trendSexHatchery'; if(charts[id]) charts[id].destroy();
+  const m=HATCHERIES.map(h=>rows.filter(r=>r.hatchery===h).reduce((s,r)=>s+(r.m_actual||0),0));
+  const f=HATCHERIES.map(h=>rows.filter(r=>r.hatchery===h).reduce((s,r)=>s+(r.f_actual||0),0));
+  const u=HATCHERIES.map(h=>rows.filter(r=>r.hatchery===h).reduce((s,r)=>s+(r.u_actual||0),0));
+  charts[id]=new Chart(document.getElementById(id),{
+    type:'bar', data:{labels:HATCHERIES, datasets:[{label:'Male',data:m,backgroundColor:'#3b82f6'},{label:'Female',data:f,backgroundColor:'#ec4899'},{label:'Unsexed',data:u,backgroundColor:'#a855f7'}]},
+    options:{ scales:{x:{stacked:true},y:{stacked:true}}, plugins:{ datalabels:{display:true,color:'#fff',font:{size:10},formatter:(v,ctx)=>{const i=ctx.dataIndex; if(ctx.datasetIndex<2) return (m[i]+f[i])?(v/(m[i]+f[i])*100).toFixed(1)+'%':''; return (m[i]+f[i]+u[i])?(v/(m[i]+f[i]+u[i])*100).toFixed(1)+'%':''}} } }
+  });
 }
 
-let tgView='week'; function setTargetsView(v){tgView=v;renderTargetsTable();}
-function renderTargetsTable(){
-  const w=document.getElementById('targetsTableWrap');if(!w)return;
-  const f=allTargets.filter(t=>t.period_type===tgView); if(!f.length){w.innerHTML=`<div class="empty-state">No Data</div>`;return}
-  let h=`<table><thead><tr><th>Period</th><th>Type</th><th class="num">Booking</th><th>Created</th><th></th></tr></thead><tbody>`;
-  f.slice(0,20).forEach(t=>{h+=`<tr><td>${t.period_type==='day'?t.target_date:'W'+t.target_week}</td><td><span class="${CTYPE_CLASS[t.customer_type]||''}">${t.customer_type}</span></td><td class="num">${t.booking.toLocaleString()}</td><td style="color:var(--muted);font-size:12px">${new Date(t.created_at).toLocaleDateString()}</td><td><button class="table-action" onclick="editTarget('${t.id}')">✏️</button><button class="table-action" onclick="deleteTarget('${t.id}')">🗑️</button></td></tr>`;});
-  w.innerHTML=h+'</tbody></table>';
+function openAddModal(){ document.getElementById('recordModal').classList.remove('hidden'); }
+function openEditModal(id){ const r=allRecords.find(x=>x.id===id); if(r){document.getElementById('rId').value=r.id; document.getElementById('recordModal').classList.remove('hidden');}}
+function closeModal(){document.getElementById('recordModal').classList.add('hidden')}
+function updateDayName(){const d=document.getElementById('rDate').value;if(d){const dt=new Date(d);document.getElementById('rDay').value=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][dt.getDay()];document.getElementById('rWeek').value=getISOWeek(dt);}}
+function onHatcheryChange(){document.getElementById('rExternalSourceRow').classList.toggle('hidden',document.getElementById('rHatchery').value!=='External')}
+function getISOWeek(d){d=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));d.setUTCDate(d.getUTCDate()+4-(d.getUTCDay()||7));return Math.ceil((((d-new Date(Date.UTC(d.getUTCFullYear(),0,1)))/86400000)+1)/7)}
+function esc(s){return s?s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])):''}
+async function saveRecord(){
+  const id=document.getElementById('rId').value, data={week_no:parseInt(document.getElementById('rWeek').value), record_date:document.getElementById('rDate').value, hatchery:document.getElementById('rHatchery').value, customer_type:document.getElementById('rCType').value, customer_name:document.getElementById('rCustomer').value, m_actual:parseInt(document.getElementById('rMAct').value)||0, f_actual:parseInt(document.getElementById('rFAct').value)||0, u_actual:parseInt(document.getElementById('rUAct').value)||0, egg_age:document.getElementById('rEggAge').value, vaccine_sc:Array.from(document.querySelectorAll('input[name="vacSC"]:checked')).map(c=>c.value).join(', '), vaccine_spray:Array.from(document.querySelectorAll('input[name="vacSpray"]:checked')).map(c=>c.value).join(', '), truck_plate:document.getElementById('rTruckPlate').value, departure_time:document.getElementById('rDepartureTime').value, location:document.getElementById('rLocation').value };
+  if(id) await sb.from('doc_records').update(data).eq('id',id); else {data.user_id=currentUser.id; await sb.from('doc_records').insert(data);}
+  location.reload();
 }
-function togglePeriodFields(){const id=document.getElementById('tPeriodType').value==='day';document.getElementById('tDateRow').classList.toggle('hidden',!id);document.getElementById('tWeekRow').classList.toggle('hidden',id);}
-function openTargetModal(){['tDate','tWeek','tBooking'].forEach(i=>document.getElementById(i).value='');document.getElementById('tPeriodType').value='day';document.getElementById('tDate').valueAsDate=new Date();togglePeriodFields();document.getElementById('targetModal').dataset.editing='';document.getElementById('targetModal').classList.remove('hidden');}
-function editTarget(id){const tg=allTargets.find(x=>x.id===id);if(!tg)return;document.getElementById('tPeriodType').value=tg.period_type;document.getElementById('tDate').value=tg.target_date||'';document.getElementById('tWeek').value=tg.target_week||'';document.getElementById('tCustomerType').value=tg.customer_type;document.getElementById('tBooking').value=tg.booking||'';togglePeriodFields();document.getElementById('targetModal').dataset.editing=id;document.getElementById('targetModal').classList.remove('hidden');}
-function closeTargetModal(){document.getElementById('targetModal').classList.add('hidden')}
-async function saveTarget(){
-  const e=document.getElementById('targetModal').dataset.editing, pt=document.getElementById('tPeriodType').value;
-  const d={period_type:pt,target_date:pt==='day'?(document.getElementById('tDate').value||null):null,target_week:pt==='week'?(parseInt(document.getElementById('tWeek').value)||null):null,customer_type:document.getElementById('tCustomerType').value,booking:parseInt(document.getElementById('tBooking').value)||0};
-  let error; if(e){({error}=await sb.from('doc_targets').update(d).eq('id',e))}else{({error}=await sb.from('doc_targets').upsert(d,{onConflict:'period_type,target_date,target_week,customer_type'}))}
-  if(error)return toast(error.message,'error');toast('Saved','success');closeTargetModal();
-}
-async function deleteTarget(id){if(!confirm('Delete?'))return;await sb.from('doc_targets').delete().eq('id',id);toast('Deleted','success');}
-
-let estView='week'; function setEstimatesView(v){estView=v;renderEstimatesTable();}
-function renderEstimatesTable(){
-  const w=document.getElementById('estimatesTableWrap');if(!w)return;
-  const f=allEstimates.filter(e=>e.period_type===estView); if(!f.length){w.innerHTML=`<div class="empty-state">No Data</div>`;return}
-  let h=`<table><thead><tr><th>Period</th><th>Hatchery</th><th class="num">Estimate Total</th><th>Notes</th><th></th></tr></thead><tbody>`;
-  f.slice(0,20).forEach(e=>{h+=`<tr><td>${e.period_type==='day'?e.target_date:'W'+e.target_week}</td><td><strong>${e.hatchery}</strong></td><td class="num">${(e.estimate_total||0).toLocaleString()}</td><td style="color:var(--muted);font-size:12px">${esc(e.notes)}</td><td>${hasPermission('manage_estimates')&&isHatcheryAllowed(e.hatchery)?`<button class="table-action" onclick="editEstimate('${e.id}')">✏️</button><button class="table-action" onclick="deleteEstimate('${e.id}')">🗑️</button>`:'🔒'}</td></tr>`;});
-  w.innerHTML=h+'</tbody></table>';
-}
-function toggleEstimatePeriodFields(){const id=document.getElementById('eePeriodType').value==='day';document.getElementById('eeDateRow').classList.toggle('hidden',!id);document.getElementById('eeWeekRow').classList.toggle('hidden',id);}
-function openEstimateModal(){['eeDate','eeWeek','eeTotal','eeNotes'].forEach(i=>document.getElementById(i).value='');document.getElementById('eePeriodType').value='week';toggleEstimatePeriodFields();document.getElementById('estimateModal').dataset.editing='';document.getElementById('estimateModal').classList.remove('hidden');}
-function editEstimate(id){const e=allEstimates.find(x=>x.id===id);if(!e)return;document.getElementById('eePeriodType').value=e.period_type;document.getElementById('eeDate').value=e.target_date||'';document.getElementById('eeWeek').value=e.target_week||'';document.getElementById('eeHatchery').value=e.hatchery;document.getElementById('eeTotal').value=e.estimate_total||'';document.getElementById('eeNotes').value=e.notes||'';toggleEstimatePeriodFields();document.getElementById('estimateModal').dataset.editing=id;document.getElementById('estimateModal').classList.remove('hidden');}
-function closeEstimateModal(){document.getElementById('estimateModal').classList.add('hidden')}
-async function saveEstimate(){
-  const e=document.getElementById('estimateModal').dataset.editing, pt=document.getElementById('eePeriodType').value;
-  const d={period_type:pt,target_date:pt==='day'?(document.getElementById('eeDate').value||null):null,target_week:pt==='week'?(parseInt(document.getElementById('tWeek').value)||null):null,hatchery:document.getElementById('eeHatchery').value,estimate_total:parseInt(document.getElementById('eeTotal').value)||0,notes:document.getElementById('eeNotes').value||null};
-  let error; if(e){({error}=await sb.from('hatchery_estimates').update(d).eq('id',e))}else{({error}=await sb.from('hatchery_estimates').upsert(d,{onConflict:'period_type,target_date,target_week,hatchery'}))}
-  if(error)return toast(error.message,'error');toast('Saved','success');closeEstimateModal();
-}
-async function deleteEstimate(id){if(!confirm('Delete?'))return;await sb.from('hatchery_estimates').delete().eq('id',id);toast('Deleted','success');}
-
-// ===== Features =====
-const SUMMARY_SECTIONS=[{id:'charts1'},{id:'charts2'},{id:'deliveryReport'},{id:'matrices'},{id:'targetVsActual'},{id:'hatcheryFunnel'},{id:'sexHatchery'},{id:'topCustomers'},{id:'difference'}];
-function getCustomizePrefs(){try{return JSON.parse(localStorage.getItem('summary_customize')||'{}');}catch{return {};}}
-function saveCustomizePrefs(p){localStorage.setItem('summary_customize',JSON.stringify(p));}
-function applySectionVisibility(){const h=getCustomizePrefs().hiddenSections||[]; SUMMARY_SECTIONS.forEach(s=>{const el=document.querySelector(`[data-section="${s.id}"]`);if(el)el.style.display=h.includes(s.id)?'none':'';});}
-function setTheme(n){const th={blue:{p:'#2563eb',pd:'#1d4ed8'},green:{p:'#16a34a',pd:'#15803d'},purple:{p:'#7c3aed',pd:'#6d28d9'},orange:{p:'#ea580c',pd:'#c2410c'},slate:{p:'#475569',pd:'#334155'}}[n]||{p:'#2563eb',pd:'#1d4ed8'};document.documentElement.style.setProperty('--primary',th.p);document.documentElement.style.setProperty('--primary-dark',th.pd);const p=getCustomizePrefs();p.theme=n;saveCustomizePrefs(p);document.querySelectorAll('.theme-btn').forEach(b=>{b.style.outline=b.dataset.theme===n?'3px solid #1f2937':'none';b.style.outlineOffset='2px';});}
-function setDiffMode(m){const p=getCustomizePrefs();p.diffMode=m;saveCustomizePrefs(p);if(typeof renderEntry==='function')renderEntry();}
-function getDiffMode(){return getCustomizePrefs().diffMode||'both';}
-function openCustomizeModal(){const p=getCustomizePrefs(),h=p.hiddenSections||[];document.getElementById('customSectionsList').innerHTML=SUMMARY_SECTIONS.map(s=>`<label style="display:flex;align-items:center;gap:8px;padding:8px;background:var(--bg);border-radius:6px;cursor:pointer"><input type="checkbox" data-section-id="${s.id}" ${h.includes(s.id)?'':'checked'}><span>Section: ${s.id}</span></label>`).join('');document.querySelectorAll('#customSectionsList input').forEach(cb=>cb.addEventListener('change',()=>{const p=getCustomizePrefs();p.hiddenSections=[...document.querySelectorAll('#customSectionsList input:not(:checked)')].map(c=>c.dataset.sectionId);saveCustomizePrefs(p);applySectionVisibility();}));document.querySelectorAll('input[name="diffMode"]').forEach(r=>{r.checked=(r.value===(p.diffMode||'both'));r.onchange=()=>setDiffMode(r.value);});setTheme(p.theme||'blue');document.getElementById('customizeModal').classList.remove('hidden');}
-function closeCustomizeModal(){document.getElementById('customizeModal').classList.add('hidden');}
-function resetCustomize(){if(!confirm('Reset?'))return;localStorage.removeItem('summary_customize');document.documentElement.style.removeProperty('--primary');document.documentElement.style.removeProperty('--primary-dark');applySectionVisibility();closeCustomizeModal();toast('Reset','success');}
-function applySavedCustomize(){const p=getCustomizePrefs();if(p.theme)setTheme(p.theme);applySectionVisibility();}
-
-function exportEntryExcel(){
-  const f=allRecords; if(!f.length)return toast('No data','error');
-  const h=['Wk','Date','Day','Hatchery','External Source','Customer Type','Customer/Farm','Breed','M Ord','F Ord','U Ord','Total Ord','M Act','F Act','U Act','Total Act','Diff','Diff %','Unit Price','Total Amount','Truck Plate','Avg Wgt M','Avg Wgt F','Avg Wgt Mixed','Egg Age','Vaccine S/C','Vaccine Spray','Notes'];
-  const d=f.map(r=>[r.week_no,r.record_date,r.day_name,r.hatchery,r.external_source,r.customer_type,r.customer_name,r.breed,r.m_ordered,r.f_ordered,r.u_ordered,r.total_ordered,r.m_actual,r.f_actual,r.u_actual,r.total_actual,r.diff,r.total_ordered?((r.diff||0)/r.total_ordered*100).toFixed(2)+'%':'',r.unit_price,r.total_amount,r.truck_plate,r.avg_weight_m,r.avg_weight_f,r.avg_weight_mixed,r.egg_age,r.vaccine_sc,r.vaccine_spray,r.notes]);
-  const ws=XLSX.utils.aoa_to_sheet([h,...d]), wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Records'); XLSX.writeFile(wb,`DOC-Entry_${new Date().toISOString().slice(0,10)}.xlsx`); toast('Exported','success');
-}
-function exportSummaryExcel(){toast('Use PDF or Entry Export','info');}
-function downloadCSVTemplate(){
-  const h=['Date(YYYY-MM-DD)','Hatchery','Customer Type','Customer Name','Breed','M_Ord','F_Ord','U_Ord','M_Act','F_Act','U_Act','Truck Plate','Avg Wgt M','Avg Wgt F','Avg Wgt Mixed','Egg Age','Vaccine SC','Vaccine Spray','Unit Price','Notes'];
-  const ws=XLSX.utils.aoa_to_sheet([h]), wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Template'); XLSX.writeFile(wb,'DOC_Template.xlsx');
-}
-function handleImportCSV(e){
-  const file=e.target.files[0]; if(!file)return; const r=new FileReader();
-  r.onload=async(evt)=>{
-    try{
-      const wb=XLSX.read(evt.target.result,{type:'binary'}), js=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]); if(!js.length)return toast('No data','error');
-      const ins=js.map(x=>({user_id:currentUser.id, record_date:x['Date(YYYY-MM-DD)'], week_no:getISOWeek(new Date(x['Date(YYYY-MM-DD)'])), day_name:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(x['Date(YYYY-MM-DD)']).getDay()], hatchery:x['Hatchery'], customer_type:x['Customer Type'], customer_name:x['Customer Name'], breed:x['Breed']||null, m_ordered:parseInt(x['M_Ord'])||null, f_ordered:parseInt(x['F_Ord'])||null, u_ordered:parseInt(x['U_Ord'])||null, m_actual:parseInt(x['M_Act'])||null, f_actual:parseInt(x['F_Act'])||null, u_actual:parseInt(x['U_Act'])||null, truck_plate:x['Truck Plate']||null, avg_weight_m:parseFloat(x['Avg Wgt M'])||null, avg_weight_f:parseFloat(x['Avg Wgt F'])||null, avg_weight_mixed:parseFloat(x['Avg Wgt Mixed'])||null, egg_age:x['Egg Age']?String(x['Egg Age']):null, vaccine_sc:x['Vaccine SC']||null, vaccine_spray:x['Vaccine Spray']||null, unit_price:parseFloat(x['Unit Price'])||null, notes:x['Notes']||null}));
-      const {error}=await sb.from('doc_records').insert(ins); if(error)throw error; toast(`Imported ${ins.length} records`,'success'); e.target.value='';
-    }catch(err){toast(err.message,'error');}
-  }; r.readAsBinaryString(file);
-}
-
-async function exportPDF(){
-  const tab=document.getElementById('tab-summary'), filename=`DOC-Tracker_${new Date().toISOString().slice(0,10)}.pdf`;
-  const ol=document.createElement('div');ol.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999999;display:flex;align-items:center;justify-content:center';ol.innerHTML='<div style="background:white;padding:30px;border-radius:12px;text-align:center">⏳ Generating PDF...</div>';document.body.appendChild(ol);
-  const cvs=[...tab.querySelectorAll('canvas')], imgs=[]; cvs.forEach(c=>{const img=document.createElement('img');img.src=c.toDataURL();img.style.cssText='max-width:100%;display:block;margin:0 auto;max-height:280px';c.parentNode.insertBefore(img,c);c.style.display='none';imgs.push(img);});
-  const tb=tab.querySelector('.toolbar'); const od=tb?tb.style.display:''; if(tb)tb.style.display='none';
-  const hd=document.createElement('div');hd.style.cssText='margin-bottom:20px;padding-bottom:14px';hd.innerHTML=`<h2>DOC Tracker Report</h2><p>${new Date().toLocaleString()}</p>`;tab.insertBefore(hd,tab.firstChild);
-  await new Promise(r=>setTimeout(r,500));
-  try{
-    const pdf=new window.jspdf.jsPDF({orientation:'landscape',unit:'mm',format:'a3',compress:true}), pw=pdf.internal.pageSize.getWidth(), ph=pdf.internal.pageSize.getHeight(), m=10, cw=pw-m*2, ch=ph-m*2;
-    const secs=[hd,...[...tab.children].filter(e=>e!==hd&&!e.classList.contains('toolbar')&&e.offsetHeight>0)]; let cy=m;
-    for(let i=0;i<secs.length;i++){
-      const c=await html2canvas(secs[i],{scale:1.5,useCORS:true}), sh=(c.height/c.width)*cw;
-      if(cy>m&&cy+sh>ph-m){pdf.addPage();cy=m;}
-      if(sh>ch){
-        if(cy>m){pdf.addPage();cy=m;} const px=c.width/cw, phpx=ch*px; let yo=0, f=true;
-        while(yo<c.height){const slh=Math.min(phpx,c.height-yo), sl=document.createElement('canvas');sl.width=c.width;sl.height=slh;sl.getContext('2d').drawImage(c,0,-yo);const smh=(slh/c.width)*cw;if(!f)pdf.addPage();pdf.addImage(sl.toDataURL('image/jpeg',0.92),'JPEG',m,m,cw,smh);yo+=slh;f=false;} cy=ph;
-      }else{pdf.addImage(c.toDataURL('image/jpeg',0.92),'JPEG',m,cy,cw,sh);cy+=sh+4;}
-    } pdf.save(filename); toast('PDF Created','success');
-  }catch(e){toast(e.message,'error');}finally{hd.remove();imgs.forEach(i=>i.remove());cvs.forEach(c=>c.style.display='');if(tb)tb.style.display=od;ol.remove();}
-}
-
-function toast(m,t='info'){const el=document.createElement('div');el.className='toast '+t;el.textContent=m;document.body.appendChild(el);setTimeout(()=>el.remove(),2800)}
-function esc(s){if(s==null)return'';return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 init();
 </script>
 </body>
