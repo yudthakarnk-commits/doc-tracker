@@ -6,7 +6,21 @@
 <title>DOC Tracker — Planning vs Actual</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBqcUTCbo0lDUATZQ3GVMNXgs3MlSQ3n9E&libraries=places" async defer></script>
+<script>
+  function loadGoogleMaps() {
+    const script = document.createElement('script');
+    script.src = "https://maps.googleapis.com/maps/api/js?key=AIzaSyBqcUTCbo0lDUATZQ3GVMNXgs3MlSQ3n9E&libraries=places";
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+        const input = document.getElementById('rLocation');
+        if (input && window.google) new google.maps.places.Autocomplete(input);
+    };
+    document.head.appendChild(script);
+  }
+  // เรียกฟังก์ชันนี้หลังจากเว็บโหลดเสร็จ
+  window.addEventListener('load', loadGoogleMaps);
+</script>
 <style>
   :root{--bg:#f3f4f6;--card:#fff;--text:#111827;--muted:#6b7280;--border:#e5e7eb;--primary:#2563eb;--primary-dark:#1d4ed8;--direct:#dbeafe;--direct-text:#1e40af;--contract:#fed7aa;--contract-text:#9a3412;--company:#bbf7d0;--company-text:#166534;--unsexed:#e9d5ff;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04)}
   *{box-sizing:border-box} body{margin:0;font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5} .hidden{display:none !important} button{font-family:inherit;cursor:pointer} input,select,textarea{font-family:inherit;font-size:14px}
@@ -603,10 +617,11 @@ function buildSexHatcheryMatrix(hM,hF,hU){
   const ts=tm+tf, tt=ts+tu; html+=`<tr class="row-total"><td>Total</td><td>${tm?tm.toLocaleString():'-'}</td><td>${tf?tf.toLocaleString():'-'}</td><td>${tu?tu.toLocaleString():'-'}</td><td>${tt?tt.toLocaleString():'-'}</td><td>${ts?(tm/ts*100).toFixed(1)+'%':'-'}</td><td>${ts?(tf/ts*100).toFixed(1)+'%':'-'}</td><td>${ts?`${Math.round(tm/ts*100)}:${Math.round(tf/ts*100)}`:'-'}</td></tr></tbody>`; return html;
 }
 function buildHatcheryFunnelMatrix(hE,hO,hA){
-  let html=`<thead><tr><th>Hatchery</th><th>Estimate</th><th>Order</th><th>Actual</th><th>H→O %</th><th>O→A %</th></tr></thead><tbody>`;
+let html=`<thead><tr><th>Hatchery</th><th>Estimate</th><th>Order</th><th>Actual</th><th>H→O %</th><th>O→A %</th></tr></thead><tbody>`;
   let te=0,to=0,ta=0; HATCHERIES.forEach(h=>{const e=hE[h]||0,o=hO[h]||0,a=hA[h]||0;te+=e;to+=o;ta+=a;const ho=o&&e?((o-e)/e*100):null, oa=a&&o?((a-o)/o*100):null; html+=`<tr><td><strong>${h}</strong></td><td>${e?e.toLocaleString():'-'}</td><td>${o?o.toLocaleString():'-'}</td><td>${a?a.toLocaleString():'-'}</td><td class="${ho===null?'diff-zero':ho>0?'diff-pos':'diff-neg'}">${ho===null?'-':(ho>0?'+':'')+ho.toFixed(1)+'%'}</td><td class="${oa===null?'diff-zero':oa>0?'diff-pos':'diff-neg'}">${oa===null?'-':(oa>0?'+':'')+oa.toFixed(1)+'%'}</td></tr>`;});
   const tho=to&&te?((to-te)/te*100):null, toa=ta&&to?((ta-to)/to*100):null; html+=`<tr class="row-total"><td>Total</td><td>${te?te.toLocaleString():'-'}</td><td>${to?to.toLocaleString():'-'}</td><td>${ta?ta.toLocaleString():'-'}</td><td class="${tho===null?'':tho>0?'diff-pos':'diff-neg'}">${tho===null?'-':(tho>0?'+':'')+tho.toFixed(1)+'%'}</td><td class="${toa===null?'':toa>0?'diff-pos':'diff-neg'}">${toa===null?'-':(toa>0?'+':'')+toa.toFixed(1)+'%'}</td></tr></tbody>`; return html;
 }
+
 function buildTopCustomersMatrix(rows){
   const bc={}; rows.forEach(r=>{const k=r.customer_name||'(unk)'; if(!bc[k])bc[k]={n:k,t:r.customer_type,o:0,a:0}; bc[k].o+=(r.total_ordered||0); bc[k].a+=(r.total_actual||0);});
   const list=Object.values(bc).sort((a,b)=>b.o-a.o||b.a-a.a); if(!list.length)return '<tbody><tr><td class="empty-state">No data</td></tr></tbody>';
@@ -614,12 +629,14 @@ function buildTopCustomersMatrix(rows){
   list.slice(0,20).forEach((c,i)=>{const f=c.o?(c.a/c.o*100):null; html+=`<tr><td>${i+1}</td><td>${esc(c.n)}</td><td><span class="${CTYPE_CLASS[c.t]||''}">${esc(c.t||'')}</span></td><td>${c.o?c.o.toLocaleString():'-'}</td><td>${c.a?c.a.toLocaleString():'-'}</td><td class="${f===null?'':f>=99&&f<=101?'diff-pos':f<90||f>110?'diff-neg':''}">${f===null?'-':f.toFixed(1)+'%'}</td><td>${f===null?'—':f>=99&&f<=101?'✅':f>=90&&f<=110?'⚠️':'❌'}</td></tr>`;});
   if(list.length>20) html+=`<tr><td colspan="7" style="text-align:center;color:var(--muted);font-size:12px">… ${list.length-20} more</td></tr>`; html+='</tbody>'; return html;
 }
+
 function buildTargetVsActualMatrix(tg,act,sl){
   let html=`<thead><tr><th>Type</th><th>Target</th><th>Actual</th><th>Diff</th><th>Diff %</th></tr></thead><tbody>`;
   let tt=0,ta=0; CTYPES.forEach(c=>{const t=tg[c]||0,a=act[c]||0,d=a-t,p=t?(d/t*100):null; tt+=t;ta+=a; html+=`<tr class="${ROW_CLASS[c]}"><td>${c}</td><td>${t?t.toLocaleString():'-'}</td><td>${a?a.toLocaleString():'-'}</td><td class="${d>0?'diff-pos':d<0?'diff-neg':'diff-zero'}">${t?(d>0?'+':'')+d.toLocaleString():'-'}</td><td class="${p===null?'diff-zero':p>0?'diff-pos':'diff-neg'}">${p===null?'-':(p>0?'+':'')+p.toFixed(1)+'%'}</td></tr>`;});
   const td=ta-tt,tp=tt?(td/tt*100):null; html+=`<tr class="row-total"><td>Total</td><td>${tt?tt.toLocaleString():'-'}</td><td>${ta?ta.toLocaleString():'-'}</td><td class="${td>0?'diff-pos':td<0?'diff-neg':'diff-zero'}">${tt?(td>0?'+':'')+td.toLocaleString():'-'}</td><td class="${tp===null?'':tp>0?'diff-pos':'diff-neg'}">${tp===null?'-':(tp>0?'+':'')+tp.toFixed(1)+'%'}</td></tr></tbody>`;
   if(tt===0) html+=`<caption style="caption-side:bottom;padding:10px;color:var(--muted);font-size:12px;font-style:italic">No targets set</caption>`; return html;
 }
+
 function buildMatrix(piv,tg,showTgt,planPiv){
   let html='<thead><tr><th>Type</th>'; HATCHERIES.forEach(h=>html+=`<th>${h}</th>`); html+='<th>Total</th>'+(showTgt?'<th>Target</th>':'')+'</tr></thead><tbody>';
   let cs=Object.fromEntries(HATCHERIES.map(h=>[h,0])), g=0;
@@ -631,6 +648,7 @@ function buildMatrix(piv,tg,showTgt,planPiv){
     HATCHERIES.forEach(h=>{const a=CTYPES.reduce((s,c)=>s+piv[c][h],0), p=CTYPES.reduce((s,c)=>s+planPiv[c][h],0), pct=p?((a-p)/p*100):0; html+=`<td class="${pct>0?'diff-pos':pct<0?'diff-neg':'diff-zero'}">${pct.toFixed(1)}%</td>`;}); html+=`<td class="${(tp?td/tp*100:0)>0?'diff-pos':(tp?td/tp*100:0)<0?'diff-neg':'diff-zero'}">${tp?(td/tp*100).toFixed(1)+'%':'0.0%'}</td>${showTgt?'<td>-</td>':''}</tr>`;
   } html+='</tbody>'; return html;
 }
+
 function buildDiffMatrix(pp,ap){
   let html='<thead><tr><th>Type</th>'; HATCHERIES.forEach(h=>html+=`<th>${h}</th>`); html+='<th>Total</th></tr></thead><tbody>';
   let cs=Object.fromEntries(HATCHERIES.map(h=>[h,0])), g=0; CTYPES.forEach(c=>{let rs=0; html+=`<tr class="${ROW_CLASS[c]}"><td>${c}</td>`; HATCHERIES.forEach(h=>{const d=ap[c][h]-pp[c][h];rs+=d;cs[h]+=d;html+=`<td class="${d>0?'diff-pos':d<0?'diff-neg':''}">${d===0?'-':(d>0?'+':'')+d.toLocaleString()}</td>`;}); g+=rs; html+=`<td class="col-total ${rs>0?'diff-pos':rs<0?'diff-neg':''}">${rs===0?'-':(rs>0?'+':'')+rs.toLocaleString()}</td></tr>`;});
