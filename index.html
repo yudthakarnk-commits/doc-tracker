@@ -9,7 +9,7 @@
 <script>
   (function(){
     var s = document.createElement('script');
-    s.src = "https://maps.googleapis.com/maps/api/js?key=AIzaSyBqcUTCbo0lDUATZQ3GVMNXgs3MlSQ3n9E&libraries=places";
+    s.src = "https://maps.googleapis.com/maps/api/js?key=AIzaSyBqcUTCbo0lDUATZQ3GVMNXgs3MlSQ3n9E&libraries=places&loading=async";
     s.async = true;
     document.head.appendChild(s);
   })();
@@ -45,6 +45,7 @@
   .location-wrap{position:relative}
   .location-wrap input{padding-right:34px;width:100%}
   .location-clear-btn{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:0 4px;display:none;line-height:1;z-index:2}
+  gmp-place-autocomplete{width:100%;--gmp-place-autocomplete-border-radius:8px;--gmp-place-autocomplete-border-color:var(--border);--gmp-place-autocomplete-border-width:1px;--gmp-place-autocomplete-background-color:var(--surface);--gmp-place-autocomplete-color:var(--text);--gmp-place-autocomplete-font-size:14px;--gmp-place-autocomplete-font-family:inherit;--gmp-place-autocomplete-input-padding:9px 36px 9px 12px;--gmp-place-autocomplete-placeholder-color:var(--muted);--gmp-place-autocomplete-focus-outline-color:var(--primary)}
   .location-clear-btn:hover{color:var(--danger)}
   #rLocationMap{height:200px;border-radius:8px;margin-top:8px;border:1px solid var(--border);display:none;overflow:hidden}
   .location-info-bar{display:none;align-items:center;justify-content:space-between;margin-top:6px;font-size:12px;flex-wrap:wrap;gap:6px;padding:6px 10px;background:#eff6ff;border-radius:6px;border:1px solid #bfdbfe}
@@ -274,8 +275,8 @@
       </div>
       <div class="form-row">
         <label data-i18n="lblLocation">📍 สถานที่ (Google Maps)</label>
-        <div class="location-wrap">
-          <input id="rLocation" type="text" autocomplete="off" placeholder="🔍 ค้นหาชื่อฟาร์ม, สถานที่, หรือที่อยู่..."/>
+        <div class="location-wrap" id="rLocationWrap">
+          <input id="rLocation" type="text" autocomplete="off" data-i18n-placeholder="lblLocationPlaceholder" placeholder="🔍 ค้นหาชื่อฟาร์ม, สถานที่, หรือที่อยู่..."/>
           <button type="button" class="location-clear-btn" id="rLocationClear" onclick="clearLocationField()">✕</button>
         </div>
         <div id="rLocationMap"></div>
@@ -335,7 +336,7 @@ const ROW_CLASS = {'Customer (Direct)':'row-direct','Contract Farm':'row-contrac
 const I18N = {
   th: {
     chooseOption:'-- เลือก --', lblEggAge:'อายุไข่ฟัก (สัปดาห์)', lblVaccineHeader:'การทำวัคซีน (Vaccination)', lblVaccineSC:'💉 วัคซีนใต้ผิวหนัง', lblVaccineSpray:'💦 วัคซีนสเปรย์', lblEggAgeAndVac:'อายุไข่ / วัคซีน',
-    lblDepartureTime:'เวลาเดินทาง', lblLocation:'สถานที่', lblLocationPlaceholder:'ค้นหาจาก Map...', th_depTime:'เวลาออก', th_location:'สถานที่',
+    lblDepartureTime:'เวลาเดินทาง', lblLocation:'สถานที่', lblLocationPlaceholder:'🔍 ค้นหาชื่อฟาร์ม, สถานที่, หรือที่อยู่...', th_depTime:'เวลาออก', th_location:'สถานที่',
     setupTitle:'ตั้งค่า Supabase', setupSub:'กรอก URL + anon key', supabaseUrl:'URL', supabaseAnonKey:'Anon key', save:'บันทึก', cancel:'ยกเลิก', delete:'ลบ',
     signIn:'เข้าสู่ระบบ', signUp:'สมัครใช้งาน', loginGoogle:'เข้าสู่ระบบด้วย Google', or:'หรือ', email:'อีเมล', password:'รหัสผ่าน',
     noAccount:'ยังไม่มีบัญชี?', haveAccount:'มีบัญชีแล้ว?', changeSupabase:'⚙️ เปลี่ยน Supabase URL / key', realtime:'Real-time', logout:'ออกจากระบบ',
@@ -369,7 +370,7 @@ const I18N = {
   },
   en: {
     chooseOption:'-- Choose --', lblEggAge:'Week of Production (WOP)', lblVaccineHeader:'Vaccination', lblVaccineSC:'💉 Subcutaneous Vaccine (S/C)', lblVaccineSpray:'💦 Coarse Spray Vaccine', lblEggAgeAndVac:'WOP / Vaccine',
-    lblDepartureTime:'Departure Time', lblLocation:'Location', lblLocationPlaceholder:'Search Map...', th_depTime:'Dep. Time', th_location:'Location',
+    lblDepartureTime:'Departure Time', lblLocation:'Location', lblLocationPlaceholder:'🔍 Search farm name, location, or address...', th_depTime:'Dep. Time', th_location:'Location',
     setupTitle:'Setup Supabase', setupSub:'Enter URL + anon key', supabaseUrl:'URL', supabaseAnonKey:'Anon key', save:'Save', cancel:'Cancel', delete:'Delete',
     signIn:'Sign In', signUp:'Sign Up', loginGoogle:'Sign in with Google', or:'or', email:'Email', password:'Password',
     noAccount:"Don't have account?", haveAccount:'Have account?', changeSupabase:'⚙️ Change Supabase', realtime:'Real-time', logout:'Logout',
@@ -424,43 +425,71 @@ function populateEggAgeOptions() {
   if(currentVal) select.value = currentVal;
 }
 
-let _locationAC = null, _locationMap = null, _locationMarker = null;
+let _locationAC = null, _locationPAE = null, _locationMap = null, _locationMarker = null;
 
 function attachLocationAutocomplete() {
   try {
     if (!window.google || !google.maps || !google.maps.places) return;
+    const wrap  = document.getElementById('rLocationWrap');
     const input = document.getElementById('rLocation');
-    if (!input) return;
+    if (!input || !wrap) return;
 
-    // สร้าง Autocomplete เพียงครั้งเดียว
-    if (!_locationAC) {
+    if (google.maps.places.PlaceAutocompleteElement) {
+      // New Places API (required for API keys created after Mar 2025)
+      if (!_locationPAE) {
+        input.style.display = 'none';
+        _locationPAE = new google.maps.places.PlaceAutocompleteElement({
+          requestedLanguage: currentLang,
+          requestedRegion: 'TH',
+        });
+        wrap.insertBefore(_locationPAE, input);
+
+        _locationPAE.addEventListener('gmp-placeselect', async ({ place }) => {
+          await place.fetchFields({ fields: ['displayName', 'formattedAddress', 'location'] });
+          const addr = place.formattedAddress || place.displayName || '';
+          input.value = addr;
+          const lat = place.location.lat();
+          const lng = place.location.lng();
+          input.dataset.lat = lat;
+          input.dataset.lng = lng;
+          const btn = document.getElementById('rLocationClear');
+          if (btn) btn.style.display = 'block';
+          showLocationPreview(lat, lng);
+        });
+
+        _locationPAE.addEventListener('input', () => {
+          const v = _locationPAE.inputValue || '';
+          const btn = document.getElementById('rLocationClear');
+          if (btn) btn.style.display = v ? 'block' : 'none';
+          if (!v) { hideLocationPreview(); input.value = ''; }
+        });
+      }
+      // Sync text into PAE when opening edit modal
+      if (input.value) _locationPAE.inputValue = input.value;
+      const btn = document.getElementById('rLocationClear');
+      if (btn) btn.style.display = input.value ? 'block' : 'none';
+
+    } else if (!_locationAC) {
+      // Fallback: legacy Autocomplete
       _locationAC = new google.maps.places.Autocomplete(input, {
         fields: ['formatted_address', 'geometry', 'name', 'place_id']
       });
       _locationAC.addListener('place_changed', () => {
         const place = _locationAC.getPlace();
         if (!place.geometry) return;
-        const addr = place.formatted_address || place.name || input.value;
-        input.value = addr;
-        const lat = place.geometry.location.lat();
-        const lng = place.geometry.location.lng();
-        input.dataset.lat = lat;
-        input.dataset.lng = lng;
-        showLocationPreview(lat, lng);
+        input.value = place.formatted_address || place.name || input.value;
+        input.dataset.lat = place.geometry.location.lat();
+        input.dataset.lng = place.geometry.location.lng();
+        showLocationPreview(input.dataset.lat, input.dataset.lng);
       });
-    }
-
-    // แสดงปุ่ม ✕ เมื่อมีข้อความ
-    input.addEventListener('input', () => {
+      input.addEventListener('input', () => {
+        const btn = document.getElementById('rLocationClear');
+        if (btn) btn.style.display = input.value ? 'block' : 'none';
+        if (!input.value) hideLocationPreview();
+      });
       const btn = document.getElementById('rLocationClear');
-      if (btn) btn.style.display = input.value ? 'block' : 'none';
-      if (!input.value) hideLocationPreview();
-    });
-
-    // ถ้ามีค่าอยู่แล้ว (กรณีเปิด edit) แสดงปุ่ม ✕
-    const btn = document.getElementById('rLocationClear');
-    if (btn && input.value) btn.style.display = 'block';
-
+      if (btn && input.value) btn.style.display = 'block';
+    }
   } catch(e) { console.log('Google Places error:', e); }
 }
 
@@ -505,8 +534,10 @@ function hideLocationPreview() {
 function clearLocationField() {
   const input = document.getElementById('rLocation');
   if (input) { input.value = ''; delete input.dataset.lat; delete input.dataset.lng; }
+  if (_locationPAE) { try { _locationPAE.inputValue = ''; } catch(e){} }
   hideLocationPreview();
-  input && input.focus();
+  if (_locationPAE) { try { _locationPAE.focus(); } catch(e){} }
+  else if (input) input.focus();
 }
 
 function geocodeAndShowMap(address) {
@@ -574,6 +605,7 @@ async function loadTargets(){const {data}=await sb.from('doc_targets').select('*
 async function loadEstimates(){const {data}=await sb.from('hatchery_estimates').select('*').order('created_at',{ascending:false});allEstimates=data||[];}
 
 function subscribeRealtime(){
+  if(realtimeChannel) return;
   realtimeChannel=sb.channel('doc-changes')
     .on('postgres_changes',{event:'*',schema:'public',table:'doc_records'},(p)=>{
       if(p.eventType==='INSERT'){allRecords.unshift(p.new);toast(t('toastNew'),'info')}
