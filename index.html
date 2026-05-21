@@ -177,7 +177,7 @@
         <select id="sumWeek" onchange="renderSummary()"></select><input type="date" id="sumDate" onchange="renderSummary()" class="hidden"/>
         <button class="btn-secondary" onclick="openCustomizeModal()" data-i18n="customizeBtn">⚙️ Customize</button>
         <button class="btn-secondary" onclick="window.print()" data-i18n="printBtn">🖨️ พิมพ์</button>
-        <button class="btn-secondary" onclick="exportSummaryExcel()" data-i18n="exportExcelBtn">📊 Export Excel</button>
+        <button class="btn-secondary" onclick="openSaleReportModal()" data-i18n="exportSaleReportBtn">📊 Export Sale Report</button>
         <button class="btn-add" onclick="exportPDF()" data-i18n="exportPdfBtn">📥 Export PDF</button>
       </div>
       <div class="trend-grid" data-section="charts1">
@@ -269,7 +269,8 @@
       </div>
 
       <div class="section-label" data-i18n="lblLogisticsWeight">Logistics & Weight</div>
-      <div class="form-grid-2">
+      <div class="form-grid-3">
+        <div class="form-row"><label data-i18n="lblDONumber">หมายเลขบิล</label><input id="rDONumber" type="text" placeholder="e.g. DO-2026-001"/></div>
         <div class="form-row"><label data-i18n="lblTruckPlate">ทะเบียนรถ</label><input id="rTruckPlate" type="text"/></div>
         <div class="form-row"><label data-i18n="lblDepartureTime">เวลาเดินทาง</label><input id="rDepartureTime" type="time"/></div>
       </div>
@@ -298,6 +299,28 @@
       <div class="form-row"><label data-i18n="lblNotes">Notes</label><textarea id="rNotes" rows="2"></textarea></div>
     </div>
     <div class="modal-footer"><button class="btn-danger hidden" id="rDeleteBtn" onclick="deleteRecord()" data-i18n="delete">ลบ</button><button class="btn-secondary" onclick="closeModal()" data-i18n="cancel">ยกเลิก</button><button class="btn-add" onclick="saveRecord()" data-i18n="save">บันทึก</button></div>
+  </div>
+</div>
+
+<div id="saleReportModal" class="modal-overlay hidden">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header"><h2 data-i18n="exportSaleReportTitle">Export Sale Report</h2><button class="modal-close" onclick="closeSaleReportModal()">&times;</button></div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:14px">
+      <div class="form-row">
+        <label data-i18n="srWeekLabel">สัปดาห์</label>
+        <select id="srWeek" style="width:100%"></select>
+      </div>
+      <div class="form-row">
+        <label data-i18n="srHatcheryLabel">โรงฟัก</label>
+        <select id="srHatchery" style="width:100%">
+          <option value="" data-i18n="srAllHatcheries">ทุกโรงฟัก (แยก Sheet)</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeSaleReportModal()" data-i18n="cancel">ยกเลิก</button>
+      <button class="btn-add" onclick="exportSaleReport()" data-i18n="srExportBtn">Export</button>
+    </div>
   </div>
 </div>
 
@@ -337,6 +360,7 @@ const I18N = {
   th: {
     chooseOption:'-- เลือก --', lblEggAge:'อายุไข่ฟัก (สัปดาห์)', lblVaccineHeader:'การทำวัคซีน (Vaccination)', lblVaccineSC:'💉 วัคซีนใต้ผิวหนัง', lblVaccineSpray:'💦 วัคซีนสเปรย์', lblEggAgeAndVac:'อายุไข่ / วัคซีน',
     lblDepartureTime:'เวลาเดินทาง', lblLocation:'สถานที่', lblLocationPlaceholder:'🔍 ค้นหาชื่อฟาร์ม, สถานที่, หรือที่อยู่...', th_depTime:'เวลาออก', th_location:'สถานที่',
+    lblDONumber:'หมายเลขบิล', exportSaleReportBtn:'📊 Export Sale Report', exportSaleReportTitle:'Export รายงานการขาย', srAllHatcheries:'ทุกโรงฟัก', srWeekLabel:'สัปดาห์', srHatcheryLabel:'โรงฟัก', srExportBtn:'Export',
     setupTitle:'ตั้งค่า Supabase', setupSub:'กรอก URL + anon key', supabaseUrl:'URL', supabaseAnonKey:'Anon key', save:'บันทึก', cancel:'ยกเลิก', delete:'ลบ',
     signIn:'เข้าสู่ระบบ', signUp:'สมัครใช้งาน', loginGoogle:'เข้าสู่ระบบด้วย Google', or:'หรือ', email:'อีเมล', password:'รหัสผ่าน',
     noAccount:'ยังไม่มีบัญชี?', haveAccount:'มีบัญชีแล้ว?', changeSupabase:'⚙️ เปลี่ยน Supabase URL / key', realtime:'Real-time', logout:'ออกจากระบบ',
@@ -371,6 +395,7 @@ const I18N = {
   en: {
     chooseOption:'-- Choose --', lblEggAge:'Week of Production (WOP)', lblVaccineHeader:'Vaccination', lblVaccineSC:'💉 Subcutaneous Vaccine (S/C)', lblVaccineSpray:'💦 Coarse Spray Vaccine', lblEggAgeAndVac:'WOP / Vaccine',
     lblDepartureTime:'Departure Time', lblLocation:'Location', lblLocationPlaceholder:'🔍 Search farm name, location, or address...', th_depTime:'Dep. Time', th_location:'Location',
+    lblDONumber:'DO. Number', exportSaleReportBtn:'📊 Export Sale Report', exportSaleReportTitle:'Export Sale Report', srAllHatcheries:'All Hatcheries', srWeekLabel:'Week', srHatcheryLabel:'Hatchery', srExportBtn:'Export',
     setupTitle:'Setup Supabase', setupSub:'Enter URL + anon key', supabaseUrl:'URL', supabaseAnonKey:'Anon key', save:'Save', cancel:'Cancel', delete:'Delete',
     signIn:'Sign In', signUp:'Sign Up', loginGoogle:'Sign in with Google', or:'or', email:'Email', password:'Password',
     noAccount:"Don't have account?", haveAccount:'Have account?', changeSupabase:'⚙️ Change Supabase', realtime:'Real-time', logout:'Logout',
@@ -672,7 +697,7 @@ function renderEntry(){
 
 function openAddModal(){
   document.getElementById('modalTitle').textContent=t('addRecordTitle'); document.getElementById('rDeleteBtn').classList.add('hidden');
-  ['rId','rCustomer','rExternalSource','rMOrd','rFOrd','rUOrd','rMAct','rFAct','rUAct','rPrice','rTotalAmount','rNotes','rTruckPlate','rDepartureTime','rLocation','rWeightM','rWeightF','rWeightMixed','rEggAge'].forEach(id=>{const el=document.getElementById(id); if(el) el.value='';});
+  ['rId','rCustomer','rExternalSource','rMOrd','rFOrd','rUOrd','rMAct','rFAct','rUAct','rPrice','rTotalAmount','rNotes','rDONumber','rTruckPlate','rDepartureTime','rLocation','rWeightM','rWeightF','rWeightMixed','rEggAge'].forEach(id=>{const el=document.getElementById(id); if(el) el.value='';});
   document.querySelectorAll('input[name="vacSC"]').forEach(cb=>cb.checked=false); document.querySelectorAll('input[name="vacSpray"]').forEach(cb=>cb.checked=false);
   document.getElementById('rDate').valueAsDate=new Date(); updateDayName(); ['rHatchery','rCType','rBreed'].forEach(id=>document.getElementById(id).value=''); document.getElementById('rExternalSourceRow').classList.add('hidden');
   hideLocationPreview();
@@ -692,7 +717,7 @@ function openEditModal(id){
   document.getElementById('rExternalSource').value=r.external_source||''; onHatcheryChange();
   document.getElementById('rMOrd').value=r.m_ordered??''; document.getElementById('rFOrd').value=r.f_ordered??''; document.getElementById('rUOrd').value=r.u_ordered??'';
   document.getElementById('rMAct').value=r.m_actual??''; document.getElementById('rFAct').value=r.f_actual??''; document.getElementById('rUAct').value=r.u_actual??'';
-  document.getElementById('rTruckPlate').value=r.truck_plate||''; document.getElementById('rDepartureTime').value=r.departure_time||''; document.getElementById('rLocation').value=r.location||''; document.getElementById('rWeightM').value=r.avg_weight_m??''; document.getElementById('rWeightF').value=r.avg_weight_f??''; document.getElementById('rWeightMixed').value=r.avg_weight_mixed??'';
+  document.getElementById('rDONumber').value=r.do_number||''; document.getElementById('rTruckPlate').value=r.truck_plate||''; document.getElementById('rDepartureTime').value=r.departure_time||''; document.getElementById('rLocation').value=r.location||''; document.getElementById('rWeightM').value=r.avg_weight_m??''; document.getElementById('rWeightF').value=r.avg_weight_f??''; document.getElementById('rWeightMixed').value=r.avg_weight_mixed??'';
   document.getElementById('rEggAge').value=r.egg_age||'';
   const scVals = r.vaccine_sc?r.vaccine_sc.split(', '):[]; document.querySelectorAll('input[name="vacSC"]').forEach(cb=>cb.checked=scVals.includes(cb.value));
   const sprayVals = r.vaccine_spray?r.vaccine_spray.split(', '):[]; document.querySelectorAll('input[name="vacSpray"]').forEach(cb=>cb.checked=sprayVals.includes(cb.value));
@@ -717,7 +742,7 @@ async function saveRecord(){
     external_source:document.getElementById('rHatchery').value==='External'?(document.getElementById('rExternalSource').value.trim()||null):null,
     m_ordered:num(document.getElementById('rMOrd').value), f_ordered:num(document.getElementById('rFOrd').value), u_ordered:num(document.getElementById('rUOrd').value),
     m_actual:num(document.getElementById('rMAct').value), f_actual:num(document.getElementById('rFAct').value), u_actual:num(document.getElementById('rUAct').value),
-    truck_plate:document.getElementById('rTruckPlate').value.trim()||null, departure_time:document.getElementById('rDepartureTime').value||null, location:document.getElementById('rLocation').value.trim()||null, avg_weight_m:dec(document.getElementById('rWeightM').value), avg_weight_f:dec(document.getElementById('rWeightF').value), avg_weight_mixed:dec(document.getElementById('rWeightMixed').value),
+    do_number:document.getElementById('rDONumber').value.trim()||null, truck_plate:document.getElementById('rTruckPlate').value.trim()||null, departure_time:document.getElementById('rDepartureTime').value||null, location:document.getElementById('rLocation').value.trim()||null, avg_weight_m:dec(document.getElementById('rWeightM').value), avg_weight_f:dec(document.getElementById('rWeightF').value), avg_weight_mixed:dec(document.getElementById('rWeightMixed').value),
     egg_age:document.getElementById('rEggAge').value.trim()||null,
     vaccine_sc:Array.from(document.querySelectorAll('input[name="vacSC"]:checked')).map(c=>c.value).join(', ')||null,
     vaccine_spray:Array.from(document.querySelectorAll('input[name="vacSpray"]:checked')).map(c=>c.value).join(', ')||null,
@@ -919,11 +944,51 @@ function applySavedCustomize(){const p=getCustomizePrefs();if(p.theme)setTheme(p
 
 function exportEntryExcel(){
   const f=allRecords; if(!f.length)return toast('No data','error');
-  const h=['Wk','Date','Day','Hatchery','External Source','Customer Type','Customer/Farm','Breed','M Ord','F Ord','U Ord','Total Ord','M Act','F Act','U Act','Total Act','Diff','Diff %','Unit Price','Total Amount','Truck Plate','Departure Time','Location','Avg Wgt M','Avg Wgt F','Avg Wgt Mixed','Egg Age','Vaccine S/C','Vaccine Spray','Notes'];
-  const d=f.map(r=>[r.week_no,r.record_date,r.day_name,r.hatchery,r.external_source,r.customer_type,r.customer_name,r.breed,r.m_ordered,r.f_ordered,r.u_ordered,r.total_ordered,r.m_actual,r.f_actual,r.u_actual,r.total_actual,r.diff,r.total_ordered?((r.diff||0)/r.total_ordered*100).toFixed(2)+'%':'',r.unit_price,r.total_amount,r.truck_plate,r.departure_time,r.location,r.avg_weight_m,r.avg_weight_f,r.avg_weight_mixed,r.egg_age,r.vaccine_sc,r.vaccine_spray,r.notes]);
+  const h=['Wk','Date','Day','Hatchery','External Source','Customer Type','Customer/Farm','Breed','DO. Number','M Ord','F Ord','U Ord','Total Ord','M Act','F Act','U Act','Total Act','Diff','Diff %','Unit Price','Total Amount','Truck Plate','Departure Time','Location','Avg Wgt M','Avg Wgt F','Avg Wgt Mixed','Egg Age','Vaccine S/C','Vaccine Spray','Notes'];
+  const d=f.map(r=>[r.week_no,r.record_date,r.day_name,r.hatchery,r.external_source,r.customer_type,r.customer_name,r.breed,r.do_number,r.m_ordered,r.f_ordered,r.u_ordered,r.total_ordered,r.m_actual,r.f_actual,r.u_actual,r.total_actual,r.diff,r.total_ordered?((r.diff||0)/r.total_ordered*100).toFixed(2)+'%':'',r.unit_price,r.total_amount,r.truck_plate,r.departure_time,r.location,r.avg_weight_m,r.avg_weight_f,r.avg_weight_mixed,r.egg_age,r.vaccine_sc,r.vaccine_spray,r.notes]);
   const ws=XLSX.utils.aoa_to_sheet([h,...d]), wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Records'); XLSX.writeFile(wb,`DOC-Entry_${new Date().toISOString().slice(0,10)}.xlsx`); toast('Exported','success');
 }
-function exportSummaryExcel(){toast('Use PDF or Entry Export','info');}
+function openSaleReportModal(){
+  const weeks=[...new Set(allRecords.map(r=>r.week_no))].filter(Boolean).sort((a,b)=>a-b);
+  const curWeek=document.getElementById('sumWeek').value;
+  const wSel=document.getElementById('srWeek');
+  wSel.innerHTML='';
+  weeks.forEach(w=>{const o=document.createElement('option');o.value=w;o.textContent=`Week ${w}`;if(String(w)===String(curWeek))o.selected=true;wSel.appendChild(o);});
+  const hSel=document.getElementById('srHatchery');
+  hSel.innerHTML=`<option value="" data-i18n="srAllHatcheries">${t('srAllHatcheries')}</option>`;
+  HATCHERIES.forEach(h=>{const o=document.createElement('option');o.value=h;o.textContent=h;hSel.appendChild(o);});
+  applyLanguage();
+  document.getElementById('saleReportModal').classList.remove('hidden');
+}
+function closeSaleReportModal(){document.getElementById('saleReportModal').classList.add('hidden');}
+function exportSaleReport(){
+  const week=document.getElementById('srWeek').value;
+  const hatch=document.getElementById('srHatchery').value;
+  let recs=allRecords.filter(r=>String(r.week_no)===String(week));
+  if(hatch) recs=recs.filter(r=>r.hatchery===hatch);
+  if(!recs.length) return toast(t('noResult'),'error');
+  recs.sort((a,b)=>new Date(a.record_date)-new Date(b.record_date));
+  const isEn=currentLang==='en';
+  const hdrs=isEn
+    ?['Date','Hatchery','Customer Name','Customer Type','Total Actual','Unit Price','Total Amount','Breed','DO. Number','Vaccine (S/C)','Vaccine (Spray)','Location','Truck Plate','Departure Time']
+    :['วันที่','โรงฟัก','ชื่อลูกค้า','ประเภทลูกค้า','จำนวนตัว','ราคา/หน่วย','ราคารวม','สายพันธุ์','หมายเลขบิล','วัคซีน (S/C)','วัคซีน (Spray)','สถานที่','ทะเบียนรถ','เวลาออก'];
+  const toRow=r=>[r.record_date,r.hatchery,r.customer_name,r.customer_type,r.total_actual,r.unit_price,r.total_amount,r.breed,r.do_number,r.vaccine_sc,r.vaccine_spray,r.location,r.truck_plate,r.departure_time];
+  const wb=XLSX.utils.book_new();
+  if(hatch){
+    const ws=XLSX.utils.aoa_to_sheet([hdrs,...recs.map(toRow)]);
+    XLSX.utils.book_append_sheet(wb,ws,hatch.substring(0,31));
+  } else {
+    const ws=XLSX.utils.aoa_to_sheet([hdrs,...recs.map(toRow)]);
+    XLSX.utils.book_append_sheet(wb,ws,isEn?'All':'ทั้งหมด');
+    HATCHERIES.forEach(h=>{
+      const hr=recs.filter(r=>r.hatchery===h);
+      if(hr.length){const hws=XLSX.utils.aoa_to_sheet([hdrs,...hr.map(toRow)]);XLSX.utils.book_append_sheet(wb,hws,h.substring(0,31));}
+    });
+  }
+  XLSX.writeFile(wb,`SaleReport_Wk${week}${hatch?'_'+hatch.replace(/\s+/g,'_'):'_All'}_${new Date().toISOString().slice(0,10)}.xlsx`);
+  toast(isEn?'Exported':'Export สำเร็จ','success');
+  closeSaleReportModal();
+}
 function downloadCSVTemplate(){
   const h=['Date(YYYY-MM-DD)','Hatchery','Customer Type','Customer Name','Breed','M_Ord','F_Ord','U_Ord','M_Act','F_Act','U_Act','Truck Plate','Departure Time','Location','Avg Wgt M','Avg Wgt F','Avg Wgt Mixed','Egg Age','Vaccine SC','Vaccine Spray','Unit Price','Notes'];
   const ws=XLSX.utils.aoa_to_sheet([h]), wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Template'); XLSX.writeFile(wb,'DOC_Template.xlsx');
