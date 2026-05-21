@@ -7,19 +7,18 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script>
-  function loadGoogleMaps() {
-    const script = document.createElement('script');
-    script.src = "https://maps.googleapis.com/maps/api/js?key=AIzaSyBqcUTCbo0lDUATZQ3GVMNXgs3MlSQ3n9E&libraries=places";
-    script.async = true;
-    script.defer = true;
-    script.onload = () => {
-        const input = document.getElementById('rLocation');
-        if (input && window.google) new google.maps.places.Autocomplete(input);
-    };
-    document.head.appendChild(script);
-  }
-  // เรียกฟังก์ชันนี้หลังจากเว็บโหลดเสร็จ
-  window.addEventListener('load', loadGoogleMaps);
+  (function(){
+    const s = document.createElement('script');
+    s.src = "https://maps.googleapis.com/maps/api/js?key=AIzaSyBqcUTCbo0lDUATZQ3GVMNXgs3MlSQ3n9E&libraries=places&callback=_initGooglePlaces";
+    s.async = true; s.defer = true;
+    document.head.appendChild(s);
+  })();
+  let _gmapsReady = false;
+  window._initGooglePlaces = function() {
+    _gmapsReady = true;
+    // ถ้า modal เปิดอยู่พอดี ให้ผูก autocomplete ทันที
+    if (typeof attachLocationAutocomplete === 'function') attachLocationAutocomplete();
+  };
 </script>
 <style>
   :root{--bg:#f3f4f6;--card:#fff;--text:#111827;--muted:#6b7280;--border:#e5e7eb;--primary:#2563eb;--primary-dark:#1d4ed8;--direct:#dbeafe;--direct-text:#1e40af;--contract:#fed7aa;--contract-text:#9a3412;--company:#bbf7d0;--company-text:#166534;--unsexed:#e9d5ff;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04)}
@@ -49,7 +48,44 @@
   .sortable{cursor:pointer;user-select:none;position:relative} .sortable:hover{background:#e5e7eb} .sort-ind{display:inline-block;width:12px;font-size:10px;color:var(--muted);margin-left:4px} .sortable.sort-asc .sort-ind::before{content:'▲';color:var(--primary)} .sortable.sort-desc .sort-ind::before{content:'▼';color:var(--primary)}
   .show-more-link{text-align:center;padding:8px;color:var(--primary);font-size:13px;cursor:pointer;background:#f9fafb;border-top:1px solid var(--border)} .show-more-link:hover{background:#eff6ff} .perm-hatchery-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px} .perm-hatchery-grid label{display:flex;align-items:center;gap:6px;padding:6px 8px;background:#f9fafb;border-radius:5px;font-size:12px;cursor:pointer}
   .lang-toggle{display:inline-flex;border:1px solid var(--border);border-radius:6px;overflow:hidden;font-size:12px;font-weight:600} .lang-toggle button{background:#fff;border:none;padding:5px 10px;color:var(--muted);cursor:pointer;transition:all .15s} .lang-toggle button.active{background:var(--primary);color:#fff} .lang-toggle button:not(.active):hover{background:var(--bg)} .lang-toggle-floating{position:absolute;top:18px;right:18px;z-index:10}
+  .location-wrap{position:relative}
+  .location-wrap input{padding-right:34px;width:100%}
+  .location-clear-btn{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:0 4px;display:none;line-height:1;z-index:2}
+  .location-clear-btn:hover{color:var(--danger)}
+  #rLocationMap{height:200px;border-radius:8px;margin-top:8px;border:1px solid var(--border);display:none;overflow:hidden}
+  .location-info-bar{display:none;align-items:center;justify-content:space-between;margin-top:6px;font-size:12px;flex-wrap:wrap;gap:6px;padding:6px 10px;background:#eff6ff;border-radius:6px;border:1px solid #bfdbfe}
+  .location-info-bar a{color:var(--primary);text-decoration:none;font-weight:600}
+  .location-info-bar a:hover{text-decoration:underline}
+  .location-coords{color:var(--muted);font-size:11px;font-family:monospace}
   @media print{ .topbar,.nav-tabs,.toolbar,.btn-add,.table-action,.user-info,.lang-toggle{display:none !important} .container{padding:0} .card,.matrix{box-shadow:none;border:1px solid #999} }
+
+  @media(max-width:640px){
+    .topbar{flex-wrap:wrap;gap:6px;padding:8px 12px}
+    .logo{font-size:14px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .user-info{gap:6px;flex-wrap:wrap;font-size:12px}
+    #userEmail{display:none}
+    .live-status{display:none}
+    .nav-tabs{padding:0 8px}
+    .tab{padding:10px 10px;font-size:13px}
+    .container{padding:10px}
+    .kpi-grid{grid-template-columns:repeat(2,1fr);gap:8px}
+    .kpi{padding:10px 12px}
+    .kpi-value{font-size:20px}
+    .toolbar{padding:8px 10px;gap:6px}
+    .toolbar input[type="search"]{min-width:100%;order:1}
+    .btn-secondary,.btn-add{font-size:12px;padding:7px 10px}
+    .form-grid-2,.form-grid-3,.form-grid-4{grid-template-columns:1fr}
+    .modal-overlay{padding:0;align-items:flex-end}
+    .modal{max-width:100%;max-height:92vh;border-radius:14px 14px 0 0}
+    .modal-body{padding:14px 14px}
+    .modal-header{padding:12px 14px}
+    .modal-footer{padding:10px 14px}
+    .summary-grid{grid-template-columns:1fr}
+    .trend-grid{grid-template-columns:1fr}
+    .perm-hatchery-grid{grid-template-columns:repeat(2,1fr)}
+    .card-header{flex-direction:column;align-items:flex-start;gap:6px}
+    .topbar .btn-secondary{font-size:12px;padding:5px 10px}
+  }
 </style>
 </head>
 <body>
@@ -238,10 +274,21 @@
       </div>
 
       <div class="section-label" data-i18n="lblLogisticsWeight">Logistics & Weight</div>
-      <div class="form-grid-3">
+      <div class="form-grid-2">
         <div class="form-row"><label data-i18n="lblTruckPlate">ทะเบียนรถ</label><input id="rTruckPlate" type="text"/></div>
         <div class="form-row"><label data-i18n="lblDepartureTime">เวลาเดินทาง</label><input id="rDepartureTime" type="time"/></div>
-        <div class="form-row"><label data-i18n="lblLocation">สถานที่ (Google Maps)</label><input id="rLocation" type="text" data-i18n-placeholder="lblLocationPlaceholder" placeholder="ค้นหาจาก Map..."/></div>
+      </div>
+      <div class="form-row">
+        <label data-i18n="lblLocation">📍 สถานที่ (Google Maps)</label>
+        <div class="location-wrap">
+          <input id="rLocation" type="text" autocomplete="off" placeholder="🔍 ค้นหาชื่อฟาร์ม, สถานที่, หรือที่อยู่..."/>
+          <button type="button" class="location-clear-btn" id="rLocationClear" onclick="clearLocationField()">✕</button>
+        </div>
+        <div id="rLocationMap"></div>
+        <div class="location-info-bar" id="rLocationInfo">
+          <a id="rLocationLink" href="#" target="_blank" rel="noopener">🗺 เปิดใน Google Maps</a>
+          <span class="location-coords" id="rLocationCoords"></span>
+        </div>
       </div>
       <div class="form-grid-3">
         <div class="form-row"><label data-i18n="lblAvgWeightM">Avg Weight (M) กรัม</label><input id="rWeightM" type="number" step="0.01"/></div>
@@ -383,15 +430,103 @@ function populateEggAgeOptions() {
   if(currentVal) select.value = currentVal;
 }
 
-function initGooglePlaces() {
+let _locationAC = null, _locationMap = null, _locationMarker = null;
+
+function attachLocationAutocomplete() {
   try {
-    if (window.google && google.maps && google.maps.places) {
-      const input = document.getElementById('rLocation');
-      if (input) new google.maps.places.Autocomplete(input);
+    if (!window.google || !google.maps || !google.maps.places) return;
+    const input = document.getElementById('rLocation');
+    if (!input) return;
+
+    // สร้าง Autocomplete เพียงครั้งเดียว
+    if (!_locationAC) {
+      _locationAC = new google.maps.places.Autocomplete(input, {
+        fields: ['formatted_address', 'geometry', 'name', 'place_id']
+      });
+      _locationAC.addListener('place_changed', () => {
+        const place = _locationAC.getPlace();
+        if (!place.geometry) return;
+        const addr = place.formatted_address || place.name || input.value;
+        input.value = addr;
+        const lat = place.geometry.location.lat();
+        const lng = place.geometry.location.lng();
+        input.dataset.lat = lat;
+        input.dataset.lng = lng;
+        showLocationPreview(lat, lng);
+      });
     }
-  } catch(e) { console.log('Google Maps API not loaded properly'); }
+
+    // แสดงปุ่ม ✕ เมื่อมีข้อความ
+    input.addEventListener('input', () => {
+      const btn = document.getElementById('rLocationClear');
+      if (btn) btn.style.display = input.value ? 'block' : 'none';
+      if (!input.value) hideLocationPreview();
+    });
+
+    // ถ้ามีค่าอยู่แล้ว (กรณีเปิด edit) แสดงปุ่ม ✕
+    const btn = document.getElementById('rLocationClear');
+    if (btn && input.value) btn.style.display = 'block';
+
+  } catch(e) { console.log('Google Places error:', e); }
 }
-window.addEventListener('load', () => setTimeout(initGooglePlaces, 1000));
+
+function showLocationPreview(lat, lng) {
+  const mapDiv   = document.getElementById('rLocationMap');
+  const infoBar  = document.getElementById('rLocationInfo');
+  const linkEl   = document.getElementById('rLocationLink');
+  const coordsEl = document.getElementById('rLocationCoords');
+  if (!mapDiv) return;
+
+  mapDiv.style.display = 'block';
+  if (infoBar) infoBar.style.display = 'flex';
+  if (linkEl)  linkEl.href = `https://www.google.com/maps?q=${lat},${lng}`;
+  if (coordsEl) coordsEl.textContent = `${parseFloat(lat).toFixed(5)}, ${parseFloat(lng).toFixed(5)}`;
+
+  const pos = { lat: parseFloat(lat), lng: parseFloat(lng) };
+  if (!_locationMap) {
+    _locationMap = new google.maps.Map(mapDiv, {
+      center: pos, zoom: 14,
+      mapTypeControl: false, streetViewControl: false,
+      fullscreenControl: true, zoomControl: true
+    });
+    _locationMarker = new google.maps.Marker({ map: _locationMap, position: pos, animation: google.maps.Animation.DROP });
+  } else {
+    _locationMap.setCenter(pos);
+    _locationMarker.setPosition(pos);
+    _locationMarker.setAnimation(google.maps.Animation.DROP);
+  }
+  // บังคับ resize เพื่อให้แผนที่แสดงถูกต้องเมื่อ div เพิ่งแสดง
+  setTimeout(() => google.maps.event.trigger(_locationMap, 'resize'), 100);
+}
+
+function hideLocationPreview() {
+  const mapDiv  = document.getElementById('rLocationMap');
+  const infoBar = document.getElementById('rLocationInfo');
+  const clearBtn = document.getElementById('rLocationClear');
+  if (mapDiv)  mapDiv.style.display  = 'none';
+  if (infoBar) infoBar.style.display = 'none';
+  if (clearBtn) clearBtn.style.display = 'none';
+}
+
+function clearLocationField() {
+  const input = document.getElementById('rLocation');
+  if (input) { input.value = ''; delete input.dataset.lat; delete input.dataset.lng; }
+  hideLocationPreview();
+  input && input.focus();
+}
+
+function geocodeAndShowMap(address) {
+  if (!address || !window.google || !google.maps) return;
+  const geocoder = new google.maps.Geocoder();
+  geocoder.geocode({ address }, (results, status) => {
+    if (status === 'OK' && results[0]) {
+      const loc = results[0].geometry.location;
+      const input = document.getElementById('rLocation');
+      if (input) { input.dataset.lat = loc.lat(); input.dataset.lng = loc.lng(); }
+      showLocationPreview(loc.lat(), loc.lng());
+    }
+  });
+}
 
 let sb=null, currentUser=null, currentProfile=null;
 let allRecords=[], allProfiles=[], allTargets=[], allEstimates=[];
@@ -514,7 +649,9 @@ function openAddModal(){
   ['rId','rCustomer','rExternalSource','rMOrd','rFOrd','rUOrd','rMAct','rFAct','rUAct','rPrice','rTotalAmount','rNotes','rTruckPlate','rDepartureTime','rLocation','rWeightM','rWeightF','rWeightMixed','rEggAge'].forEach(id=>{const el=document.getElementById(id); if(el) el.value='';});
   document.querySelectorAll('input[name="vacSC"]').forEach(cb=>cb.checked=false); document.querySelectorAll('input[name="vacSpray"]').forEach(cb=>cb.checked=false);
   document.getElementById('rDate').valueAsDate=new Date(); updateDayName(); ['rHatchery','rCType','rBreed'].forEach(id=>document.getElementById(id).value=''); document.getElementById('rExternalSourceRow').classList.add('hidden');
+  hideLocationPreview();
   applyHatcheryRestrictionToForm(); document.getElementById('recordModal').classList.remove('hidden');
+  attachLocationAutocomplete();
 }
 function applyHatcheryRestrictionToForm(){
   const sel=document.getElementById('rHatchery'); if(!sel) return;
@@ -533,7 +670,11 @@ function openEditModal(id){
   document.getElementById('rEggAge').value=r.egg_age||'';
   const scVals = r.vaccine_sc?r.vaccine_sc.split(', '):[]; document.querySelectorAll('input[name="vacSC"]').forEach(cb=>cb.checked=scVals.includes(cb.value));
   const sprayVals = r.vaccine_spray?r.vaccine_spray.split(', '):[]; document.querySelectorAll('input[name="vacSpray"]').forEach(cb=>cb.checked=sprayVals.includes(cb.value));
-  document.getElementById('rPrice').value=r.unit_price??''; document.getElementById('rNotes').value=r.notes||''; computeAmountPreview(); document.getElementById('recordModal').classList.remove('hidden');
+  document.getElementById('rPrice').value=r.unit_price??''; document.getElementById('rNotes').value=r.notes||''; computeAmountPreview();
+  hideLocationPreview();
+  document.getElementById('recordModal').classList.remove('hidden');
+  attachLocationAutocomplete();
+  if (r.location) setTimeout(() => geocodeAndShowMap(r.location), 250);
 }
 function computeAmountPreview(){const p=parseFloat(document.getElementById('rPrice').value)||0, m=parseFloat(document.getElementById('rMAct').value)||0, f=parseFloat(document.getElementById('rFAct').value)||0, u=parseFloat(document.getElementById('rUAct').value)||0; const amt=p*(m+f+u); document.getElementById('rTotalAmount').value=amt?amt.toLocaleString('en-US',{minimumFractionDigits:2}):'';}
 ['rPrice','rMAct','rFAct','rUAct'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('input',computeAmountPreview);});
