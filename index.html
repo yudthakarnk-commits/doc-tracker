@@ -281,8 +281,10 @@
 const CONFIG_SUPABASE_URL = 'https://ncnppcmlxdaabuwkcbtm.supabase.co';
 const CONFIG_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5jbnBwY21seGRhYWJ1d2tjYnRtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxNjg3NTEsImV4cCI6MjA5Mjc0NDc1MX0.bfUzVo4WvMdjAtZl9NdCf8Q7CScghg-oWTRFLlhHaTs';
 
-Chart.register(ChartDataLabels);
-Chart.defaults.set('plugins.datalabels', { display: false }); // ปิด datalabels ดั้งเดิม เปิดเฉพาะกราฟที่ต้องการ
+try {
+  Chart.register(ChartDataLabels);
+  Chart.defaults.set('plugins.datalabels', { display: false });
+} catch(e) { console.warn('Chart.js/ChartDataLabels not ready:', e); }
 
 const HATCHERIES = ['Chengkau','Kluang','K.Kangsar','Sg. Sayong','Kota','External'];
 const CTYPES = ['Customer (Direct)','Contract Farm','Company Farm'];
@@ -562,7 +564,10 @@ async function saveRecord(){
 async function deleteRecord(){const id=document.getElementById('rId').value;if(!id||!confirm(t('confirmDelete')))return;const {error}=await sb.from('doc_records').delete().eq('id',id);if(error) return toast(error.message,'error');toast(t('toastDeleted'),'success');closeModal();}
 
 function renderSummary(){
-  const mode=document.getElementById('sumMode').value, week=document.getElementById('sumWeek').value, date=document.getElementById('sumDate').value;
+  const mode=document.getElementById('sumMode').value;
+  document.getElementById('sumWeek').classList.toggle('hidden', mode!=='week');
+  document.getElementById('sumDate').classList.toggle('hidden', mode!=='day');
+  const week=document.getElementById('sumWeek').value, date=document.getElementById('sumDate').value;
   let rows=allRecords, scopeLabel='';
   if(mode==='week'&&week){rows=rows.filter(r=>String(r.week_no)===week);scopeLabel=`Week ${week}`} else if(mode==='day'&&date){rows=rows.filter(r=>r.record_date===date);scopeLabel=date}
   document.getElementById('sumScopeLabel1').textContent='— '+scopeLabel; document.getElementById('sumScopeLabel2').textContent='— '+scopeLabel;
@@ -608,44 +613,7 @@ function renderTrendCharts(scopedRows){
 function renderSexCharts(hM,hF,hU){
   if(chartSexHat) chartSexHat.destroy(); chartSexHat = new Chart(document.getElementById('trendSexHatchery'),{type:'bar',data:{labels:HATCHERIES,datasets:[{label:'Male',data:HATCHERIES.map(h=>hM[h]||0),backgroundColor:'#3b82f6'},{label:'Female',data:HATCHERIES.map(h=>hF[h]||0),backgroundColor:'#ec4899'},{label:'Unsexed',data:HATCHERIES.map(h=>hU[h]||0),backgroundColor:'#a855f7'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'},datalabels:{display:true,color:'#fff',font:{weight:'bold',size:10},formatter:(v,ctx)=>{if(!v)return'';const h=HATCHERIES[ctx.dataIndex],m=hM[h]||0,f=hF[h]||0,u=hU[h]||0,s=m+f,t=s+u;if(ctx.datasetIndex===0||ctx.datasetIndex===1)return s?(v/s*100).toFixed(1)+'%':'';return t?(v/t*100).toFixed(1)+'%':'';}},tooltip:{callbacks:{footer:items=>'Total: '+items.reduce((s,i)=>s+i.parsed.y,0).toLocaleString()}}},scales:{x:{stacked:true},y:{stacked:true,ticks:{callback:v=>v.toLocaleString()}}}}});
   const tM=HATCHERIES.reduce((s,h)=>s+(hM[h]||0),0), tF=HATCHERIES.reduce((s,h)=>s+(hF[h]||0),0);
-  if (chartMF) chartMF.destroy(); 
-const ctxMF = document.getElementById('trendMFRatio');
-if (ctxMF) {
-    chartMF = new Chart(ctxMF, {
-        type: 'doughnut',
-        data: {
-            labels: ['Male', 'Female'],
-            datasets: [{
-                data: [tM, tF],
-                backgroundColor: ['#3b82f6', '#ec4899']
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { position: 'bottom' },
-                datalabels: {
-                    display: true,
-                    color: '#fff',
-                    font: { weight: 'bold', size: 12 },
-                    formatter: (v, ctx) => {
-                        const s = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
-                        return s ? (v / s * 100).toFixed(1) + '%' : '';
-                    }
-                },
-                tooltip: {
-                    callbacks: {
-                        label: ctx => {
-                            const s = tM + tF;
-                            return `${ctx.label}: ${ctx.parsed.toLocaleString()} (${s ? (ctx.parsed / s * 100).toFixed(1) + '%' : ''})`;
-                        }
-                    }
-                }
-            }
-        }
-    });
-}
+  if(chartMF) chartMF.destroy(); chartMF = new Chart(document.getElementById('trendMFRatio'),{type:'doughnut',data:{labels:['Male','Female'],datasets:[{data:[tM,tF],backgroundColor:['#3b82f6','#ec4899']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'},datalabels:{display:true,color:'#fff',font:{weight:'bold',size:12},formatter:(v,ctx)=>{const s=ctx.chart.data.datasets[0].data.reduce((a,b)=>a+b,0);return s?(v/s*100).toFixed(1)+'%':'';}},tooltip:{callbacks:{label:ctx=>{const s=tM+tF;return`${ctx.label}: ${ctx.parsed.toLocaleString()} (${s?(ctx.parsed/s*100).toFixed(1)+'%':''})`;}}}}});
 }
 
 function buildSexHatcheryMatrix(hM,hF,hU){
@@ -763,7 +731,7 @@ function editEstimate(id){const e=allEstimates.find(x=>x.id===id);if(!e)return;d
 function closeEstimateModal(){document.getElementById('estimateModal').classList.add('hidden')}
 async function saveEstimate(){
   const e=document.getElementById('estimateModal').dataset.editing, pt=document.getElementById('eePeriodType').value;
-  const d={period_type:pt,target_date:pt==='day'?(document.getElementById('eeDate').value||null):null,target_week:pt==='week'?(parseInt(document.getElementById('tWeek').value)||null):null,hatchery:document.getElementById('eeHatchery').value,estimate_total:parseInt(document.getElementById('eeTotal').value)||0,notes:document.getElementById('eeNotes').value||null};
+  const d={period_type:pt,target_date:pt==='day'?(document.getElementById('eeDate').value||null):null,target_week:pt==='week'?(parseInt(document.getElementById('eeWeek').value)||null):null,hatchery:document.getElementById('eeHatchery').value,estimate_total:parseInt(document.getElementById('eeTotal').value)||0,notes:document.getElementById('eeNotes').value||null};
   let error; if(e){({error}=await sb.from('hatchery_estimates').update(d).eq('id',e))}else{({error}=await sb.from('hatchery_estimates').upsert(d,{onConflict:'period_type,target_date,target_week,hatchery'}))}
   if(error)return toast(error.message,'error');toast('Saved','success');closeEstimateModal();
 }
