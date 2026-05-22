@@ -2,8 +2,15 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>DOC Tracker — Planning vs Actual</title>
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#2563eb" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="DOC Tracker" />
+<link rel="apple-touch-icon" href="icon-192.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script>
@@ -51,6 +58,29 @@
   .location-wrap{position:relative}
   .location-wrap input{padding-right:34px;width:100%}
   .location-clear-btn{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:0 4px;display:none;line-height:1;z-index:2}
+  /* ── PWA / Offline ── */
+  .offline-banner{position:fixed;top:0;left:0;right:0;z-index:9997;background:#f59e0b;color:#fff;text-align:center;padding:7px 12px;font-size:13px;font-weight:600;display:none;gap:8px;align-items:center;justify-content:center}
+  .offline-banner.show{display:flex}
+  .offline-banner button{background:rgba(255,255,255,.25);border:1px solid rgba(255,255,255,.5);color:#fff;border-radius:5px;padding:2px 10px;font-size:12px;cursor:pointer}
+  .sync-badge{position:absolute;top:-4px;right:-4px;background:#ef4444;color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 5px;min-width:16px;text-align:center}
+  .btn-install{background:var(--primary);color:#fff;border:none;padding:6px 12px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;display:none;align-items:center;gap:5px}
+  .btn-install.show{display:flex}
+  .btn-pwa-wrap{position:relative;display:inline-flex}
+  /* ── QR Scanner ── */
+  .qr-scanner-wrap{position:relative;background:#000;border-radius:10px;overflow:hidden;aspect-ratio:1}
+  .qr-viewfinder{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:64%;aspect-ratio:1;border:2px solid rgba(255,255,255,.8);border-radius:10px;box-shadow:0 0 0 9999px rgba(0,0,0,.52);pointer-events:none}
+  .qr-corner{position:absolute;width:22px;height:22px;border-style:solid;border-color:var(--primary)}
+  .qr-corner.tl{top:-1px;left:-1px;border-width:3px 0 0 3px;border-radius:6px 0 0 0}
+  .qr-corner.tr{top:-1px;right:-1px;border-width:3px 3px 0 0;border-radius:0 6px 0 0}
+  .qr-corner.bl{bottom:-1px;left:-1px;border-width:0 0 3px 3px;border-radius:0 0 0 6px}
+  .qr-corner.br{bottom:-1px;right:-1px;border-width:0 3px 3px 0;border-radius:0 0 6px 0}
+  .qr-scan-line{position:absolute;left:5%;right:5%;height:2px;background:linear-gradient(to right,transparent,var(--primary),transparent);border-radius:2px;animation:qrScan 2s ease-in-out infinite}
+  @keyframes qrScan{0%,100%{top:10%}50%{top:88%}}
+  .qr-result-box{padding:14px;background:#f0fdf4;border-top:1px solid #bbf7d0;font-size:13px}
+  .qr-result-label{font-size:11px;color:var(--muted);font-weight:600;margin-bottom:4px;text-transform:uppercase}
+  /* ── QR Code display ── */
+  #qrCodeCanvas{display:block;margin:0 auto;border-radius:8px}
+
   gmp-place-autocomplete{width:100%;--gmp-place-autocomplete-border-radius:8px;--gmp-place-autocomplete-border-color:var(--border);--gmp-place-autocomplete-border-width:1px;--gmp-place-autocomplete-background-color:var(--surface);--gmp-place-autocomplete-color:var(--text);--gmp-place-autocomplete-font-size:14px;--gmp-place-autocomplete-font-family:inherit;--gmp-place-autocomplete-input-padding:9px 36px 9px 12px;--gmp-place-autocomplete-placeholder-color:var(--muted);--gmp-place-autocomplete-focus-outline-color:var(--primary)}
   .location-clear-btn:hover{color:var(--danger)}
   #rLocationMap{height:200px;border-radius:8px;margin-top:8px;border:1px solid var(--border);display:none;overflow:hidden}
@@ -91,6 +121,50 @@
 </head>
 <body>
 
+<!-- ── Offline Banner ── -->
+<div class="offline-banner" id="offlineBanner">
+  <span>⚡ Offline Mode</span>
+  <span id="offlinePendingLabel"></span>
+  <button onclick="syncOfflineQueue()">🔄 Sync Now</button>
+</div>
+
+<!-- ── QR Scanner Modal ── -->
+<div id="qrScanModal" class="modal-overlay hidden">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header"><h2>📷 QR Scanner</h2><button class="modal-close" onclick="closeQRScanner()">&times;</button></div>
+    <div class="modal-body" style="padding:12px">
+      <div class="qr-scanner-wrap">
+        <video id="qrVideo" muted playsinline style="width:100%;height:100%;object-fit:cover;display:block"></video>
+        <canvas id="qrCanvas" style="display:none"></canvas>
+        <div class="qr-viewfinder">
+          <div class="qr-corner tl"></div><div class="qr-corner tr"></div>
+          <div class="qr-corner bl"></div><div class="qr-corner br"></div>
+        </div>
+        <div class="qr-scan-line"></div>
+      </div>
+      <p style="text-align:center;font-size:12px;color:var(--muted);margin:10px 0 0">จ่อกล้องไปที่ QR Code ของล็อตลูกไก่</p>
+      <div id="qrScanResult" class="qr-result-box hidden">
+        <div class="qr-result-label">ผลการสแกน</div>
+        <div id="qrScanText" style="font-family:monospace;word-break:break-all;margin-bottom:8px"></div>
+        <button class="btn-add" id="qrOpenRecord" style="display:none" onclick="openRecordFromQR()">📋 เปิด Record</button>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn-secondary" onclick="closeQRScanner()">ปิด</button></div>
+  </div>
+</div>
+
+<!-- ── QR Code Display Modal ── -->
+<div id="qrShowModal" class="modal-overlay hidden">
+  <div class="modal" style="max-width:340px">
+    <div class="modal-header"><h2>🔲 QR Code</h2><button class="modal-close" onclick="document.getElementById('qrShowModal').classList.add('hidden')">&times;</button></div>
+    <div class="modal-body" style="text-align:center">
+      <canvas id="qrCodeCanvas" style="border-radius:8px;margin-bottom:12px"></canvas>
+      <div id="qrShowInfo" style="font-size:12px;color:var(--muted);line-height:1.6"></div>
+      <button class="btn-secondary" style="margin-top:12px;width:100%" onclick="downloadQRCode()">⬇️ Download QR</button>
+    </div>
+  </div>
+</div>
+
 <div id="setupScreen" class="center-screen hidden">
   <div class="lang-toggle lang-toggle-floating"><button data-lang="th" onclick="setLanguage('th')">ไทย</button><button data-lang="en" onclick="setLanguage('en')">EN</button></div>
   <div class="auth-card">
@@ -125,6 +199,8 @@
     <div class="user-info">
       <div class="lang-toggle"><button data-lang="th" onclick="setLanguage('th')">ไทย</button><button data-lang="en" onclick="setLanguage('en')">EN</button></div>
       <span class="live-status"><span class="live-dot"></span><span data-i18n="realtime">Real-time</span></span>
+      <div class="btn-pwa-wrap"><button class="btn-secondary" onclick="openQRScanner()" title="QR Scanner" style="padding:6px 10px">📷</button><span class="sync-badge" id="pendingBadge" style="display:none">0</span></div>
+      <button class="btn-install" id="btnInstall" onclick="installPWA()">📲 Install App</button>
       <span id="userEmail"></span><span id="userBadge" class="badge"></span>
       <button class="btn-secondary" onclick="logout()" data-i18n="logout">Logout</button>
     </div>
@@ -309,7 +385,7 @@
       </div>
       <div class="form-row"><label data-i18n="lblNotes">Notes</label><textarea id="rNotes" rows="2"></textarea></div>
     </div>
-    <div class="modal-footer"><button class="btn-danger hidden" id="rDeleteBtn" onclick="deleteRecord()" data-i18n="delete">ลบ</button><button class="btn-secondary" onclick="closeModal()" data-i18n="cancel">ยกเลิก</button><button class="btn-add" onclick="saveRecord()" data-i18n="save">บันทึก</button></div>
+    <div class="modal-footer"><button class="btn-danger hidden" id="rDeleteBtn" onclick="deleteRecord()" data-i18n="delete">ลบ</button><button class="btn-secondary hidden" id="rQRBtn" onclick="showRecordQR()" title="Generate QR Code">🔲 QR</button><button class="btn-secondary" onclick="closeModal()" data-i18n="cancel">ยกเลิก</button><button class="btn-add" onclick="saveRecord()" data-i18n="save">บันทึก</button></div>
   </div>
 </div>
 
@@ -372,6 +448,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 
 <script>
 // ===========================================================
@@ -733,7 +811,7 @@ function renderEntry(){
 }
 
 function openAddModal(){
-  document.getElementById('modalTitle').textContent=t('addRecordTitle'); document.getElementById('rDeleteBtn').classList.add('hidden');
+  document.getElementById('modalTitle').textContent=t('addRecordTitle'); document.getElementById('rDeleteBtn').classList.add('hidden'); document.getElementById('rQRBtn').classList.add('hidden');
   ['rId','rCustomer','rCustomerCode','rExternalSource','rMOrd','rFOrd','rUOrd','rMAct','rFAct','rUAct','rPrice','rTotalAmount','rNotes','rDONumber','rTruckPlate','rDepartureTime','rLocation','rWeightM','rWeightF','rWeightMixed','rEggAge'].forEach(id=>{const el=document.getElementById(id); if(el) el.value='';});
   document.querySelectorAll('input[name="vacSC"]').forEach(cb=>cb.checked=false); document.querySelectorAll('input[name="vacSpray"]').forEach(cb=>cb.checked=false);
   document.getElementById('rDate').valueAsDate=new Date(); updateDayName(); ['rHatchery','rCType','rBreed'].forEach(id=>document.getElementById(id).value=''); document.getElementById('rExternalSourceRow').classList.add('hidden');
@@ -748,7 +826,7 @@ function applyHatcheryRestrictionToForm(){
 }
 function openEditModal(id){
   const r=allRecords.find(x=>x.id===id);if(!r) return;
-  document.getElementById('modalTitle').textContent=t('editRecordTitle'); applyHatcheryRestrictionToForm(); document.getElementById('rDeleteBtn').classList.toggle('hidden',!(currentProfile?.role==='admin'||r.user_id===currentUser.id));
+  document.getElementById('modalTitle').textContent=t('editRecordTitle'); applyHatcheryRestrictionToForm(); document.getElementById('rDeleteBtn').classList.toggle('hidden',!(currentProfile?.role==='admin'||r.user_id===currentUser.id)); document.getElementById('rQRBtn').classList.remove('hidden');
   document.getElementById('rId').value=r.id; document.getElementById('rWeek').value=r.week_no; document.getElementById('rDate').value=r.record_date; document.getElementById('rDay').value=r.day_name||'';
   document.getElementById('rHatchery').value=r.hatchery; document.getElementById('rCType').value=r.customer_type; document.getElementById('rCustomer').value=r.customer_name; document.getElementById('rCustomerCode').value=r.customer_code||''; document.getElementById('rBreed').value=r.breed||'';
   document.getElementById('rExternalSource').value=r.external_source||''; onHatcheryChange();
@@ -787,6 +865,12 @@ async function saveRecord(){
   };
   if(!data.week_no||!data.record_date||!data.hatchery||!data.customer_type||!data.customer_name){toast(t('toastRequiredFields'),'error');return}
   if(!isHatcheryAllowed(data.hatchery)){toast('🔒 Permission denied','error');return}
+  // Offline support — queue new records when no network
+  if(!id && !navigator.onLine){
+    data.user_id=currentUser.id;
+    await queueOfflineRecord(data);
+    toast('💾 บันทึก Offline — จะ Sync เมื่อมีเน็ต','info'); closeModal(); return;
+  }
   let error; if(id){({error}=await sb.from('doc_records').update(data).eq('id',id))}else{data.user_id=currentUser.id;({error}=await sb.from('doc_records').insert(data))}
   if(error) return toast(error.message,'error'); toast(id?t('toastUpdated'):t('toastSaved'),'success'); closeModal();
 }
@@ -1174,6 +1258,298 @@ async function exportPDF(){
 
 function toast(m,t='info'){const el=document.createElement('div');el.className='toast '+t;el.textContent=m;document.body.appendChild(el);setTimeout(()=>el.remove(),2800)}
 function esc(s){if(s==null)return'';return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+
+// ===========================================================
+// PWA — Service Worker Registration
+// ===========================================================
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => {
+        console.log('[PWA] SW registered, scope:', reg.scope);
+        navigator.serviceWorker.addEventListener('message', e => {
+          if (e.data?.type === 'SW_SYNC_REQUIRED') syncOfflineQueue();
+        });
+      })
+      .catch(e => console.warn('[PWA] SW registration failed:', e));
+  });
+}
+
+// ===========================================================
+// PWA — Install Prompt
+// ===========================================================
+let deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  const btn = document.getElementById('btnInstall');
+  if (btn) btn.classList.add('show');
+});
+window.addEventListener('appinstalled', () => {
+  deferredInstallPrompt = null;
+  const btn = document.getElementById('btnInstall');
+  if (btn) btn.classList.remove('show');
+  toast('✅ ติดตั้งแอปสำเร็จ!', 'success');
+});
+function installPWA() {
+  if (!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  deferredInstallPrompt.userChoice.then(r => { if (r.outcome === 'accepted') deferredInstallPrompt = null; });
+}
+
+// Handle URL action shortcuts from manifest
+window.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+  const action = params.get('action');
+  if (action === 'add') setTimeout(() => { if (typeof openAddModal === 'function') openAddModal(); }, 1200);
+  if (action === 'scan') setTimeout(() => { if (typeof openQRScanner === 'function') openQRScanner(); }, 1200);
+});
+
+// ===========================================================
+// PWA — Offline Detection
+// ===========================================================
+function updateOfflineBanner() {
+  const banner = document.getElementById('offlineBanner');
+  if (!banner) return;
+  if (navigator.onLine) {
+    banner.classList.remove('show');
+  } else {
+    banner.classList.add('show');
+    updatePendingBadge();
+  }
+}
+window.addEventListener('online', () => {
+  updateOfflineBanner();
+  syncOfflineQueue();
+  toast('✅ กลับมา Online — กำลัง Sync...', 'success');
+});
+window.addEventListener('offline', () => {
+  updateOfflineBanner();
+  toast('⚡ ใช้งาน Offline Mode', 'info');
+});
+updateOfflineBanner();
+
+// ===========================================================
+// PWA — IndexedDB Offline Queue
+// ===========================================================
+const IDB_NAME = 'docTrackerOffline';
+const IDB_STORE = 'pendingRecords';
+let _idb = null;
+
+function openOfflineDB() {
+  return new Promise((resolve, reject) => {
+    if (_idb) { resolve(_idb); return; }
+    const req = indexedDB.open(IDB_NAME, 1);
+    req.onupgradeneeded = e => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(IDB_STORE)) {
+        db.createObjectStore(IDB_STORE, { keyPath: '_offlineId', autoIncrement: true });
+      }
+    };
+    req.onsuccess = e => { _idb = e.target.result; resolve(_idb); };
+    req.onerror = e => reject(e.target.error);
+  });
+}
+
+async function queueOfflineRecord(data) {
+  const db = await openOfflineDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(IDB_STORE, 'readwrite');
+    const store = tx.objectStore(IDB_STORE);
+    const req = store.add({ ...data, _queuedAt: new Date().toISOString() });
+    req.onsuccess = () => { updatePendingBadge(); resolve(); };
+    req.onerror = e => reject(e.target.error);
+  });
+}
+
+async function getPendingRecords() {
+  const db = await openOfflineDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(IDB_STORE, 'readonly');
+    const req = tx.objectStore(IDB_STORE).getAll();
+    req.onsuccess = () => resolve(req.result || []);
+    req.onerror = e => reject(e.target.error);
+  });
+}
+
+async function deletePendingRecord(offlineId) {
+  const db = await openOfflineDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(IDB_STORE, 'readwrite');
+    const req = tx.objectStore(IDB_STORE).delete(offlineId);
+    req.onsuccess = () => resolve();
+    req.onerror = e => reject(e.target.error);
+  });
+}
+
+async function updatePendingBadge() {
+  try {
+    const pending = await getPendingRecords();
+    const badge = document.getElementById('pendingBadge');
+    const label = document.getElementById('offlinePendingLabel');
+    if (badge) { badge.textContent = pending.length; badge.style.display = pending.length > 0 ? 'block' : 'none'; }
+    if (label) label.textContent = pending.length > 0 ? `(${pending.length} รายการรอ Sync)` : '';
+  } catch(e) {}
+}
+
+async function syncOfflineQueue() {
+  if (!navigator.onLine || !sb || !currentUser) return;
+  let pending;
+  try { pending = await getPendingRecords(); } catch(e) { return; }
+  if (!pending || pending.length === 0) { updatePendingBadge(); return; }
+  let synced = 0, failed = 0;
+  for (const rec of pending) {
+    const { _offlineId, _queuedAt, ...data } = rec;
+    try {
+      const { error } = await sb.from('doc_records').insert(data);
+      if (error) { failed++; continue; }
+      await deletePendingRecord(_offlineId);
+      synced++;
+    } catch(e) { failed++; }
+  }
+  updatePendingBadge();
+  if (synced > 0) toast(`✅ Sync สำเร็จ ${synced} รายการ`, 'success');
+  if (failed > 0) toast(`⚠️ Sync ล้มเหลว ${failed} รายการ — ลองใหม่ภายหลัง`, 'error');
+}
+
+// ===========================================================
+// PWA — QR Scanner
+// ===========================================================
+let _qrStream = null;
+let _qrAnimFrame = null;
+let _qrLastResult = null;
+
+function openQRScanner() {
+  document.getElementById('qrScanModal').classList.remove('hidden');
+  document.getElementById('qrScanResult').classList.add('hidden');
+  _qrLastResult = null;
+  startQRCamera();
+}
+
+function closeQRScanner() {
+  document.getElementById('qrScanModal').classList.add('hidden');
+  stopQRCamera();
+}
+
+async function startQRCamera() {
+  try {
+    _qrStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }
+    });
+    const video = document.getElementById('qrVideo');
+    video.srcObject = _qrStream;
+    await video.play();
+    _qrAnimFrame = requestAnimationFrame(scanQRFrame);
+  } catch(e) {
+    toast('❌ ไม่สามารถเปิดกล้องได้: ' + e.message, 'error');
+    closeQRScanner();
+  }
+}
+
+function stopQRCamera() {
+  if (_qrAnimFrame) { cancelAnimationFrame(_qrAnimFrame); _qrAnimFrame = null; }
+  if (_qrStream) { _qrStream.getTracks().forEach(t => t.stop()); _qrStream = null; }
+  const video = document.getElementById('qrVideo');
+  if (video) video.srcObject = null;
+}
+
+function scanQRFrame() {
+  const video = document.getElementById('qrVideo');
+  const canvas = document.getElementById('qrCanvas');
+  if (!video || !canvas || video.readyState < video.HAVE_ENOUGH_DATA) {
+    _qrAnimFrame = requestAnimationFrame(scanQRFrame); return;
+  }
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  try {
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const jsQRFn = window.jsQR || window['jsQR'];
+    if (jsQRFn) {
+      const code = jsQRFn(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
+      if (code && code.data && code.data !== _qrLastResult) {
+        _qrLastResult = code.data;
+        handleQRResult(code.data);
+        return; // stop scanning after a hit
+      }
+    }
+  } catch(e) {}
+  _qrAnimFrame = requestAnimationFrame(scanQRFrame);
+}
+
+function handleQRResult(data) {
+  const resultBox = document.getElementById('qrScanResult');
+  const resultText = document.getElementById('qrScanText');
+  const openBtn = document.getElementById('qrOpenRecord');
+  resultBox.classList.remove('hidden');
+  resultText.textContent = data;
+  if (data.startsWith('DOCT://')) {
+    const recordId = data.replace('DOCT://', '').trim();
+    openBtn.style.display = 'inline-flex';
+    openBtn.dataset.recordId = recordId;
+    toast('✅ พบ QR Code ของระบบ', 'success');
+  } else {
+    openBtn.style.display = 'none';
+    toast('📷 สแกนได้: ' + data.substring(0, 50), 'info');
+  }
+  stopQRCamera();
+}
+
+function openRecordFromQR() {
+  const recordId = document.getElementById('qrOpenRecord').dataset.recordId;
+  if (!recordId) return;
+  closeQRScanner();
+  const rec = allRecords.find(r => r.id === recordId);
+  if (rec) {
+    openEditModal(recordId);
+  } else {
+    toast('❌ ไม่พบ Record ID นี้ในระบบ', 'error');
+  }
+}
+
+// ===========================================================
+// PWA — QR Code Generator
+// ===========================================================
+let _currentQRRecordId = null;
+
+function showRecordQR() {
+  const id = document.getElementById('rId').value;
+  if (!id) { toast('กรุณาบันทึก Record ก่อนสร้าง QR', 'info'); return; }
+  _currentQRRecordId = id;
+  const rec = allRecords.find(r => r.id === id);
+  const modal = document.getElementById('qrShowModal');
+  modal.classList.remove('hidden');
+  const canvas = document.getElementById('qrCodeCanvas');
+  const info = document.getElementById('qrShowInfo');
+  const qrData = 'DOCT://' + id;
+  if (rec) {
+    info.innerHTML = `<strong>${esc(rec.customer_name || '')}</strong><br>${rec.record_date || ''} · ${esc(rec.hatchery || '')}<br><span style="font-size:11px;font-family:monospace;color:var(--muted)">${qrData}</span>`;
+  } else {
+    info.textContent = qrData;
+  }
+  if (typeof QRCode !== 'undefined' && QRCode.toCanvas) {
+    QRCode.toCanvas(canvas, qrData, { width: 240, margin: 2, color: { dark: '#111827', light: '#ffffff' } }, err => {
+      if (err) toast('QR Error: ' + err.message, 'error');
+    });
+  } else {
+    toast('QR library ยังไม่โหลด', 'error');
+  }
+}
+
+function downloadQRCode() {
+  const canvas = document.getElementById('qrCodeCanvas');
+  if (!canvas) return;
+  const rec = allRecords.find(r => r.id === _currentQRRecordId);
+  const filename = rec
+    ? ('QR_' + (rec.customer_name || 'record') + '_' + (rec.record_date || '')).replace(/[^a-zA-Z0-9_\-]/g, '_') + '.png'
+    : 'QR_Record.png';
+  const link = document.createElement('a');
+  link.download = filename;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+
 init();
 </script>
 </body>
