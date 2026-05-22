@@ -34,6 +34,11 @@
   table{width:100%;border-collapse:collapse;font-size:13px} th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--border);white-space:nowrap} th{background:#f9fafb;font-weight:600;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;position:sticky;top:0;z-index:1} tbody tr:hover{background:#f9fafb} .num{text-align:right;font-variant-numeric:tabular-nums}
   .ctype-direct{background:var(--direct);color:var(--direct-text);padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;display:inline-block} .ctype-contract{background:var(--contract);color:var(--contract-text);padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;display:inline-block} .ctype-company{background:var(--company);color:var(--company-text);padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;display:inline-block} .unsexed-cell{background:var(--unsexed)} .breed-chip{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:10px;font-size:11px;font-weight:600;color:#fff} .breed-chip.cobb{background:#3b82f6} .breed-chip.ross{background:#dc2626} .breed-stripe-cobb{border-left:3px solid #3b82f6} .breed-stripe-ross{border-left:3px solid #dc2626}
   .diff-pos{color:var(--success);font-weight:600} .diff-neg{color:var(--danger);font-weight:600} .diff-zero{color:var(--muted)} .table-wrap{overflow-x:auto;max-height:600px;overflow-y:auto} .table-action{background:none;border:none;padding:3px 6px;color:var(--muted);border-radius:4px;font-size:14px;cursor:pointer} .table-action:hover{background:var(--bg);color:var(--text)} .empty-state{text-align:center;padding:50px 20px;color:var(--muted)}
+  #tab-admin .table-wrap{max-height:420px}
+  .sort-th{cursor:pointer;user-select:none;white-space:nowrap} .sort-th:hover{background:rgba(99,102,241,0.1)!important}
+  .cust-ac-wrap{position:relative} .cust-ac{position:absolute;left:0;right:0;top:100%;z-index:200;background:var(--surface);border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px;max-height:220px;overflow-y:auto;box-shadow:0 6px 16px rgba(0,0,0,.12);display:none}
+  .cust-ac-item{padding:9px 12px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border)} .cust-ac-item:last-child{border-bottom:none} .cust-ac-item:hover{background:var(--bg)}
+  .cust-ac-code{background:#eff6ff;color:var(--primary);font-size:11px;font-weight:700;padding:1px 6px;border-radius:4px} .cust-ac-type{color:var(--muted);font-size:11px}
   .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:50;padding:14px} .modal{background:#fff;border-radius:12px;max-width:750px;width:100%;max-height:92vh;overflow-y:auto} .modal-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center} .modal-header h2{margin:0;font-size:17px} .modal-close{background:none;border:none;font-size:22px;color:var(--muted);line-height:1} .modal-body{padding:18px 20px} .modal-footer{padding:12px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
   .form-row{margin-bottom:11px} .form-row label{display:block;font-weight:500;margin-bottom:4px;font-size:13px;color:#374151} .form-row input,.form-row select,.form-row textarea{width:100%;padding:8px 11px;border:1px solid var(--border);border-radius:7px} .form-row input:focus,.form-row select:focus{outline:none;border-color:var(--primary)} .form-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px} .form-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px} .form-grid-4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px} .section-label{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin:14px 0 6px} .btn-secondary{background:#fff;color:var(--text);border:1px solid var(--border);padding:8px 14px;border-radius:7px;font-weight:500} .btn-secondary:hover{background:var(--bg)} .btn-danger{background:var(--danger);color:#fff;border:none;padding:8px 14px;border-radius:7px;font-weight:500}
   .summary-section{margin-bottom:20px} .summary-title{font-size:13px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;background:#f3f4f6;padding:8px 12px;border-radius:6px} .matrix{width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden;box-shadow:var(--shadow)} .matrix th,.matrix td{padding:8px 12px;border:1px solid var(--border);text-align:right;font-variant-numeric:tabular-nums;font-size:13px} .matrix th:first-child,.matrix td:first-child{text-align:left} .matrix thead th{background:#374151;color:#fff;font-weight:600} .matrix .row-direct{background:#eff6ff} .matrix .row-contract{background:#fff7ed} .matrix .row-company{background:#f0fdf4} .matrix .row-total{background:#1f2937;color:#fff;font-weight:700} .matrix .row-total td{border-color:#374151} .matrix .col-total{font-weight:700;background:#f3f4f6} .matrix .row-target{background:#fef3c7;font-weight:600} .matrix .row-diff{font-weight:600} .matrix .row-diff.pos{background:#d1fae5} .matrix .row-diff.neg{background:#fee2e2}
@@ -201,6 +206,7 @@
       <div class="card"><div class="card-header"><span class="card-title" data-i18n="manageUsers">จัดการผู้ใช้</span></div><div class="table-wrap"><table><thead><tr><th data-i18n="th_email">อีเมล</th><th data-i18n="th_name">ชื่อ</th><th data-i18n="th_role">Role</th><th data-i18n="th_registered">สมัครเมื่อ</th><th data-i18n="th_perms">สิทธิ์</th><th></th></tr></thead><tbody id="adminTbody"></tbody></table></div></div>
       <div class="card" style="margin-top:14px"><div class="card-header"><span class="card-title" data-i18n="bookingTargetsTitle">Booking Targets</span><div style="display:flex;gap:8px;align-items:center"><select id="targetsViewSelect" onchange="setTargetsView(this.value)"><option value="week" data-i18n="byWeek">📅 รายสัปดาห์</option><option value="day" data-i18n="byDay">📆 รายวัน</option></select><button class="btn-add" onclick="openTargetModal()" data-i18n="addTarget">+ ตั้งเป้าหมาย</button></div></div><div class="table-wrap" id="targetsTableWrap"></div></div>
       <div class="card" style="margin-top:14px"><div class="card-header"><span class="card-title" data-i18n="hatcheryEstTitle">Hatchery Estimate</span><div style="display:flex;gap:8px;align-items:center"><select id="estimatesViewSelect" onchange="setEstimatesView(this.value)"><option value="week" data-i18n="byWeek">📅 รายสัปดาห์</option><option value="day" data-i18n="byDay">📆 รายวัน</option></select><button class="btn-add" onclick="openEstimateModal()" data-i18n="addEstimate">+ เพิ่ม Estimate</button></div></div><div class="table-wrap" id="estimatesTableWrap"></div></div>
+      <div class="card" style="margin-top:14px"><div class="card-header"><span class="card-title" data-i18n="customersTitle">📋 ข้อมูลอ้างอิงลูกค้า</span><button class="btn-add" onclick="openCustomerModal()" data-i18n="addCustomer">+ เพิ่มลูกค้า</button></div><div class="table-wrap" id="customersTableWrap"></div></div>
     </div>
   </div>
 </div>
@@ -224,7 +230,7 @@
         </div>
       </div>
       <div class="form-grid-2">
-        <div class="form-row"><label data-i18n="lblCustomer">Customer / Farm Name</label><input id="rCustomer" type="text" required/></div>
+        <div class="form-row cust-ac-wrap"><label data-i18n="lblCustomer">Customer / Farm Name</label><input id="rCustomer" type="text" required autocomplete="off" oninput="onCustomerInput(this)" onblur="setTimeout(()=>hideCustAC(),200)"/><div id="rCustomerAC" class="cust-ac"></div></div>
         <div class="form-row"><label data-i18n="lblBreed">Breed</label><select id="rBreed"><option value="" data-i18n="chooseOption">-- เลือก --</option><option value="COBB">COBB</option><option value="ROSS">ROSS</option></select></div>
       </div>
       <div class="form-row hidden" id="rExternalSourceRow"><label data-i18n="lblExternalSource">🛒 ซื้อจากที่ไหน (ระบุชื่อบริษัท/แหล่งซื้อ)</label><input id="rExternalSource" type="text"/></div>
@@ -324,6 +330,29 @@
   </div>
 </div>
 
+<div id="customerModal" class="modal-overlay hidden">
+  <div class="modal" style="max-width:580px">
+    <div class="modal-header"><h2 id="customerModalTitle" data-i18n="addCustomerTitle">เพิ่มข้อมูลลูกค้า</h2><button class="modal-close" onclick="closeCustomerModal()">&times;</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="custId"/>
+      <div class="form-grid-2">
+        <div class="form-row"><label data-i18n="lblCustomer">ชื่อลูกค้า / ฟาร์ม</label><input id="custName" type="text"/></div>
+        <div class="form-row"><label data-i18n="lblCustomerCode">รหัสลูกค้า</label><input id="custCode" type="text" placeholder="e.g. BRC-001"/></div>
+      </div>
+      <div class="form-row"><label data-i18n="lblCType">ประเภทลูกค้า</label>
+        <select id="custType"><option value="" data-i18n="chooseOption">-- เลือก --</option><option value="Customer (Direct)">Customer (Direct)</option><option value="Contract Farm">Contract Farm</option><option value="Company Farm">Company Farm</option></select>
+      </div>
+      <div class="form-row"><label data-i18n="lblFarmLocation">สถานที่ฟาร์ม</label><input id="custFarmLocation" type="text" placeholder="ชื่อสถานที่หรือที่อยู่"/></div>
+      <div class="form-grid-2">
+        <div class="form-row"><label data-i18n="lblNumSheds">จำนวนเล้า</label><input id="custNumSheds" type="number" min="0"/></div>
+        <div class="form-row"><label data-i18n="lblChickenCapacity">ปริมาณไก่เข้าเลี้ยง (ตัว)</label><input id="custChickenCapacity" type="number" min="0"/></div>
+      </div>
+      <div class="form-row"><label data-i18n="lblNotes">Notes</label><textarea id="custNotes" rows="2"></textarea></div>
+    </div>
+    <div class="modal-footer"><button class="btn-danger hidden" id="custDeleteBtn" onclick="deleteCustomerFromModal()">🗑️ ลบ</button><button class="btn-secondary" onclick="closeCustomerModal()" data-i18n="cancel">ยกเลิก</button><button class="btn-add" onclick="saveCustomer()" data-i18n="save">บันทึก</button></div>
+  </div>
+</div>
+
 <div id="targetModal" class="modal-overlay hidden"><div class="modal" style="max-width:520px"><div class="modal-header"><h2 data-i18n="setTargetTitle">ตั้งเป้าหมาย Booking</h2><button class="modal-close" onclick="closeTargetModal()">&times;</button></div><div class="modal-body"><div class="form-row"><label data-i18n="lblPeriodType">ประเภทระยะเวลา</label><select id="tPeriodType" onchange="togglePeriodFields()"><option value="day" data-i18n="byDay">📆 รายวัน</option><option value="week" data-i18n="byWeek">📅 รายสัปดาห์</option></select></div><div class="form-row" id="tDateRow"><label data-i18n="lblDate">วันที่</label><input id="tDate" type="date"/></div><div class="form-row hidden" id="tWeekRow"><label data-i18n="lblWeek">สัปดาห์</label><input id="tWeek" type="number" min="1" max="53"/></div><div class="form-row"><label data-i18n="lblCType">ประเภทลูกค้า</label><select id="tCustomerType"><option value="" data-i18n="chooseOption">-- เลือก --</option><option value="Customer (Direct)">Customer (Direct)</option><option value="Contract Farm">Contract Farm</option><option value="Company Farm">Company Farm</option></select></div><div class="form-row"><label data-i18n="lblBooking">Booking (จำนวนที่จอง)</label><input id="tBooking" type="number" min="0"/></div></div><div class="modal-footer"><button class="btn-secondary" onclick="closeTargetModal()" data-i18n="cancel">ยกเลิก</button><button class="btn-add" onclick="saveTarget()" data-i18n="save">บันทึก</button></div></div></div>
 
 <div id="customizeModal" class="modal-overlay hidden"><div class="modal" style="max-width:520px"><div class="modal-header"><h2 data-i18n="customizeTitle">⚙️ ปรับแต่งการแสดงผล</h2><button class="modal-close" onclick="closeCustomizeModal()">&times;</button></div><div class="modal-body"><div class="section-label" data-i18n="customSectionsLabel">เลือก section ที่ต้องการแสดง</div><div id="customSectionsList" style="display:grid;grid-template-columns:1fr;gap:6px;font-size:13px"></div><div class="section-label" style="margin-top:16px" data-i18n="customDisplayLabel">รูปแบบค่าที่แสดง (Diff)</div><div style="display:flex;gap:6px;flex-wrap:wrap"><label style="flex:1;min-width:90px;display:flex;align-items:center;gap:6px;padding:8px;background:var(--bg);border-radius:6px;cursor:pointer"><input type="radio" name="diffMode" value="number"> <span data-i18n="modeNumber">ตัวเลข</span></label><label style="flex:1;min-width:90px;display:flex;align-items:center;gap:6px;padding:8px;background:var(--bg);border-radius:6px;cursor:pointer"><input type="radio" name="diffMode" value="percent"> <span data-i18n="modePercent">เปอร์เซ็นต์</span></label><label style="flex:1;min-width:90px;display:flex;align-items:center;gap:6px;padding:8px;background:var(--bg);border-radius:6px;cursor:pointer"><input type="radio" name="diffMode" value="both" checked> <span data-i18n="modeBoth">ทั้งสองอย่าง</span></label></div><div class="section-label" style="margin-top:16px" data-i18n="customThemeLabel">สี Theme หลัก</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="theme-btn" onclick="setTheme('blue')" data-theme="blue" style="flex:1;min-width:80px;padding:8px;background:#2563eb;color:white;border:none;border-radius:6px;font-weight:600;cursor:pointer">Blue</button><button class="theme-btn" onclick="setTheme('green')" data-theme="green" style="flex:1;min-width:80px;padding:8px;background:#16a34a;color:white;border:none;border-radius:6px;font-weight:600;cursor:pointer">Green</button><button class="theme-btn" onclick="setTheme('purple')" data-theme="purple" style="flex:1;min-width:80px;padding:8px;background:#7c3aed;color:white;border:none;border-radius:6px;font-weight:600;cursor:pointer">Purple</button><button class="theme-btn" onclick="setTheme('orange')" data-theme="orange" style="flex:1;min-width:80px;padding:8px;background:#ea580c;color:white;border:none;border-radius:6px;font-weight:600;cursor:pointer">Orange</button><button class="theme-btn" onclick="setTheme('slate')" data-theme="slate" style="flex:1;min-width:80px;padding:8px;background:#475569;color:white;border:none;border-radius:6px;font-weight:600;cursor:pointer">Slate</button></div></div><div class="modal-footer"><button class="btn-danger" onclick="resetCustomize()" data-i18n="resetDefault">รีเซ็ต</button><button class="btn-secondary" onclick="closeCustomizeModal()" data-i18n="close">ปิด</button></div></div></div>
@@ -382,6 +411,7 @@ const I18N = {
     role_user:'User', role_admin:'Admin', perm_manage_users:'จัดการ User', perm_manage_targets:'จัดการ Targets', perm_manage_estimates:'จัดการ Estimates',
     perm_edit_all_records:'แก้ไข Records คนอื่น', perm_export_pdf:'Export PDF ได้', perm_view_admin_tab:'เห็นแท็บ Admin', permHatcheriesLabel:'โรงฟักที่อนุญาต', permHatcheriesHint:'ไม่ติ๊ก = ได้ทุกโรงฟัก',
     th_createdAt:'สร้างเมื่อ', showAll:'แสดงทั้งหมด', show10Latest:'แสดง 10 ล่าสุด', lblExternalSource:'🛒 ซื้อจากที่ไหน', manageUsers:'จัดการผู้ใช้',
+    customersTitle:'📋 ข้อมูลอ้างอิงลูกค้า', addCustomer:'+ เพิ่มลูกค้า', lblCustomerCode:'รหัสลูกค้า', lblFarmLocation:'สถานที่ฟาร์ม', lblNumSheds:'จำนวนเล้า', lblChickenCapacity:'ปริมาณไก่เข้าเลี้ยง', confirmDeleteCustomer:'ลบข้อมูลลูกค้านี้?', editCustomerTitle:'แก้ไขข้อมูลลูกค้า', addCustomerTitle:'เพิ่มข้อมูลลูกค้า',
     th_email:'อีเมล', th_name:'ชื่อ', th_role:'สิทธิ์', th_registered:'สมัครเมื่อ', th_changeRole:'เปลี่ยนสิทธิ์', bookingTargetsTitle:'Booking Targets', addTarget:'+ ตั้งเป้าหมาย',
     th_periodType:'ประเภท', th_period:'วัน/สัปดาห์', th_customerType:'ประเภทลูกค้า', lblPeriodType:'ประเภทระยะเวลา', addRecordTitle:'เพิ่มรายการ', editRecordTitle:'แก้ไขรายการ',
     lblWeek:'สัปดาห์', lblDate:'วันที่', lblDay:'วัน', lblHatchery:'โรงฟัก', lblCType:'ประเภทลูกค้า', lblCustomer:'ชื่อลูกค้า / ฟาร์ม', lblBreed:'สายพันธุ์',
@@ -417,6 +447,7 @@ const I18N = {
     role_user:'User', role_admin:'Admin', perm_manage_users:'Manage Users', perm_manage_targets:'Manage Targets', perm_manage_estimates:'Manage Estimates',
     perm_edit_all_records:'Edit All Records', perm_export_pdf:'Export PDF', perm_view_admin_tab:'View Admin Tab', permHatcheriesLabel:'Allowed Hatcheries', permHatcheriesHint:'None = all',
     th_createdAt:'Created', showAll:'Show All', show10Latest:'Show 10 Latest', lblExternalSource:'🛒 Buy-in source', manageUsers:'Manage Users',
+    customersTitle:'📋 Customer Reference', addCustomer:'+ Add Customer', lblCustomerCode:'Customer Code', lblFarmLocation:'Farm Location', lblNumSheds:'No. of Sheds', lblChickenCapacity:'Chicken Capacity', confirmDeleteCustomer:'Delete this customer?', editCustomerTitle:'Edit Customer', addCustomerTitle:'Add Customer',
     th_email:'Email', th_name:'Name', th_role:'Role', th_registered:'Registered', th_changeRole:'Change Role', bookingTargetsTitle:'Booking Targets', addTarget:'+ Add Target',
     th_periodType:'Type', th_period:'Day/Week', th_customerType:'Customer Type', lblPeriodType:'Period Type', addRecordTitle:'Add Record', editRecordTitle:'Edit Record',
     lblWeek:'Week', lblDate:'Date', lblDay:'Day', lblHatchery:'Hatchery', lblCType:'Customer Type', lblCustomer:'Customer', lblBreed:'Breed',
@@ -619,9 +650,9 @@ async function onLogin(user){
   document.getElementById('userEmail').textContent=profile?.email||user.email;
   const badge=document.getElementById('userBadge');
   if(profile?.role==='admin'){badge.className='badge badge-admin';badge.textContent='ADMIN'}else{badge.className='badge badge-user';badge.textContent='USER'}
-  await Promise.all([loadProfiles(),loadRecords(),loadTargets(),loadEstimates()]);
+  await Promise.all([loadProfiles(),loadRecords(),loadTargets(),loadEstimates(),loadCustomers()]);
   applyPermissionsToUI(); populateWeekFilters(); renderEntry(); renderSummary();
-  if(hasPermission('view_admin_tab')){renderAdminTable();renderTargetsTable();renderEstimatesTable();}
+  if(hasPermission('view_admin_tab')){renderAdminTable();renderTargetsTable();renderEstimatesTable();renderCustomersTable();}
   subscribeRealtime();
 }
 async function loadProfiles(){const {data}=await sb.from('profiles').select('*').order('created_at');allProfiles=data||[];}
@@ -640,6 +671,7 @@ function subscribeRealtime(){
     })
     .on('postgres_changes',{event:'*',schema:'public',table:'doc_targets'},async()=>{await loadTargets();renderSummary();if(currentProfile?.role==='admin')renderTargetsTable()})
     .on('postgres_changes',{event:'*',schema:'public',table:'hatchery_estimates'},async()=>{await loadEstimates();renderSummary();if(currentProfile?.role==='admin')renderEstimatesTable()})
+    .on('postgres_changes',{event:'*',schema:'public',table:'customers'},async()=>{await loadCustomers();if(currentProfile?.role==='admin')renderCustomersTable();})
     .subscribe();
 }
 
@@ -889,12 +921,16 @@ function applyPermissionsToUI(){
   document.querySelectorAll('[onclick*="openEstimateModal"]').forEach(b=>b.style.display=hasPermission('manage_estimates')?'':'none');
 }
 
-let tgView='week'; function setTargetsView(v){tgView=v;renderTargetsTable();}
+let tgView='week', tgSortCol='', tgSortDir=1;
+function setTargetsView(v){tgView=v;renderTargetsTable();}
+function tgSort(col){if(tgSortCol===col)tgSortDir*=-1;else{tgSortCol=col;tgSortDir=1;}renderTargetsTable();}
 function renderTargetsTable(){
   const w=document.getElementById('targetsTableWrap');if(!w)return;
-  const f=allTargets.filter(t=>t.period_type===tgView); if(!f.length){w.innerHTML=`<div class="empty-state">No Data</div>`;return}
-  let h=`<table><thead><tr><th>Period</th><th>Type</th><th class="num">Booking</th><th>Created</th><th></th></tr></thead><tbody>`;
-  f.slice(0,20).forEach(t=>{h+=`<tr><td>${t.period_type==='day'?t.target_date:'W'+t.target_week}</td><td><span class="${CTYPE_CLASS[t.customer_type]||''}">${t.customer_type}</span></td><td class="num">${t.booking.toLocaleString()}</td><td style="color:var(--muted);font-size:12px">${new Date(t.created_at).toLocaleDateString()}</td><td><button class="table-action" onclick="editTarget('${t.id}')">✏️</button><button class="table-action" onclick="deleteTarget('${t.id}')">🗑️</button></td></tr>`;});
+  let f=allTargets.filter(t=>t.period_type===tgView); if(!f.length){w.innerHTML=`<div class="empty-state">No Data</div>`;return}
+  if(tgSortCol){f=[...f].sort((a,b)=>{const av=a[tgSortCol]??'',bv=b[tgSortCol]??'';return(typeof av==='number'?av-bv:String(av).localeCompare(String(bv)))*tgSortDir;});}
+  const ico=c=>tgSortCol===c?(tgSortDir===1?' ▲':' ▼'):'';
+  let h=`<table><thead><tr><th class="sort-th" onclick="tgSort('${tgView==='day'?'target_date':'target_week'}')">Period${ico(tgView==='day'?'target_date':'target_week')}</th><th class="sort-th" onclick="tgSort('customer_type')">Type${ico('customer_type')}</th><th class="sort-th num" onclick="tgSort('booking')">Booking${ico('booking')}</th><th class="sort-th" onclick="tgSort('created_at')">Created${ico('created_at')}</th><th></th></tr></thead><tbody>`;
+  f.forEach(t=>{h+=`<tr><td>${t.period_type==='day'?t.target_date:'W'+t.target_week}</td><td><span class="${CTYPE_CLASS[t.customer_type]||''}">${t.customer_type}</span></td><td class="num">${t.booking.toLocaleString()}</td><td style="color:var(--muted);font-size:12px">${new Date(t.created_at).toLocaleDateString()}</td><td><button class="table-action" onclick="editTarget('${t.id}')">✏️</button><button class="table-action" onclick="deleteTarget('${t.id}')">🗑️</button></td></tr>`;});
   w.innerHTML=h+'</tbody></table>';
 }
 function togglePeriodFields(){const id=document.getElementById('tPeriodType').value==='day';document.getElementById('tDateRow').classList.toggle('hidden',!id);document.getElementById('tWeekRow').classList.toggle('hidden',id);}
@@ -909,12 +945,16 @@ async function saveTarget(){
 }
 async function deleteTarget(id){if(!confirm('Delete?'))return;await sb.from('doc_targets').delete().eq('id',id);toast('Deleted','success');}
 
-let estView='week'; function setEstimatesView(v){estView=v;renderEstimatesTable();}
+let estView='week', estSortCol='', estSortDir=1;
+function setEstimatesView(v){estView=v;renderEstimatesTable();}
+function estSort(col){if(estSortCol===col)estSortDir*=-1;else{estSortCol=col;estSortDir=1;}renderEstimatesTable();}
 function renderEstimatesTable(){
   const w=document.getElementById('estimatesTableWrap');if(!w)return;
-  const f=allEstimates.filter(e=>e.period_type===estView); if(!f.length){w.innerHTML=`<div class="empty-state">No Data</div>`;return}
-  let h=`<table><thead><tr><th>Period</th><th>Hatchery</th><th class="num">Estimate Total</th><th>Notes</th><th></th></tr></thead><tbody>`;
-  f.slice(0,20).forEach(e=>{h+=`<tr><td>${e.period_type==='day'?e.target_date:'W'+e.target_week}</td><td><strong>${e.hatchery}</strong></td><td class="num">${(e.estimate_total||0).toLocaleString()}</td><td style="color:var(--muted);font-size:12px">${esc(e.notes)}</td><td>${hasPermission('manage_estimates')&&isHatcheryAllowed(e.hatchery)?`<button class="table-action" onclick="editEstimate('${e.id}')">✏️</button><button class="table-action" onclick="deleteEstimate('${e.id}')">🗑️</button>`:'🔒'}</td></tr>`;});
+  let f=allEstimates.filter(e=>e.period_type===estView); if(!f.length){w.innerHTML=`<div class="empty-state">No Data</div>`;return}
+  if(estSortCol){f=[...f].sort((a,b)=>{const av=a[estSortCol]??'',bv=b[estSortCol]??'';return(typeof av==='number'?av-bv:String(av).localeCompare(String(bv)))*estSortDir;});}
+  const ico=c=>estSortCol===c?(estSortDir===1?' ▲':' ▼'):'';
+  let h=`<table><thead><tr><th class="sort-th" onclick="estSort('${estView==='day'?'target_date':'target_week'}')">Period${ico(estView==='day'?'target_date':'target_week')}</th><th class="sort-th" onclick="estSort('hatchery')">Hatchery${ico('hatchery')}</th><th class="sort-th num" onclick="estSort('estimate_total')">Estimate Total${ico('estimate_total')}</th><th>Notes</th><th></th></tr></thead><tbody>`;
+  f.forEach(e=>{h+=`<tr><td>${e.period_type==='day'?e.target_date:'W'+e.target_week}</td><td><strong>${e.hatchery}</strong></td><td class="num">${(e.estimate_total||0).toLocaleString()}</td><td style="color:var(--muted);font-size:12px">${esc(e.notes||'')}</td><td>${hasPermission('manage_estimates')&&isHatcheryAllowed(e.hatchery)?`<button class="table-action" onclick="editEstimate('${e.id}')">✏️</button><button class="table-action" onclick="deleteEstimate('${e.id}')">🗑️</button>`:'🔒'}</td></tr>`;});
   w.innerHTML=h+'</tbody></table>';
 }
 function toggleEstimatePeriodFields(){const id=document.getElementById('eePeriodType').value==='day';document.getElementById('eeDateRow').classList.toggle('hidden',!id);document.getElementById('eeWeekRow').classList.toggle('hidden',id);}
@@ -928,6 +968,107 @@ async function saveEstimate(){
   if(error)return toast(error.message,'error');toast('Saved','success');closeEstimateModal();
 }
 async function deleteEstimate(id){if(!confirm('Delete?'))return;await sb.from('hatchery_estimates').delete().eq('id',id);toast('Deleted','success');}
+
+// ===== Customer Reference =====
+let allCustomers=[], custSortCol='customer_name', custSortDir=1;
+async function loadCustomers(){try{const {data}=await sb.from('customers').select('*').order('customer_name');allCustomers=data||[];}catch(e){allCustomers=[];}}
+function custSort(col){if(custSortCol===col)custSortDir*=-1;else{custSortCol=col;custSortDir=1;}renderCustomersTable();}
+function renderCustomersTable(){
+  const w=document.getElementById('customersTableWrap');if(!w)return;
+  if(!allCustomers.length){w.innerHTML=`<div class="empty-state">${t('noResult')}</div>`;return}
+  const sorted=[...allCustomers].sort((a,b)=>{const av=a[custSortCol]??'',bv=b[custSortCol]??'';return(typeof av==='number'?av-bv:String(av).localeCompare(String(bv)))*custSortDir;});
+  const ico=c=>custSortCol===c?(custSortDir===1?' ▲':' ▼'):'';
+  const isEn=currentLang==='en';
+  let h=`<table><thead><tr>
+    <th class="sort-th" onclick="custSort('customer_name')">${isEn?'Customer Name':'ชื่อลูกค้า'}${ico('customer_name')}</th>
+    <th class="sort-th" onclick="custSort('customer_code')">${isEn?'Code':'รหัส'}${ico('customer_code')}</th>
+    <th class="sort-th" onclick="custSort('customer_type')">${isEn?'Type':'ประเภท'}${ico('customer_type')}</th>
+    <th class="sort-th" onclick="custSort('farm_location')">${isEn?'Farm Location':'สถานที่ฟาร์ม'}${ico('farm_location')}</th>
+    <th class="sort-th num" onclick="custSort('num_sheds')">${isEn?'Sheds':'เล้า'}${ico('num_sheds')}</th>
+    <th class="sort-th num" onclick="custSort('chicken_capacity')">${isEn?'Capacity':'ปริมาณ'}${ico('chicken_capacity')}</th>
+    <th></th>
+  </tr></thead><tbody>`;
+  sorted.forEach(c=>{
+    h+=`<tr>
+      <td><strong>${esc(c.customer_name)}</strong></td>
+      <td><span style="background:#eff6ff;color:var(--primary);font-size:11px;font-weight:700;padding:2px 7px;border-radius:4px">${esc(c.customer_code||'—')}</span></td>
+      <td><span class="${CTYPE_CLASS[c.customer_type]||''}">${esc(c.customer_type||'')}</span></td>
+      <td style="color:var(--muted);font-size:12px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(c.farm_location||'')}">${esc(c.farm_location||'—')}</td>
+      <td class="num">${c.num_sheds??'—'}</td>
+      <td class="num">${c.chicken_capacity?c.chicken_capacity.toLocaleString():'—'}</td>
+      <td><button class="table-action" onclick="openCustomerModal('${c.id}')">✏️</button><button class="table-action" onclick="deleteCustomer('${c.id}')">🗑️</button></td>
+    </tr>`;
+  });
+  w.innerHTML=h+'</tbody></table>';
+}
+function openCustomerModal(id){
+  ['custId','custName','custCode','custFarmLocation','custNumSheds','custChickenCapacity','custNotes'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
+  document.getElementById('custType').value='';
+  document.getElementById('customerModalTitle').textContent=t(id?'editCustomerTitle':'addCustomerTitle');
+  const delBtn=document.getElementById('custDeleteBtn');
+  if(id){
+    const c=allCustomers.find(x=>x.id===id);if(!c)return;
+    document.getElementById('custId').value=c.id;
+    document.getElementById('custName').value=c.customer_name||'';
+    document.getElementById('custCode').value=c.customer_code||'';
+    document.getElementById('custType').value=c.customer_type||'';
+    document.getElementById('custFarmLocation').value=c.farm_location||'';
+    document.getElementById('custNumSheds').value=c.num_sheds??'';
+    document.getElementById('custChickenCapacity').value=c.chicken_capacity??'';
+    document.getElementById('custNotes').value=c.notes||'';
+    if(delBtn)delBtn.classList.remove('hidden');
+  }else{if(delBtn)delBtn.classList.add('hidden');}
+  document.getElementById('customerModal').classList.remove('hidden');
+}
+function closeCustomerModal(){document.getElementById('customerModal').classList.add('hidden');}
+async function saveCustomer(){
+  const id=document.getElementById('custId').value;
+  const name=document.getElementById('custName').value.trim();
+  if(!name)return toast(currentLang==='en'?'Please enter customer name':'กรุณากรอกชื่อลูกค้า','error');
+  const d={customer_name:name,customer_code:document.getElementById('custCode').value.trim()||null,customer_type:document.getElementById('custType').value||null,farm_location:document.getElementById('custFarmLocation').value.trim()||null,num_sheds:parseInt(document.getElementById('custNumSheds').value)||null,chicken_capacity:parseInt(document.getElementById('custChickenCapacity').value)||null,notes:document.getElementById('custNotes').value.trim()||null};
+  let error;
+  if(id){({error}=await sb.from('customers').update(d).eq('id',id));}
+  else{({error}=await sb.from('customers').insert(d));}
+  if(error)return toast(error.message,'error');
+  toast(t('toastSaved'),'success');closeCustomerModal();await loadCustomers();renderCustomersTable();
+}
+async function deleteCustomer(id){
+  if(!confirm(t('confirmDeleteCustomer')))return;
+  const {error}=await sb.from('customers').delete().eq('id',id);
+  if(error)return toast(error.message,'error');
+  toast(t('toastDeleted'),'success');await loadCustomers();renderCustomersTable();
+}
+async function deleteCustomerFromModal(){
+  const id=document.getElementById('custId').value;
+  if(!id||!confirm(t('confirmDeleteCustomer')))return;
+  const {error}=await sb.from('customers').delete().eq('id',id);
+  if(error)return toast(error.message,'error');
+  toast(t('toastDeleted'),'success');closeCustomerModal();await loadCustomers();renderCustomersTable();
+}
+// Customer Autocomplete in Add Record
+function onCustomerInput(inp){
+  const q=inp.value.trim().toLowerCase();
+  const dd=document.getElementById('rCustomerAC');
+  if(!q||!allCustomers.length){if(dd)dd.style.display='none';return;}
+  const matches=allCustomers.filter(c=>(c.customer_name||'').toLowerCase().includes(q)||(c.customer_code||'').toLowerCase().includes(q)).slice(0,8);
+  if(!matches.length){dd.style.display='none';return;}
+  dd.innerHTML=matches.map(c=>`<div class="cust-ac-item" onmousedown="selectCustomerAC('${c.id}')"><span>${esc(c.customer_name)}</span>${c.customer_code?`<span class="cust-ac-code">${esc(c.customer_code)}</span>`:''}<span class="cust-ac-type">${esc(c.customer_type||'')}</span></div>`).join('');
+  dd.style.display='block';
+}
+function hideCustAC(){const dd=document.getElementById('rCustomerAC');if(dd)dd.style.display='none';}
+function selectCustomerAC(id){
+  const c=allCustomers.find(x=>x.id===id);if(!c)return;
+  document.getElementById('rCustomer').value=c.customer_name;
+  if(c.customer_type)document.getElementById('rCType').value=c.customer_type;
+  if(c.farm_location){
+    const inp=document.getElementById('rLocation');
+    if(inp)inp.value=c.farm_location;
+    if(_locationPAE){try{_locationPAE.inputValue=c.farm_location;}catch(e){}}
+    const btn=document.getElementById('rLocationClear');if(btn)btn.style.display='block';
+    setTimeout(()=>geocodeAndShowMap(c.farm_location),100);
+  }
+  hideCustAC();
+}
 
 // ===== Features =====
 const SUMMARY_SECTIONS=[{id:'charts1'},{id:'charts2'},{id:'deliveryReport'},{id:'matrices'},{id:'targetVsActual'},{id:'hatcheryFunnel'},{id:'sexHatchery'},{id:'topCustomers'},{id:'difference'}];
