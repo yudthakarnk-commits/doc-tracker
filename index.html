@@ -38,7 +38,7 @@
   .sort-th{cursor:pointer;user-select:none;white-space:nowrap} .sort-th:hover{background:rgba(99,102,241,0.1)!important}
   .cust-ac-wrap{position:relative}
   .cust-ac{position:absolute;left:0;right:0;top:calc(100% + 2px);z-index:9999;background:#ffffff;border:2px solid var(--primary);border-radius:10px;max-height:260px;overflow-y:auto;box-shadow:0 12px 32px rgba(37,99,235,.18),0 2px 8px rgba(0,0,0,.12);display:none}
-  .cust-ac-item{padding:10px 14px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #f3f4f6;background:#ffffff} .cust-ac-item:last-child{border-bottom:none} .cust-ac-item:hover,.cust-ac-item:focus{background:#eff6ff}
+  .cust-ac-item{padding:10px 14px;cursor:pointer;font-size:13px;display:flex;align-items:flex-start;gap:10px;border-bottom:1px solid #f3f4f6;background:#ffffff} .cust-ac-item:last-child{border-bottom:none} .cust-ac-item:hover,.cust-ac-item:focus{background:#eff6ff}
   .cust-ac-name{font-weight:600;color:var(--text)} .cust-ac-code{background:#dbeafe;color:#1d4ed8;font-size:11px;font-weight:700;padding:2px 7px;border-radius:4px;letter-spacing:.3px} .cust-ac-type{color:var(--muted);font-size:11px;margin-left:auto}
   .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:50;padding:14px} .modal{background:#fff;border-radius:12px;max-width:750px;width:100%;max-height:92vh;overflow-y:auto} .modal-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center} .modal-header h2{margin:0;font-size:17px} .modal-close{background:none;border:none;font-size:22px;color:var(--muted);line-height:1} .modal-body{padding:18px 20px} .modal-footer{padding:12px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
   .form-row{margin-bottom:11px} .form-row label{display:block;font-weight:500;margin-bottom:4px;font-size:13px;color:#374151} .form-row input,.form-row select,.form-row textarea{width:100%;padding:8px 11px;border:1px solid var(--border);border-radius:7px} .form-row input:focus,.form-row select:focus{outline:none;border-color:var(--primary)} .form-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px} .form-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px} .form-grid-4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px} .section-label{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin:14px 0 6px} .btn-secondary{background:#fff;color:var(--text);border:1px solid var(--border);padding:8px 14px;border-radius:7px;font-weight:500} .btn-secondary:hover{background:var(--bg)} .btn-danger{background:var(--danger);color:#fff;border:none;padding:8px 14px;border-radius:7px;font-weight:500}
@@ -231,10 +231,13 @@
         </div>
       </div>
       <div class="form-grid-2">
-        <div class="form-row cust-ac-wrap"><label data-i18n="lblCustomer">Customer / Farm Name</label><input id="rCustomer" type="text" required autocomplete="off" oninput="onCustomerInput(this)" onblur="setTimeout(()=>hideCustAC(),200)"/><div id="rCustomerAC" class="cust-ac"></div></div>
-        <div class="form-row"><label data-i18n="lblBreed">Breed</label><select id="rBreed"><option value="" data-i18n="chooseOption">-- เลือก --</option><option value="COBB">COBB</option><option value="ROSS">ROSS</option></select></div>
+        <div class="form-row cust-ac-wrap" style="grid-column:1"><label data-i18n="lblCustomer">Customer / Farm Name</label><input id="rCustomer" type="text" required autocomplete="off" oninput="onCustomerInput(this)" onblur="setTimeout(()=>hideCustAC(),200)"/><div id="rCustomerAC" class="cust-ac"></div></div>
+        <div class="form-row"><label data-i18n="lblCustomerCode">รหัสลูกค้า</label><input id="rCustomerCode" type="text" data-i18n-placeholder="custCodePlaceholder" placeholder="Auto-fill หรือคีย์เอง"/></div>
       </div>
-      <div class="form-row"><label data-i18n="lblCustomerCode">รหัสลูกค้า</label><input id="rCustomerCode" type="text" data-i18n-placeholder="custCodePlaceholder" placeholder="Auto-fill เมื่อเลือกจาก dropdown หรือคีย์เอง"/></div>
+      <div class="form-grid-3">
+        <div class="form-row"><label data-i18n="lblBreed">Breed</label><select id="rBreed"><option value="" data-i18n="chooseOption">-- เลือก --</option><option value="COBB">COBB</option><option value="ROSS">ROSS</option></select></div>
+        <div></div><div></div>
+      </div>
       <div class="form-row hidden" id="rExternalSourceRow"><label data-i18n="lblExternalSource">🛒 ซื้อจากที่ไหน (ระบุชื่อบริษัท/แหล่งซื้อ)</label><input id="rExternalSource" type="text"/></div>
       
       <div class="section-label" data-i18n="orderSection">Order (Planned)</div>
@@ -1054,7 +1057,7 @@ function onCustomerInput(inp){
   if(!q||!allCustomers.length){if(dd)dd.style.display='none';return;}
   const matches=allCustomers.filter(c=>(c.customer_name||'').toLowerCase().includes(q)||(c.customer_code||'').toLowerCase().includes(q)).slice(0,8);
   if(!matches.length){dd.style.display='none';return;}
-  dd.innerHTML=matches.map(c=>`<div class="cust-ac-item" onmousedown="selectCustomerAC('${c.id}')"><span class="cust-ac-name">${esc(c.customer_name)}</span>${c.customer_code?`<span class="cust-ac-code">${esc(c.customer_code)}</span>`:''}<span class="cust-ac-type">${esc(c.customer_type||'')}</span></div>`).join('');
+  dd.innerHTML=matches.map(c=>`<div class="cust-ac-item" onmousedown="selectCustomerAC('${c.id}')"><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:8px"><span class="cust-ac-name">${esc(c.customer_name)}</span>${c.customer_code?`<span class="cust-ac-code">${esc(c.customer_code)}</span>`:''}</div>${c.farm_location?`<div style="font-size:11px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">📍 ${esc(c.farm_location)}</div>`:''}</div><span class="cust-ac-type" style="flex-shrink:0">${esc(c.customer_type||'')}</span></div>`).join('');
   dd.style.display='block';
 }
 function hideCustAC(){const dd=document.getElementById('rCustomerAC');if(dd)dd.style.display='none';}
