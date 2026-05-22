@@ -90,6 +90,34 @@
   .location-coords{color:var(--muted);font-size:11px;font-family:monospace}
   @media print{ .topbar,.nav-tabs,.toolbar,.btn-add,.table-action,.user-info,.lang-toggle{display:none !important} .container{padding:0} .card,.matrix{box-shadow:none;border:1px solid #999} }
 
+  /* ── Advanced Analytics KPI Cards ── */
+  .adv-kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-bottom:16px}
+  .adv-kpi-card{background:#fff;padding:14px 16px;border-radius:10px;box-shadow:var(--shadow);border-left:4px solid var(--primary);min-width:0}
+  .adv-kpi-card.wow{border-left-color:#2563eb}
+  .adv-kpi-card.mom{border-left-color:#7c3aed}
+  .adv-kpi-card.yoy{border-left-color:#059669}
+  .adv-kpi-card.forecast{border-left-color:#f59e0b}
+  .adv-kpi-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:1px}
+  .adv-kpi-period{font-size:10px;color:var(--muted);margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .adv-kpi-value{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--text)}
+  .adv-kpi-change{font-size:12px;font-weight:600;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .adv-kpi-change.up{color:var(--success)}
+  .adv-kpi-change.down{color:var(--danger)}
+  .adv-kpi-change.flat{color:var(--muted)}
+  /* ── Heatmap ── */
+  .heatmap-table{width:100%;border-collapse:collapse;font-size:11px}
+  .heatmap-table th{background:#f9fafb;font-size:10px;text-transform:uppercase;padding:5px 6px;font-weight:600;color:var(--muted);white-space:nowrap;position:sticky;top:0}
+  .heatmap-table td{padding:7px 6px;text-align:center;font-weight:600;border:2px solid #fff}
+  .hm-great{background:#d1fae5;color:#065f46}
+  .hm-good{background:#bbf7d0;color:#166534}
+  .hm-ok{background:#fef9c3;color:#854d0e}
+  .hm-warn{background:#fed7aa;color:#9a3412}
+  .hm-bad{background:#fecaca;color:#991b1b}
+  .hm-crit{background:#ef4444;color:#fff}
+  .hm-empty{background:#f9fafb;color:var(--muted)}
+  /* ── Pareto ── */
+  #paretoChart{max-height:280px}
+
   @media(max-width:640px){
     .topbar{flex-wrap:wrap;gap:6px;padding:8px 12px}
     .logo{font-size:14px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -262,13 +290,45 @@
         <button class="btn-secondary" onclick="openSaleReportModal()" data-i18n="exportSaleReportBtn">📊 Export Sale Report</button>
         <button class="btn-add" onclick="exportPDF()" data-i18n="exportPdfBtn">📥 Export PDF</button>
       </div>
+      <!-- ── Advanced KPI Row ── -->
+      <div class="adv-kpi-grid" id="advKPISection">
+        <div class="adv-kpi-card wow">
+          <div class="adv-kpi-label">Week over Week</div>
+          <div class="adv-kpi-period" id="kpiWoWPeriod">—</div>
+          <div class="adv-kpi-value" id="kpiWoWValue">—</div>
+          <div class="adv-kpi-change flat" id="kpiWoWChange">—</div>
+        </div>
+        <div class="adv-kpi-card mom">
+          <div class="adv-kpi-label">Month over Month</div>
+          <div class="adv-kpi-period" id="kpiMoMPeriod">—</div>
+          <div class="adv-kpi-value" id="kpiMoMValue">—</div>
+          <div class="adv-kpi-change flat" id="kpiMoMChange">—</div>
+        </div>
+        <div class="adv-kpi-card yoy">
+          <div class="adv-kpi-label">Year over Year</div>
+          <div class="adv-kpi-period" id="kpiYoYPeriod">—</div>
+          <div class="adv-kpi-value" id="kpiYoYValue">—</div>
+          <div class="adv-kpi-change flat" id="kpiYoYChange">—</div>
+        </div>
+        <div class="adv-kpi-card forecast">
+          <div class="adv-kpi-label">📈 Forecast (MA4)</div>
+          <div class="adv-kpi-period" id="kpiForecastPeriod">—</div>
+          <div class="adv-kpi-value" id="kpiForecastValue">—</div>
+          <div class="adv-kpi-change flat" id="kpiForecastChange">—</div>
+        </div>
+      </div>
       <div class="trend-grid" data-section="charts1">
-        <div class="chart-card"><h4 data-i18n="chartTrend">📈 แนวโน้มรายสัปดาห์</h4><canvas id="trendLine"></canvas></div>
+        <div class="chart-card"><h4 data-i18n="chartTrend">📈 แนวโน้มรายสัปดาห์ + Forecast</h4><canvas id="trendLine"></canvas></div>
         <div class="chart-card"><h4 data-i18n="chartBreed">🐔 แยกตามสายพันธุ์ (%)</h4><canvas id="trendBreed"></canvas></div>
       </div>
       <div class="trend-grid" data-section="charts2">
         <div class="chart-card"><h4 data-i18n="chartHatchery">🏭 ยอด Actual ต่อโรงฟัก</h4><canvas id="trendHatchery"></canvas></div>
         <div class="chart-card"><h4 data-i18n="chartCType">👥 ยอดต่อประเภทลูกค้า</h4><canvas id="trendCType"></canvas></div>
+      </div>
+      <!-- ── Pareto + Heatmap ── -->
+      <div class="trend-grid" data-section="charts3">
+        <div class="chart-card"><h4>📊 Pareto: Top Customers (80/20 Rule)</h4><canvas id="paretoChart"></canvas></div>
+        <div class="chart-card"><h4>🔥 Heatmap: Delivery Gap (Hatchery × Day)</h4><div id="heatmapWrap" style="overflow-x:auto;margin-top:4px"></div></div>
       </div>
       <div class="summary-section" data-section="deliveryReport"><div class="summary-title" data-i18n="deliveryReportSection">CUSTOMER DELIVERY REPORT</div><div class="table-wrap" style="max-height: 400px; overflow-y: auto;"><table class="matrix" id="deliveryReportTable" style="text-align:left;"><thead><tr><th style="text-align:left;">Date</th><th style="text-align:left;">Hatchery</th><th style="text-align:left;">Customer</th><th style="text-align:left;">Breed</th><th style="text-align:left;" data-i18n="lblTruckPlate">Truck Plate</th><th style="text-align:left;" data-i18n="th_depTime">Dep. Time</th><th style="text-align:left;" data-i18n="th_location">Location</th><th style="text-align:left;">Avg Wgt (M/F/U)</th><th style="text-align:right;">Actual Delivered</th></tr></thead><tbody id="deliveryReportTbody"></tbody></table></div></div>
       <div class="summary-grid" data-section="matrices"><div><div class="summary-title"><span data-i18n="orderPlanning">ORDER PLANNING FROM SALES</span> <span id="sumScopeLabel1"></span></div><table class="matrix" id="planMatrix"></table></div><div><div class="summary-title"><span data-i18n="actualDist">ACTUAL DOC DISTRIBUTED</span> <span id="sumScopeLabel2"></span></div><table class="matrix" id="actualMatrix"></table></div></div>
@@ -899,6 +959,9 @@ function renderSummary(){
   document.getElementById('sexHatcheryMatrix').innerHTML=buildSexHatcheryMatrix(hM,hF,hU); renderSexCharts(hM,hF,hU);
   document.getElementById('topCustomersMatrix').innerHTML=buildTopCustomersMatrix(rows); document.getElementById('diffMatrix').innerHTML=buildDiffMatrix(planPivot,actPivot);
   renderTrendCharts(rows);
+  renderAdvancedKPIs();
+  renderHeatmap(rows);
+  renderParetoChart(rows);
 }
 
 function renderDeliveryReport(scopedRows) {
@@ -908,11 +971,24 @@ function renderDeliveryReport(scopedRows) {
   drTbody.innerHTML = sorted.map(r => `<tr><td style="border-bottom:1px solid var(--border);">${r.record_date||'-'}</td><td style="border-bottom:1px solid var(--border);">${esc(r.hatchery)}</td><td style="border-bottom:1px solid var(--border);">${esc(r.customer_name)}</td><td style="border-bottom:1px solid var(--border);">${esc(r.breed||'-')}</td><td style="border-bottom:1px solid var(--border);color:var(--primary);font-weight:600;">${esc(r.truck_plate||'-')}</td><td style="border-bottom:1px solid var(--border);">${r.departure_time||'-'}</td><td style="border-bottom:1px solid var(--border);"><div style="max-width:150px;overflow:hidden;text-overflow:ellipsis" title="${esc(r.location)}">${esc(r.location||'-')}</div></td><td style="border-bottom:1px solid var(--border);font-size:11px;color:var(--muted);">M:${r.avg_weight_m?r.avg_weight_m+'g':'-'} / F:${r.avg_weight_f?r.avg_weight_f+'g':'-'} / U:${r.avg_weight_mixed?r.avg_weight_mixed+'g':'-'}</td><td style="border-bottom:1px solid var(--border);text-align:right;font-weight:600;color:var(--success);">${(r.total_actual||0).toLocaleString()}</td></tr>`).join('');
 }
 
-let chartTrend=null,chartBreed=null,chartHat=null,chartCt=null,chartSexHat=null,chartMF=null;
+let chartTrend=null,chartBreed=null,chartHat=null,chartCt=null,chartSexHat=null,chartMF=null,chartPareto=null;
 function renderTrendCharts(scopedRows){
   const wTot={}; allRecords.forEach(r=>{if(!wTot[r.week_no])wTot[r.week_no]={o:0,a:0};wTot[r.week_no].o+=(r.total_ordered||0);wTot[r.week_no].a+=(r.total_actual||0);});
   const weeks=Object.keys(wTot).map(Number).sort((a,b)=>a-b).slice(-8);
-  if(chartTrend) chartTrend.destroy(); chartTrend=new Chart(document.getElementById('trendLine'),{type:'line',data:{labels:weeks.map(w=>'W'+w),datasets:[{label:'Ordered',data:weeks.map(w=>wTot[w].o),borderColor:'#2563eb',backgroundColor:'rgba(37,99,235,.1)',fill:true,tension:.3},{label:'Actual',data:weeks.map(w=>wTot[w].a),borderColor:'#10b981',backgroundColor:'rgba(16,185,129,.1)',fill:true,tension:.3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'},datalabels:{display:false}},scales:{y:{ticks:{callback:v=>v.toLocaleString()}}}}});
+  // Moving Average Forecast (4-week)
+  const last4=weeks.slice(-4);
+  const ma4=last4.length>=2?Math.round(last4.reduce((s,w)=>s+(wTot[w]?.a||0),0)/last4.length):null;
+  const nextWk=weeks.length>0?weeks[weeks.length-1]+1:null;
+  const trendLabels=[...weeks.map(w=>'W'+w),...(ma4!==null?['W'+nextWk+' ⟶']:[] )];
+  const ordData=[...weeks.map(w=>wTot[w].o),...(ma4!==null?[null]:[])];
+  const actData=[...weeks.map(w=>wTot[w].a),...(ma4!==null?[null]:[])];
+  const fctData=ma4!==null?[...Array(weeks.length-1).fill(null),wTot[weeks[weeks.length-1]]?.a||0,ma4]:[];
+  const trendDatasets=[
+    {label:'Ordered',data:ordData,borderColor:'#2563eb',backgroundColor:'rgba(37,99,235,.1)',fill:true,tension:.3,spanGaps:false},
+    {label:'Actual',data:actData,borderColor:'#10b981',backgroundColor:'rgba(16,185,129,.1)',fill:true,tension:.3,spanGaps:false}
+  ];
+  if(ma4!==null) trendDatasets.push({label:'Forecast (MA4)',data:fctData,borderColor:'#f59e0b',backgroundColor:'transparent',borderDash:[6,4],borderWidth:2,tension:0,fill:false,spanGaps:true,pointRadius:fctData.map((v,i)=>v!==null&&i===fctData.length-1?6:0),pointBackgroundColor:'#f59e0b',pointBorderColor:'#fff',pointBorderWidth:2});
+  if(chartTrend) chartTrend.destroy(); chartTrend=new Chart(document.getElementById('trendLine'),{type:'line',data:{labels:trendLabels,datasets:trendDatasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'},datalabels:{display:false},tooltip:{callbacks:{footer:items=>{const idx=items[0]?.dataIndex;if(idx===trendLabels.length-1&&ma4!==null)return'📈 MA4 Forecast';return'';}}}}  ,scales:{y:{ticks:{callback:v=>v.toLocaleString()}}}}});
   
   const bTot={COBB:0,ROSS:0}; scopedRows.forEach(r=>{if(r.breed&&(r.breed.toUpperCase()==='COBB'||r.breed.toUpperCase()==='ROSS'))bTot[r.breed.toUpperCase()]+=(r.total_actual||0);});
   if(chartBreed) chartBreed.destroy(); chartBreed=new Chart(document.getElementById('trendBreed'),{type:'doughnut',data:{labels:['COBB','ROSS'],datasets:[{data:[bTot.COBB,bTot.ROSS],backgroundColor:['#3b82f6','#dc2626']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed.toLocaleString()} chicks`}},datalabels:{display:true,color:'#fff',font:{weight:'bold',size:12},formatter:(v,ctx)=>{const s=ctx.chart.data.datasets[0].data.reduce((a,b)=>a+b,0);return s?(v/s*100).toFixed(1)+'%':'';}}}}});
@@ -1258,6 +1334,224 @@ async function exportPDF(){
 
 function toast(m,t='info'){const el=document.createElement('div');el.className='toast '+t;el.textContent=m;document.body.appendChild(el);setTimeout(()=>el.remove(),2800)}
 function esc(s){if(s==null)return'';return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+
+// ===========================================================
+// PHASE 1 — Advanced Analytics
+// ===========================================================
+
+// ── 1. WoW / MoM / YoY KPI Cards ──────────────────────────
+function renderAdvancedKPIs() {
+  // ── Week totals ──
+  const wTot = {};
+  allRecords.forEach(r => {
+    if (!r.week_no || !r.record_date) return;
+    if (!wTot[r.week_no]) wTot[r.week_no] = { a: 0, date: r.record_date };
+    wTot[r.week_no].a += (r.total_actual || 0);
+    if (r.record_date > wTot[r.week_no].date) wTot[r.week_no].date = r.record_date;
+  });
+  const weeks = Object.keys(wTot).map(Number).sort((a, b) => b - a);
+
+  // WoW
+  if (weeks.length >= 1) {
+    const cw = weeks[0], pw = weeks[1];
+    const cv = wTot[cw].a, pv = pw !== undefined ? wTot[pw].a : null;
+    const pct = pv ? ((cv - pv) / pv * 100) : null;
+    setAdvKPI('kpiWoW', `W${cw}${pw !== undefined ? ' vs W'+pw : ''}`, cv.toLocaleString(), pct,
+      pv !== null ? `prev ${pv.toLocaleString()}` : 'no prev week');
+    // Forecast (MA4)
+    const last4 = weeks.slice(0, 4);
+    if (last4.length >= 2) {
+      const avg = Math.round(last4.reduce((s, w) => s + wTot[w].a, 0) / last4.length);
+      const vsLast = avg - cv;
+      const vsLastPct = cv ? (vsLast / cv * 100) : null;
+      setAdvKPI('kpiForecast', `Next W${cw + 1} (MA${last4.length})`, avg.toLocaleString(), vsLastPct,
+        `Based on W${last4[last4.length-1]}–W${last4[0]}`);
+    } else {
+      setAdvKPI('kpiForecast', 'Need ≥ 2 weeks data', '—', null, 'Not enough data');
+    }
+  }
+
+  // ── Month totals ──
+  const mTot = {};
+  allRecords.forEach(r => {
+    const m = r.record_date?.substring(0, 7);
+    if (!m) return;
+    mTot[m] = (mTot[m] || 0) + (r.total_actual || 0);
+  });
+  const months = Object.keys(mTot).sort().reverse();
+  if (months.length >= 1) {
+    const cm = months[0], pm = months[1];
+    const cv = mTot[cm], pv = pm ? mTot[pm] : null;
+    const pct = pv ? ((cv - pv) / pv * 100) : null;
+    const fmtM = m => { if (!m) return 'N/A'; const d = new Date(m + '-01'); return d.toLocaleDateString('en', { month: 'short', year: '2-digit' }); };
+    setAdvKPI('kpiMoM', `${fmtM(cm)}${pm ? ' vs '+fmtM(pm) : ''}`, cv.toLocaleString(), pct,
+      pv !== null ? `prev ${pv.toLocaleString()}` : 'no prev month');
+  }
+
+  // ── Year totals ──
+  const yTot = {};
+  allRecords.forEach(r => {
+    const y = r.record_date?.substring(0, 4);
+    if (!y) return;
+    yTot[y] = (yTot[y] || 0) + (r.total_actual || 0);
+  });
+  const years = Object.keys(yTot).sort().reverse();
+  if (years.length >= 1) {
+    const cy = years[0], py = years[1];
+    const cv = yTot[cy], pv = py ? yTot[py] : null;
+    const pct = pv ? ((cv - pv) / pv * 100) : null;
+    setAdvKPI('kpiYoY', `${cy}${py ? ' vs '+py : ''}`, cv.toLocaleString(), pct,
+      pv !== null ? `prev ${pv.toLocaleString()}` : 'no prev year');
+  }
+}
+
+function setAdvKPI(prefix, period, value, changePct, sub) {
+  const pEl = document.getElementById(prefix + 'Period');
+  const vEl = document.getElementById(prefix + 'Value');
+  const cEl = document.getElementById(prefix + 'Change');
+  if (!pEl || !vEl || !cEl) return;
+  pEl.textContent = period;
+  vEl.textContent = value;
+  if (changePct === null || changePct === undefined) {
+    cEl.textContent = sub || '';
+    cEl.className = 'adv-kpi-change flat';
+  } else {
+    const arrow = changePct > 0.05 ? '▲' : changePct < -0.05 ? '▼' : '→';
+    const cls = changePct > 0.05 ? 'up' : changePct < -0.05 ? 'down' : 'flat';
+    const sign = changePct > 0 ? '+' : '';
+    cEl.textContent = `${arrow} ${sign}${changePct.toFixed(1)}%  (${sub || ''})`;
+    cEl.className = 'adv-kpi-change ' + cls;
+  }
+}
+
+// ── 2. Heatmap: Hatchery × Day ─────────────────────────────
+function renderHeatmap(rows) {
+  const wrap = document.getElementById('heatmapWrap');
+  if (!wrap) return;
+  if (!rows || rows.length === 0) { wrap.innerHTML = '<p style="color:var(--muted);font-size:13px;padding:20px;text-align:center">No data for selected period</p>'; return; }
+
+  const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  // Build: data[hatchery][day] = { totalDiffPct, count, totalAct }
+  const data = {};
+  HATCHERIES.forEach(h => {
+    data[h] = {};
+    DAYS.forEach(d => data[h][d] = { diffSum: 0, count: 0, actSum: 0 });
+  });
+  rows.forEach(r => {
+    const h = r.hatchery, d = r.day_name;
+    if (!data[h] || !d || !data[h][d]) return;
+    const ord = r.total_ordered || 0, act = r.total_actual || 0;
+    data[h][d].actSum += act;
+    if (ord > 0) { data[h][d].diffSum += ((act - ord) / ord * 100); data[h][d].count++; }
+  });
+
+  const hmClass = pct => {
+    if (pct >= 0)   return 'hm-great';
+    if (pct >= -3)  return 'hm-good';
+    if (pct >= -8)  return 'hm-ok';
+    if (pct >= -15) return 'hm-warn';
+    if (pct >= -25) return 'hm-bad';
+    return 'hm-crit';
+  };
+
+  let html = '<table class="heatmap-table"><thead><tr><th>Hatchery</th>';
+  DAYS.forEach(d => html += `<th>${d}</th>`);
+  html += '</tr></thead><tbody>';
+
+  HATCHERIES.forEach(h => {
+    html += `<tr><td style="font-weight:700;text-align:left;background:#f9fafb;padding:7px 8px;white-space:nowrap">${h}</td>`;
+    DAYS.forEach(d => {
+      const cell = data[h][d];
+      if (cell.actSum === 0 && cell.count === 0) {
+        html += `<td class="hm-empty" title="No delivery">—</td>`;
+      } else if (cell.count === 0) {
+        // Has actuals but no ordered baseline → show volume
+        html += `<td class="hm-great" title="${cell.actSum.toLocaleString()} actual, no order target">✓</td>`;
+      } else {
+        const avg = cell.diffSum / cell.count;
+        const lbl = (avg >= 0 ? '+' : '') + avg.toFixed(1) + '%';
+        html += `<td class="${hmClass(avg)}" title="${h} / ${d}: avg ${lbl} over ${cell.count} records">${lbl}</td>`;
+      }
+    });
+    html += '</tr>';
+  });
+
+  html += `</tbody><tfoot><tr><td colspan="8" style="font-size:10px;color:var(--muted);padding:6px 8px;background:#f9fafb">
+    <span style="color:#065f46">●</span> ≥0% &nbsp;
+    <span style="color:#166534">●</span> -3% &nbsp;
+    <span style="color:#854d0e">●</span> -8% &nbsp;
+    <span style="color:#9a3412">●</span> -15% &nbsp;
+    <span style="color:#991b1b">●</span> -25% &nbsp;
+    <span style="background:#ef4444;color:#fff;padding:0 4px;border-radius:2px">Critical</span> &lt;-25%
+  </td></tr></tfoot></table>`;
+  wrap.innerHTML = html;
+}
+
+// ── 3. Pareto Chart (Top Customers) ────────────────────────
+function renderParetoChart(rows) {
+  const canvas = document.getElementById('paretoChart');
+  if (!canvas) return;
+
+  // Aggregate by customer
+  const custMap = {};
+  rows.forEach(r => {
+    const k = r.customer_name || '(unknown)';
+    custMap[k] = (custMap[k] || 0) + (r.total_actual || 0);
+  });
+  const sorted = Object.entries(custMap).sort((a, b) => b[1] - a[1]).slice(0, 20);
+  if (sorted.length === 0) {
+    if (chartPareto) { chartPareto.destroy(); chartPareto = null; }
+    return;
+  }
+
+  const totalAct = sorted.reduce((s, [, v]) => s + v, 0);
+  let cumul = 0;
+  const cumulPcts = sorted.map(([, v]) => { cumul += v; return Math.round(cumul / totalAct * 100); });
+  const line80 = Array(sorted.length).fill(80);
+
+  const labels = sorted.map(([k]) => k.length > 16 ? k.substring(0, 15) + '…' : k);
+  const values = sorted.map(([, v]) => v);
+  const barColors = sorted.map((_, i) => {
+    const pct = (i + 1) / sorted.length;
+    return pct <= 0.2 ? '#1d4ed8' : pct <= 0.5 ? '#3b82f6' : '#93c5fd';
+  });
+
+  if (chartPareto) chartPareto.destroy();
+  chartPareto = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { type: 'bar', label: 'Actual (chicks)', data: values, backgroundColor: barColors, yAxisID: 'y', borderRadius: 3, order: 2 },
+        { type: 'line', label: 'Cumulative %', data: cumulPcts, borderColor: '#f59e0b', backgroundColor: 'transparent', yAxisID: 'y1', tension: 0.1, pointRadius: 2, borderWidth: 2, order: 1, fill: false },
+        { type: 'line', label: '80% line', data: line80, borderColor: '#ef4444', borderDash: [5, 4], borderWidth: 1, pointRadius: 0, yAxisID: 'y1', backgroundColor: 'transparent', fill: false, order: 0 }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { position: 'bottom', labels: { filter: item => item.text !== '80% line' } },
+        datalabels: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              if (ctx.datasetIndex === 0) return `Actual: ${ctx.parsed.y.toLocaleString()} chicks`;
+              if (ctx.datasetIndex === 1) return `Cumulative: ${ctx.parsed.y}%`;
+              return null;
+            }
+          }
+        }
+      },
+      scales: {
+        y: { type: 'linear', position: 'left', ticks: { callback: v => v >= 1e6 ? (v/1e6).toFixed(1)+'M' : v >= 1e3 ? (v/1e3).toFixed(0)+'K' : v } },
+        y1: { type: 'linear', position: 'right', min: 0, max: 100, grid: { drawOnChartArea: false }, ticks: { callback: v => v + '%' } },
+        x: { ticks: { font: { size: 9 }, maxRotation: 40 } }
+      }
+    }
+  });
+}
 
 // ===========================================================
 // PWA — Service Worker Registration
