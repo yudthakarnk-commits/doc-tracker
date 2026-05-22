@@ -36,9 +36,10 @@
   .diff-pos{color:var(--success);font-weight:600} .diff-neg{color:var(--danger);font-weight:600} .diff-zero{color:var(--muted)} .table-wrap{overflow-x:auto;max-height:600px;overflow-y:auto} .table-action{background:none;border:none;padding:3px 6px;color:var(--muted);border-radius:4px;font-size:14px;cursor:pointer} .table-action:hover{background:var(--bg);color:var(--text)} .empty-state{text-align:center;padding:50px 20px;color:var(--muted)}
   #tab-admin .table-wrap{max-height:420px}
   .sort-th{cursor:pointer;user-select:none;white-space:nowrap} .sort-th:hover{background:rgba(99,102,241,0.1)!important}
-  .cust-ac-wrap{position:relative} .cust-ac{position:absolute;left:0;right:0;top:100%;z-index:200;background:var(--surface);border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px;max-height:220px;overflow-y:auto;box-shadow:0 6px 16px rgba(0,0,0,.12);display:none}
-  .cust-ac-item{padding:9px 12px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border)} .cust-ac-item:last-child{border-bottom:none} .cust-ac-item:hover{background:var(--bg)}
-  .cust-ac-code{background:#eff6ff;color:var(--primary);font-size:11px;font-weight:700;padding:1px 6px;border-radius:4px} .cust-ac-type{color:var(--muted);font-size:11px}
+  .cust-ac-wrap{position:relative}
+  .cust-ac{position:absolute;left:0;right:0;top:calc(100% + 2px);z-index:9999;background:#ffffff;border:2px solid var(--primary);border-radius:10px;max-height:260px;overflow-y:auto;box-shadow:0 12px 32px rgba(37,99,235,.18),0 2px 8px rgba(0,0,0,.12);display:none}
+  .cust-ac-item{padding:10px 14px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #f3f4f6;background:#ffffff} .cust-ac-item:last-child{border-bottom:none} .cust-ac-item:hover,.cust-ac-item:focus{background:#eff6ff}
+  .cust-ac-name{font-weight:600;color:var(--text)} .cust-ac-code{background:#dbeafe;color:#1d4ed8;font-size:11px;font-weight:700;padding:2px 7px;border-radius:4px;letter-spacing:.3px} .cust-ac-type{color:var(--muted);font-size:11px;margin-left:auto}
   .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:50;padding:14px} .modal{background:#fff;border-radius:12px;max-width:750px;width:100%;max-height:92vh;overflow-y:auto} .modal-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center} .modal-header h2{margin:0;font-size:17px} .modal-close{background:none;border:none;font-size:22px;color:var(--muted);line-height:1} .modal-body{padding:18px 20px} .modal-footer{padding:12px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
   .form-row{margin-bottom:11px} .form-row label{display:block;font-weight:500;margin-bottom:4px;font-size:13px;color:#374151} .form-row input,.form-row select,.form-row textarea{width:100%;padding:8px 11px;border:1px solid var(--border);border-radius:7px} .form-row input:focus,.form-row select:focus{outline:none;border-color:var(--primary)} .form-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px} .form-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px} .form-grid-4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px} .section-label{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin:14px 0 6px} .btn-secondary{background:#fff;color:var(--text);border:1px solid var(--border);padding:8px 14px;border-radius:7px;font-weight:500} .btn-secondary:hover{background:var(--bg)} .btn-danger{background:var(--danger);color:#fff;border:none;padding:8px 14px;border-radius:7px;font-weight:500}
   .summary-section{margin-bottom:20px} .summary-title{font-size:13px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;background:#f3f4f6;padding:8px 12px;border-radius:6px} .matrix{width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden;box-shadow:var(--shadow)} .matrix th,.matrix td{padding:8px 12px;border:1px solid var(--border);text-align:right;font-variant-numeric:tabular-nums;font-size:13px} .matrix th:first-child,.matrix td:first-child{text-align:left} .matrix thead th{background:#374151;color:#fff;font-weight:600} .matrix .row-direct{background:#eff6ff} .matrix .row-contract{background:#fff7ed} .matrix .row-company{background:#f0fdf4} .matrix .row-total{background:#1f2937;color:#fff;font-weight:700} .matrix .row-total td{border-color:#374151} .matrix .col-total{font-weight:700;background:#f3f4f6} .matrix .row-target{background:#fef3c7;font-weight:600} .matrix .row-diff{font-weight:600} .matrix .row-diff.pos{background:#d1fae5} .matrix .row-diff.neg{background:#fee2e2}
@@ -233,6 +234,7 @@
         <div class="form-row cust-ac-wrap"><label data-i18n="lblCustomer">Customer / Farm Name</label><input id="rCustomer" type="text" required autocomplete="off" oninput="onCustomerInput(this)" onblur="setTimeout(()=>hideCustAC(),200)"/><div id="rCustomerAC" class="cust-ac"></div></div>
         <div class="form-row"><label data-i18n="lblBreed">Breed</label><select id="rBreed"><option value="" data-i18n="chooseOption">-- เลือก --</option><option value="COBB">COBB</option><option value="ROSS">ROSS</option></select></div>
       </div>
+      <div class="form-row"><label data-i18n="lblCustomerCode">รหัสลูกค้า</label><input id="rCustomerCode" type="text" data-i18n-placeholder="custCodePlaceholder" placeholder="Auto-fill เมื่อเลือกจาก dropdown หรือคีย์เอง"/></div>
       <div class="form-row hidden" id="rExternalSourceRow"><label data-i18n="lblExternalSource">🛒 ซื้อจากที่ไหน (ระบุชื่อบริษัท/แหล่งซื้อ)</label><input id="rExternalSource" type="text"/></div>
       
       <div class="section-label" data-i18n="orderSection">Order (Planned)</div>
@@ -411,7 +413,7 @@ const I18N = {
     role_user:'User', role_admin:'Admin', perm_manage_users:'จัดการ User', perm_manage_targets:'จัดการ Targets', perm_manage_estimates:'จัดการ Estimates',
     perm_edit_all_records:'แก้ไข Records คนอื่น', perm_export_pdf:'Export PDF ได้', perm_view_admin_tab:'เห็นแท็บ Admin', permHatcheriesLabel:'โรงฟักที่อนุญาต', permHatcheriesHint:'ไม่ติ๊ก = ได้ทุกโรงฟัก',
     th_createdAt:'สร้างเมื่อ', showAll:'แสดงทั้งหมด', show10Latest:'แสดง 10 ล่าสุด', lblExternalSource:'🛒 ซื้อจากที่ไหน', manageUsers:'จัดการผู้ใช้',
-    customersTitle:'📋 ข้อมูลอ้างอิงลูกค้า', addCustomer:'+ เพิ่มลูกค้า', lblCustomerCode:'รหัสลูกค้า', lblFarmLocation:'สถานที่ฟาร์ม', lblNumSheds:'จำนวนเล้า', lblChickenCapacity:'ปริมาณไก่เข้าเลี้ยง', confirmDeleteCustomer:'ลบข้อมูลลูกค้านี้?', editCustomerTitle:'แก้ไขข้อมูลลูกค้า', addCustomerTitle:'เพิ่มข้อมูลลูกค้า',
+    customersTitle:'📋 ข้อมูลอ้างอิงลูกค้า', addCustomer:'+ เพิ่มลูกค้า', lblCustomerCode:'รหัสลูกค้า', lblFarmLocation:'สถานที่ฟาร์ม', lblNumSheds:'จำนวนเล้า', lblChickenCapacity:'ปริมาณไก่เข้าเลี้ยง', confirmDeleteCustomer:'ลบข้อมูลลูกค้านี้?', editCustomerTitle:'แก้ไขข้อมูลลูกค้า', addCustomerTitle:'เพิ่มข้อมูลลูกค้า', custCodePlaceholder:'Auto-fill จาก dropdown หรือคีย์เอง',
     th_email:'อีเมล', th_name:'ชื่อ', th_role:'สิทธิ์', th_registered:'สมัครเมื่อ', th_changeRole:'เปลี่ยนสิทธิ์', bookingTargetsTitle:'Booking Targets', addTarget:'+ ตั้งเป้าหมาย',
     th_periodType:'ประเภท', th_period:'วัน/สัปดาห์', th_customerType:'ประเภทลูกค้า', lblPeriodType:'ประเภทระยะเวลา', addRecordTitle:'เพิ่มรายการ', editRecordTitle:'แก้ไขรายการ',
     lblWeek:'สัปดาห์', lblDate:'วันที่', lblDay:'วัน', lblHatchery:'โรงฟัก', lblCType:'ประเภทลูกค้า', lblCustomer:'ชื่อลูกค้า / ฟาร์ม', lblBreed:'สายพันธุ์',
@@ -447,7 +449,7 @@ const I18N = {
     role_user:'User', role_admin:'Admin', perm_manage_users:'Manage Users', perm_manage_targets:'Manage Targets', perm_manage_estimates:'Manage Estimates',
     perm_edit_all_records:'Edit All Records', perm_export_pdf:'Export PDF', perm_view_admin_tab:'View Admin Tab', permHatcheriesLabel:'Allowed Hatcheries', permHatcheriesHint:'None = all',
     th_createdAt:'Created', showAll:'Show All', show10Latest:'Show 10 Latest', lblExternalSource:'🛒 Buy-in source', manageUsers:'Manage Users',
-    customersTitle:'📋 Customer Reference', addCustomer:'+ Add Customer', lblCustomerCode:'Customer Code', lblFarmLocation:'Farm Location', lblNumSheds:'No. of Sheds', lblChickenCapacity:'Chicken Capacity', confirmDeleteCustomer:'Delete this customer?', editCustomerTitle:'Edit Customer', addCustomerTitle:'Add Customer',
+    customersTitle:'📋 Customer Reference', addCustomer:'+ Add Customer', lblCustomerCode:'Customer Code', lblFarmLocation:'Farm Location', lblNumSheds:'No. of Sheds', lblChickenCapacity:'Chicken Capacity', confirmDeleteCustomer:'Delete this customer?', editCustomerTitle:'Edit Customer', addCustomerTitle:'Add Customer', custCodePlaceholder:'Auto-fill from dropdown, or type manually',
     th_email:'Email', th_name:'Name', th_role:'Role', th_registered:'Registered', th_changeRole:'Change Role', bookingTargetsTitle:'Booking Targets', addTarget:'+ Add Target',
     th_periodType:'Type', th_period:'Day/Week', th_customerType:'Customer Type', lblPeriodType:'Period Type', addRecordTitle:'Add Record', editRecordTitle:'Edit Record',
     lblWeek:'Week', lblDate:'Date', lblDay:'Day', lblHatchery:'Hatchery', lblCType:'Customer Type', lblCustomer:'Customer', lblBreed:'Breed',
@@ -729,7 +731,7 @@ function renderEntry(){
 
 function openAddModal(){
   document.getElementById('modalTitle').textContent=t('addRecordTitle'); document.getElementById('rDeleteBtn').classList.add('hidden');
-  ['rId','rCustomer','rExternalSource','rMOrd','rFOrd','rUOrd','rMAct','rFAct','rUAct','rPrice','rTotalAmount','rNotes','rDONumber','rTruckPlate','rDepartureTime','rLocation','rWeightM','rWeightF','rWeightMixed','rEggAge'].forEach(id=>{const el=document.getElementById(id); if(el) el.value='';});
+  ['rId','rCustomer','rCustomerCode','rExternalSource','rMOrd','rFOrd','rUOrd','rMAct','rFAct','rUAct','rPrice','rTotalAmount','rNotes','rDONumber','rTruckPlate','rDepartureTime','rLocation','rWeightM','rWeightF','rWeightMixed','rEggAge'].forEach(id=>{const el=document.getElementById(id); if(el) el.value='';});
   document.querySelectorAll('input[name="vacSC"]').forEach(cb=>cb.checked=false); document.querySelectorAll('input[name="vacSpray"]').forEach(cb=>cb.checked=false);
   document.getElementById('rDate').valueAsDate=new Date(); updateDayName(); ['rHatchery','rCType','rBreed'].forEach(id=>document.getElementById(id).value=''); document.getElementById('rExternalSourceRow').classList.add('hidden');
   hideLocationPreview();
@@ -745,7 +747,7 @@ function openEditModal(id){
   const r=allRecords.find(x=>x.id===id);if(!r) return;
   document.getElementById('modalTitle').textContent=t('editRecordTitle'); applyHatcheryRestrictionToForm(); document.getElementById('rDeleteBtn').classList.toggle('hidden',!(currentProfile?.role==='admin'||r.user_id===currentUser.id));
   document.getElementById('rId').value=r.id; document.getElementById('rWeek').value=r.week_no; document.getElementById('rDate').value=r.record_date; document.getElementById('rDay').value=r.day_name||'';
-  document.getElementById('rHatchery').value=r.hatchery; document.getElementById('rCType').value=r.customer_type; document.getElementById('rCustomer').value=r.customer_name; document.getElementById('rBreed').value=r.breed||'';
+  document.getElementById('rHatchery').value=r.hatchery; document.getElementById('rCType').value=r.customer_type; document.getElementById('rCustomer').value=r.customer_name; document.getElementById('rCustomerCode').value=r.customer_code||''; document.getElementById('rBreed').value=r.breed||'';
   document.getElementById('rExternalSource').value=r.external_source||''; onHatcheryChange();
   document.getElementById('rMOrd').value=r.m_ordered??''; document.getElementById('rFOrd').value=r.f_ordered??''; document.getElementById('rUOrd').value=r.u_ordered??'';
   document.getElementById('rMAct').value=r.m_actual??''; document.getElementById('rFAct').value=r.f_actual??''; document.getElementById('rUAct').value=r.u_actual??'';
@@ -770,7 +772,7 @@ async function saveRecord(){
   const id=document.getElementById('rId').value, num=v=>v===''?null:parseInt(v), dec=v=>v===''?null:parseFloat(v);
   const data={
     week_no:parseInt(document.getElementById('rWeek').value), record_date:document.getElementById('rDate').value, day_name:document.getElementById('rDay').value,
-    hatchery:document.getElementById('rHatchery').value, customer_type:document.getElementById('rCType').value, customer_name:document.getElementById('rCustomer').value.trim(), breed:document.getElementById('rBreed').value||null,
+    hatchery:document.getElementById('rHatchery').value, customer_type:document.getElementById('rCType').value, customer_name:document.getElementById('rCustomer').value.trim(), customer_code:document.getElementById('rCustomerCode').value.trim()||null, breed:document.getElementById('rBreed').value||null,
     external_source:document.getElementById('rHatchery').value==='External'?(document.getElementById('rExternalSource').value.trim()||null):null,
     m_ordered:num(document.getElementById('rMOrd').value), f_ordered:num(document.getElementById('rFOrd').value), u_ordered:num(document.getElementById('rUOrd').value),
     m_actual:num(document.getElementById('rMAct').value), f_actual:num(document.getElementById('rFAct').value), u_actual:num(document.getElementById('rUAct').value),
@@ -1052,13 +1054,14 @@ function onCustomerInput(inp){
   if(!q||!allCustomers.length){if(dd)dd.style.display='none';return;}
   const matches=allCustomers.filter(c=>(c.customer_name||'').toLowerCase().includes(q)||(c.customer_code||'').toLowerCase().includes(q)).slice(0,8);
   if(!matches.length){dd.style.display='none';return;}
-  dd.innerHTML=matches.map(c=>`<div class="cust-ac-item" onmousedown="selectCustomerAC('${c.id}')"><span>${esc(c.customer_name)}</span>${c.customer_code?`<span class="cust-ac-code">${esc(c.customer_code)}</span>`:''}<span class="cust-ac-type">${esc(c.customer_type||'')}</span></div>`).join('');
+  dd.innerHTML=matches.map(c=>`<div class="cust-ac-item" onmousedown="selectCustomerAC('${c.id}')"><span class="cust-ac-name">${esc(c.customer_name)}</span>${c.customer_code?`<span class="cust-ac-code">${esc(c.customer_code)}</span>`:''}<span class="cust-ac-type">${esc(c.customer_type||'')}</span></div>`).join('');
   dd.style.display='block';
 }
 function hideCustAC(){const dd=document.getElementById('rCustomerAC');if(dd)dd.style.display='none';}
 function selectCustomerAC(id){
   const c=allCustomers.find(x=>x.id===id);if(!c)return;
   document.getElementById('rCustomer').value=c.customer_name;
+  document.getElementById('rCustomerCode').value=c.customer_code||'';
   if(c.customer_type)document.getElementById('rCType').value=c.customer_type;
   if(c.farm_location){
     const inp=document.getElementById('rLocation');
