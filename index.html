@@ -343,7 +343,17 @@
       <div class="card"><div class="card-header"><span class="card-title" data-i18n="manageUsers">จัดการผู้ใช้</span></div><div class="table-wrap"><table><thead><tr><th data-i18n="th_email">อีเมล</th><th data-i18n="th_name">ชื่อ</th><th data-i18n="th_role">Role</th><th data-i18n="th_registered">สมัครเมื่อ</th><th data-i18n="th_perms">สิทธิ์</th><th></th></tr></thead><tbody id="adminTbody"></tbody></table></div></div>
       <div class="card" style="margin-top:14px"><div class="card-header"><span class="card-title" data-i18n="bookingTargetsTitle">Booking Targets</span><div style="display:flex;gap:8px;align-items:center"><select id="targetsViewSelect" onchange="setTargetsView(this.value)"><option value="week" data-i18n="byWeek">📅 รายสัปดาห์</option><option value="day" data-i18n="byDay">📆 รายวัน</option></select><button class="btn-add" onclick="openTargetModal()" data-i18n="addTarget">+ ตั้งเป้าหมาย</button></div></div><div class="table-wrap" id="targetsTableWrap"></div></div>
       <div class="card" style="margin-top:14px"><div class="card-header"><span class="card-title" data-i18n="hatcheryEstTitle">Hatchery Estimate</span><div style="display:flex;gap:8px;align-items:center"><select id="estimatesViewSelect" onchange="setEstimatesView(this.value)"><option value="week" data-i18n="byWeek">📅 รายสัปดาห์</option><option value="day" data-i18n="byDay">📆 รายวัน</option></select><button class="btn-add" onclick="openEstimateModal()" data-i18n="addEstimate">+ เพิ่ม Estimate</button></div></div><div class="table-wrap" id="estimatesTableWrap"></div></div>
-      <div class="card" style="margin-top:14px"><div class="card-header"><span class="card-title" data-i18n="customersTitle">📋 ข้อมูลอ้างอิงลูกค้า</span><button class="btn-add" onclick="openCustomerModal()" data-i18n="addCustomer">+ เพิ่มลูกค้า</button></div><div class="table-wrap" id="customersTableWrap"></div></div>
+      <div class="card" style="margin-top:14px">
+        <div class="card-header">
+          <span class="card-title" data-i18n="customersTitle">📋 ข้อมูลอ้างอิงลูกค้า</span>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <button class="btn-secondary" onclick="downloadCustomerTemplate()" style="font-size:12px;padding:6px 12px" title="ดาวน์โหลด Excel Template">📄 Template</button>
+            <label class="btn-secondary" style="font-size:12px;padding:6px 12px;cursor:pointer;margin:0" title="นำเข้าข้อมูลลูกค้าจาก Excel">📥 Import<input type="file" id="custImportFile" accept=".xlsx,.xls,.csv" style="display:none" onchange="importCustomers(this)"/></label>
+            <button class="btn-add" onclick="openCustomerModal()" data-i18n="addCustomer">+ เพิ่มลูกค้า</button>
+          </div>
+        </div>
+        <div class="table-wrap" id="customersTableWrap"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -393,7 +403,7 @@
       <div class="form-grid-3">
         <div class="form-row">
           <label data-i18n="lblEggAge">อายุไข่ฟัก (สัปดาห์)</label>
-          <select id="rEggAge" style="width:100%"></select>
+          <input id="rEggAge" type="text" placeholder="e.g. 18  หรือ  17,18  หากมีหลายอายุ" style="width:100%"/>
         </div>
       </div>
 
@@ -421,17 +431,16 @@
         <div class="form-row"><label data-i18n="lblTruckPlate">ทะเบียนรถ</label><input id="rTruckPlate" type="text"/></div>
         <div class="form-row"><label data-i18n="lblDepartureTime">เวลาเดินทาง</label><input id="rDepartureTime" type="time"/></div>
       </div>
-      <div class="form-row">
-        <label data-i18n="lblLocation">📍 สถานที่ (Google Maps)</label>
-        <div class="location-wrap" id="rLocationWrap">
-          <input id="rLocation" type="text" autocomplete="off" data-i18n-placeholder="lblLocationPlaceholder" placeholder="🔍 ค้นหาชื่อฟาร์ม, สถานที่, หรือที่อยู่..."/>
-          <button type="button" class="location-clear-btn" id="rLocationClear" onclick="clearLocationField()">✕</button>
+      <!-- Location: read-only, auto-filled from Customer Reference -->
+      <input type="hidden" id="rLocation"/>
+      <div class="form-row" id="rLocationDisplayRow" style="display:none">
+        <label data-i18n="lblLocation">📍 สถานที่ฟาร์ม</label>
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:7px;font-size:13px;color:#0369a1">
+          <span>📍</span>
+          <span id="rLocationText" style="flex:1"></span>
+          <a id="rLocationGMLink" href="#" target="_blank" rel="noopener" style="font-size:11px;color:var(--primary);text-decoration:none;white-space:nowrap;flex-shrink:0">🗺 Maps</a>
         </div>
-        <div id="rLocationMap"></div>
-        <div class="location-info-bar" id="rLocationInfo">
-          <a id="rLocationLink" href="#" target="_blank" rel="noopener">🗺 เปิดใน Google Maps</a>
-          <span class="location-coords" id="rLocationCoords"></span>
-        </div>
+        <p style="font-size:11px;color:var(--muted);margin:3px 0 0">ดึงมาจากข้อมูลลูกค้า — แก้ไขได้ที่ Admin › ข้อมูลลูกค้า</p>
       </div>
       <div class="form-grid-3">
         <div class="form-row"><label data-i18n="lblAvgWeightM">Avg Weight (M) กรัม</label><input id="rWeightM" type="number" step="0.01"/></div>
@@ -483,7 +492,22 @@
       <div class="form-row"><label data-i18n="lblCType">ประเภทลูกค้า</label>
         <select id="custType"><option value="" data-i18n="chooseOption">-- เลือก --</option><option value="Customer (Direct)">Customer (Direct)</option><option value="Contract Farm">Contract Farm</option><option value="Company Farm">Company Farm</option></select>
       </div>
-      <div class="form-row"><label data-i18n="lblFarmLocation">สถานที่ฟาร์ม</label><input id="custFarmLocation" type="text" placeholder="ชื่อสถานที่หรือที่อยู่"/></div>
+      <div class="form-row">
+        <label data-i18n="lblFarmLocation">📍 สถานที่ฟาร์ม</label>
+        <div style="display:flex;gap:6px;margin-bottom:7px">
+          <button type="button" id="custLocModeGoogleBtn" onclick="setCustLocMode('google')" style="font-size:12px;padding:4px 12px;border-radius:6px;border:1px solid var(--border);background:#fff;cursor:pointer">🗺 Google Maps</button>
+          <button type="button" id="custLocModeManualBtn" onclick="setCustLocMode('manual')" style="font-size:12px;padding:4px 12px;border-radius:6px;border:1px solid var(--border);background:var(--primary);color:#fff;cursor:pointer">✏️ พิมพ์เอง</button>
+        </div>
+        <div class="location-wrap" id="custLocationWrap">
+          <input id="custFarmLocation" type="text" placeholder="ชื่อสถานที่ หรือที่อยู่ฟาร์ม" autocomplete="off"/>
+          <button type="button" class="location-clear-btn" id="custLocationClear" onclick="clearCustLocation()" style="display:none">✕</button>
+        </div>
+        <div id="custLocationMap" style="height:180px;border-radius:8px;margin-top:8px;border:1px solid var(--border);display:none;overflow:hidden"></div>
+        <div class="location-info-bar" id="custLocationInfo">
+          <a id="custLocationLink" href="#" target="_blank" rel="noopener">🗺 เปิดใน Google Maps</a>
+          <span class="location-coords" id="custLocationCoords"></span>
+        </div>
+      </div>
       <div class="form-grid-2">
         <div class="form-row"><label data-i18n="lblNumSheds">จำนวนเล้า</label><input id="custNumSheds" type="number" min="0"/></div>
         <div class="form-row"><label data-i18n="lblChickenCapacity">ปริมาณไก่เข้าเลี้ยง (ตัว)</label><input id="custChickenCapacity" type="number" min="0"/></div>
@@ -610,18 +634,9 @@ function applyLanguage(){
   document.querySelectorAll('[data-i18n]').forEach(el=>{ const v=t(el.dataset.i18n); if(v) el.textContent=v; });
   document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>{ const v=t(el.getAttribute('data-i18n-placeholder')); if(v) el.placeholder=v; });
   document.querySelectorAll('.lang-toggle button').forEach(b=>{ b.classList.toggle('active', b.dataset.lang===currentLang); });
-  populateEggAgeOptions();
-}
-
-function populateEggAgeOptions() {
-  const select = document.getElementById('rEggAge');
-  if(!select) return;
-  const currentVal = select.value;
-  select.innerHTML = `<option value="" data-i18n="chooseOption">${t('chooseOption')}</option>`;
-  for (let i = 1; i <= 50; i++) {
-    select.innerHTML += `<option value="${i}">${i}</option>`;
-  }
-  if(currentVal) select.value = currentVal;
+  // WOP placeholder language
+  const wopEl = document.getElementById('rEggAge');
+  if (wopEl) wopEl.placeholder = currentLang === 'en' ? 'e.g. 18  or  17,18  for multiple' : 'e.g. 18  หรือ  17,18  หากมีหลายอายุ';
 }
 
 let _locationAC = null, _locationPAE = null, _locationMap = null, _locationMarker = null;
@@ -875,9 +890,8 @@ function openAddModal(){
   ['rId','rCustomer','rCustomerCode','rExternalSource','rMOrd','rFOrd','rUOrd','rMAct','rFAct','rUAct','rPrice','rTotalAmount','rNotes','rDONumber','rTruckPlate','rDepartureTime','rLocation','rWeightM','rWeightF','rWeightMixed','rEggAge'].forEach(id=>{const el=document.getElementById(id); if(el) el.value='';});
   document.querySelectorAll('input[name="vacSC"]').forEach(cb=>cb.checked=false); document.querySelectorAll('input[name="vacSpray"]').forEach(cb=>cb.checked=false);
   document.getElementById('rDate').valueAsDate=new Date(); updateDayName(); ['rHatchery','rCType','rBreed'].forEach(id=>document.getElementById(id).value=''); document.getElementById('rExternalSourceRow').classList.add('hidden');
-  hideLocationPreview();
+  document.getElementById('rLocationDisplayRow').style.display='none';
   applyHatcheryRestrictionToForm(); document.getElementById('recordModal').classList.remove('hidden');
-  attachLocationAutocomplete();
 }
 function applyHatcheryRestrictionToForm(){
   const sel=document.getElementById('rHatchery'); if(!sel) return;
@@ -897,10 +911,17 @@ function openEditModal(id){
   const scVals = r.vaccine_sc?r.vaccine_sc.split(', '):[]; document.querySelectorAll('input[name="vacSC"]').forEach(cb=>cb.checked=scVals.includes(cb.value));
   const sprayVals = r.vaccine_spray?r.vaccine_spray.split(', '):[]; document.querySelectorAll('input[name="vacSpray"]').forEach(cb=>cb.checked=sprayVals.includes(cb.value));
   document.getElementById('rPrice').value=r.unit_price??''; document.getElementById('rNotes').value=r.notes||''; computeAmountPreview();
-  hideLocationPreview();
+  // Location — read-only display from saved record
+  const _loc = r.location || '';
+  document.getElementById('rLocation').value = _loc;
+  if (_loc) {
+    document.getElementById('rLocationText').textContent = _loc;
+    document.getElementById('rLocationGMLink').href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(_loc)}`;
+    document.getElementById('rLocationDisplayRow').style.display = '';
+  } else {
+    document.getElementById('rLocationDisplayRow').style.display = 'none';
+  }
   document.getElementById('recordModal').classList.remove('hidden');
-  attachLocationAutocomplete();
-  if (r.location) setTimeout(() => geocodeAndShowMap(r.location), 250);
 }
 function computeAmountPreview(){const p=parseFloat(document.getElementById('rPrice').value)||0, m=parseFloat(document.getElementById('rMAct').value)||0, f=parseFloat(document.getElementById('rFAct').value)||0, u=parseFloat(document.getElementById('rUAct').value)||0; const amt=p*(m+f+u); document.getElementById('rTotalAmount').value=amt?amt.toLocaleString('en-US',{minimumFractionDigits:2}):'';}
 ['rPrice','rMAct','rFAct','rUAct'].forEach(id=>{const el=document.getElementById(id);if(el)el.addEventListener('input',computeAmountPreview);});
@@ -1170,6 +1191,9 @@ function openCustomerModal(id){
   ['custId','custName','custCode','custFarmLocation','custNumSheds','custChickenCapacity','custNotes'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
   document.getElementById('custType').value='';
   document.getElementById('customerModalTitle').textContent=t(id?'editCustomerTitle':'addCustomerTitle');
+  // Reset location UI to manual mode
+  setCustLocMode('manual');
+  clearCustLocation();
   const delBtn=document.getElementById('custDeleteBtn');
   if(id){
     const c=allCustomers.find(x=>x.id===id);if(!c)return;
@@ -1178,6 +1202,7 @@ function openCustomerModal(id){
     document.getElementById('custCode').value=c.customer_code||'';
     document.getElementById('custType').value=c.customer_type||'';
     document.getElementById('custFarmLocation').value=c.farm_location||'';
+    if(c.farm_location){const btn=document.getElementById('custLocationClear');if(btn)btn.style.display='block';}
     document.getElementById('custNumSheds').value=c.num_sheds??'';
     document.getElementById('custChickenCapacity').value=c.chicken_capacity??'';
     document.getElementById('custNotes').value=c.notes||'';
@@ -1186,6 +1211,168 @@ function openCustomerModal(id){
   document.getElementById('customerModal').classList.remove('hidden');
 }
 function closeCustomerModal(){document.getElementById('customerModal').classList.add('hidden');}
+
+// ── Customer Modal: Location Mode Toggle ────────────────────
+let _custLocMode = 'manual';
+let _custLocationPAE = null, _custLocationMap = null, _custLocationMarker = null;
+
+function setCustLocMode(mode) {
+  _custLocMode = mode;
+  const gBtn = document.getElementById('custLocModeGoogleBtn');
+  const mBtn = document.getElementById('custLocModeManualBtn');
+  if (gBtn) { gBtn.style.background = mode === 'google' ? 'var(--primary)' : '#fff'; gBtn.style.color = mode === 'google' ? '#fff' : ''; }
+  if (mBtn) { mBtn.style.background = mode === 'manual' ? 'var(--primary)' : '#fff'; mBtn.style.color = mode === 'manual' ? '#fff' : ''; }
+  if (mode === 'google') {
+    attachCustLocationAutocomplete();
+  } else {
+    // Manual: show plain text input, hide PAE
+    const input = document.getElementById('custFarmLocation');
+    if (input) input.style.display = '';
+    if (_custLocationPAE) { try { _custLocationPAE.style.display = 'none'; } catch(e){} }
+  }
+}
+
+function attachCustLocationAutocomplete() {
+  try {
+    if (!window.google || !google.maps || !google.maps.places) {
+      toast('Google Maps ยังโหลดไม่เสร็จ — ใช้โหมดพิมพ์เองแทน', 'info');
+      setCustLocMode('manual'); return;
+    }
+    const wrap  = document.getElementById('custLocationWrap');
+    const input = document.getElementById('custFarmLocation');
+    if (!input || !wrap) return;
+    if (google.maps.places.PlaceAutocompleteElement) {
+      if (!_custLocationPAE) {
+        input.style.display = 'none';
+        _custLocationPAE = new google.maps.places.PlaceAutocompleteElement({ requestedLanguage: currentLang });
+        wrap.insertBefore(_custLocationPAE, input);
+        _custLocationPAE.addEventListener('gmp-placeselect', async ({ place }) => {
+          await place.fetchFields({ fields: ['displayName', 'formattedAddress', 'location'] });
+          const addr = place.formattedAddress || place.displayName || '';
+          input.value = addr;
+          const lat = place.location.lat(), lng = place.location.lng();
+          input.dataset.lat = lat; input.dataset.lng = lng;
+          const btn = document.getElementById('custLocationClear');
+          if (btn) btn.style.display = 'block';
+          showCustLocationPreview(lat, lng);
+        });
+      } else {
+        _custLocationPAE.style.display = '';
+        input.style.display = 'none';
+      }
+      if (input.value) try { _custLocationPAE.inputValue = input.value; } catch(e){}
+      const btn = document.getElementById('custLocationClear');
+      if (btn) btn.style.display = input.value ? 'block' : 'none';
+    } else {
+      // Fallback legacy Autocomplete
+      if (!window._custLocationAC) {
+        window._custLocationAC = new google.maps.places.Autocomplete(input, { fields: ['formatted_address','geometry','name'] });
+        window._custLocationAC.addListener('place_changed', () => {
+          const p = window._custLocationAC.getPlace();
+          if (!p.geometry) return;
+          input.value = p.formatted_address || p.name || input.value;
+          input.dataset.lat = p.geometry.location.lat();
+          input.dataset.lng = p.geometry.location.lng();
+          showCustLocationPreview(input.dataset.lat, input.dataset.lng);
+        });
+      }
+    }
+  } catch(e) { console.log('Cust location PAE error:', e); setCustLocMode('manual'); }
+}
+
+function showCustLocationPreview(lat, lng) {
+  const mapDiv  = document.getElementById('custLocationMap');
+  const infoBar = document.getElementById('custLocationInfo');
+  const linkEl  = document.getElementById('custLocationLink');
+  const coordEl = document.getElementById('custLocationCoords');
+  if (!mapDiv) return;
+  mapDiv.style.display = 'block';
+  if (infoBar) infoBar.style.display = 'flex';
+  if (linkEl)  linkEl.href = `https://www.google.com/maps?q=${lat},${lng}`;
+  if (coordEl) coordEl.textContent = `${parseFloat(lat).toFixed(5)}, ${parseFloat(lng).toFixed(5)}`;
+  const pos = { lat: parseFloat(lat), lng: parseFloat(lng) };
+  if (!_custLocationMap) {
+    _custLocationMap = new google.maps.Map(mapDiv, { center: pos, zoom: 14, mapTypeControl: false, streetViewControl: false });
+    _custLocationMarker = new google.maps.Marker({ map: _custLocationMap, position: pos, animation: google.maps.Animation.DROP });
+  } else {
+    _custLocationMap.setCenter(pos);
+    _custLocationMarker.setPosition(pos);
+    _custLocationMarker.setAnimation(google.maps.Animation.DROP);
+  }
+  setTimeout(() => google.maps.event.trigger(_custLocationMap, 'resize'), 100);
+}
+
+function clearCustLocation() {
+  const input = document.getElementById('custFarmLocation');
+  if (input) { input.value = ''; delete input.dataset.lat; delete input.dataset.lng; }
+  if (_custLocationPAE) { try { _custLocationPAE.inputValue = ''; } catch(e){} }
+  const mapDiv  = document.getElementById('custLocationMap');
+  const infoBar = document.getElementById('custLocationInfo');
+  const btn     = document.getElementById('custLocationClear');
+  if (mapDiv)  mapDiv.style.display  = 'none';
+  if (infoBar) infoBar.style.display = 'none';
+  if (btn)     btn.style.display     = 'none';
+}
+
+// ── Customer Import / Template ──────────────────────────────
+function downloadCustomerTemplate() {
+  const headers = ['customer_name*','customer_code','customer_type','farm_location','num_sheds','chicken_capacity','notes'];
+  const hint    = ['Required','Optional','Customer (Direct) / Contract Farm / Company Farm','Optional','Number','Number','Optional'];
+  const example = ['ฟาร์มตัวอย่าง จ.เชียงใหม่','CMI-001','Contract Farm','อ.สันทราย จ.เชียงใหม่','4','20000','หมายเหตุเพิ่มเติม'];
+  const ws = XLSX.utils.aoa_to_sheet([headers, hint, example]);
+  ws['!cols'] = headers.map((h,i) => ({ wch: i === 2 ? 32 : i === 3 ? 28 : 18 }));
+  // Style header row
+  headers.forEach((_,c) => {
+    const cell = XLSX.utils.encode_cell({r:0, c});
+    if (!ws[cell]) return;
+    ws[cell].s = { font: {bold:true}, fill: {fgColor:{rgb:'2563EB'}}, font: {bold:true, color:{rgb:'FFFFFF'}} };
+  });
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Customers');
+  XLSX.writeFile(wb, 'Customer_Import_Template.xlsx');
+  toast('📄 ดาวน์โหลด Template สำเร็จ', 'success');
+}
+
+async function importCustomers(fileInput) {
+  const file = fileInput.files[0];
+  if (!file) return;
+  try {
+    const ab = await file.arrayBuffer();
+    const wb = XLSX.read(ab, { type: 'array' });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+    if (!rows.length) { toast('ไม่พบข้อมูลในไฟล์', 'error'); fileInput.value = ''; return; }
+    let added = 0, updated = 0, errors = 0;
+    for (const row of rows) {
+      // Support both header formats
+      const name = String(row['customer_name*'] || row['customer_name'] || '').trim();
+      if (!name || name === 'Required') continue; // skip hint row
+      const d = {
+        customer_name:    name,
+        customer_code:    String(row['customer_code'] || '').trim() || null,
+        customer_type:    String(row['customer_type'] || '').trim() || null,
+        farm_location:    String(row['farm_location'] || '').trim() || null,
+        num_sheds:        parseInt(row['num_sheds'])        || null,
+        chicken_capacity: parseInt(row['chicken_capacity']) || null,
+        notes:            String(row['notes'] || '').trim() || null,
+      };
+      const existing = allCustomers.find(c => c.customer_name === name);
+      if (existing) {
+        const { error } = await sb.from('customers').update(d).eq('id', existing.id);
+        error ? errors++ : updated++;
+      } else {
+        const { error } = await sb.from('customers').insert(d);
+        error ? errors++ : added++;
+      }
+    }
+    const msg = `✅ Import: +${added} ใหม่, ${updated} อัปเดต${errors > 0 ? `, ⚠️ ${errors} error` : ''}`;
+    toast(msg, errors > 0 ? 'info' : 'success');
+    await loadCustomers(); renderCustomersTable();
+  } catch(e) {
+    toast('Import failed: ' + e.message, 'error');
+  }
+  fileInput.value = '';
+}
 async function saveCustomer(){
   const id=document.getElementById('custId').value;
   const name=document.getElementById('custName').value.trim();
@@ -1226,12 +1413,15 @@ function selectCustomerAC(id){
   document.getElementById('rCustomer').value=c.customer_name;
   document.getElementById('rCustomerCode').value=c.customer_code||'';
   if(c.customer_type)document.getElementById('rCType').value=c.customer_type;
-  if(c.farm_location){
-    const inp=document.getElementById('rLocation');
-    if(inp)inp.value=c.farm_location;
-    if(_locationPAE){try{_locationPAE.inputValue=c.farm_location;}catch(e){}}
-    const btn=document.getElementById('rLocationClear');if(btn)btn.style.display='block';
-    setTimeout(()=>geocodeAndShowMap(c.farm_location),100);
+  // Location — fill hidden input + show read-only display
+  const loc=c.farm_location||'';
+  document.getElementById('rLocation').value=loc;
+  if(loc){
+    document.getElementById('rLocationText').textContent=loc;
+    document.getElementById('rLocationGMLink').href=`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc)}`;
+    document.getElementById('rLocationDisplayRow').style.display='';
+  } else {
+    document.getElementById('rLocationDisplayRow').style.display='none';
   }
   hideCustAC();
 }
