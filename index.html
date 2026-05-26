@@ -115,6 +115,19 @@
   .hm-bad{background:#fecaca;color:#991b1b}
   .hm-crit{background:#ef4444;color:#fff}
   .hm-empty{background:#f9fafb;color:var(--muted)}
+  /* ── Transport Report ── */
+  .tr-kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:16px}
+  .tr-kpi-card{background:#fff;padding:14px 16px;border-radius:10px;box-shadow:var(--shadow);border-left:4px solid #6366f1;min-width:0}
+  .tr-kpi-card.time{border-left-color:#6366f1}.tr-kpi-card.dist{border-left-color:#0891b2}.tr-kpi-card.doa{border-left-color:#dc2626}.tr-kpi-card.doaPct{border-left-color:#d97706}
+  .tr-kpi-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+  .tr-kpi-value{font-size:22px;font-weight:700;color:var(--text);margin:2px 0;line-height:1.2}
+  .tr-kpi-sub{font-size:11px;color:var(--muted);margin-top:2px}
+  .tr-filter-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px;padding:12px 14px;background:#fff;border-radius:10px;box-shadow:var(--shadow)}
+  .tr-info-box{background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:14px;display:grid;grid-template-columns:1fr 1fr;gap:8px 14px}
+  .tr-info-label{font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.3px;margin-bottom:2px}
+  .tr-info-val{font-size:13px;font-weight:600;color:var(--text)}
+  .doa-ok{color:#16a34a!important;font-weight:700}.doa-warn{color:#d97706!important;font-weight:700}.doa-bad{color:#dc2626!important;font-weight:700}
+  .tr-doa-box{background:#fff5f5;border:1px solid #fecaca;border-radius:8px;padding:12px;margin:4px 0}
   /* ── Pareto ── */
   #paretoChart{max-height:280px}
 
@@ -237,6 +250,7 @@
   <div class="nav-tabs">
     <button class="tab active" data-tab="entry" onclick="switchTab('entry')" data-i18n="tabEntry">📋 Order Entry</button>
     <button class="tab" data-tab="summary" onclick="switchTab('summary')" data-i18n="tabSummary">📊 Summarize</button>
+    <button class="tab" data-tab="transport" onclick="switchTab('transport')" data-i18n="tabTransport">🚚 Transport</button>
     <button class="tab hidden" data-tab="admin" id="adminTab" onclick="switchTab('admin')" data-i18n="tabAdmin">⚙️ Admin</button>
   </div>
 
@@ -337,6 +351,56 @@
       <div class="summary-section" data-section="sexHatchery"><div class="summary-title" data-i18n="sexHatcherySection">ACTUAL CHICKS BY SEX × HATCHERY (%)</div><div class="trend-grid" style="grid-template-columns:2fr 1fr"><div class="chart-card"><h4 data-i18n="chartSexHatchery">📊 ลูกไก่ตามเพศ × โรงฟัก</h4><canvas id="trendSexHatchery"></canvas></div><div class="chart-card"><h4 data-i18n="chartMFRatio">⚖️ M:F Ratio รวม (%)</h4><canvas id="trendMFRatio"></canvas></div></div><table class="matrix" id="sexHatcheryMatrix"></table></div>
       <div class="summary-section" data-section="topCustomers"><div class="summary-title" data-i18n="topCustomersSection">TOP CUSTOMERS</div><table class="matrix" id="topCustomersMatrix"></table></div>
       <div class="summary-section" data-section="difference"><div class="summary-title" data-i18n="diffSection">DIFFERENCE (ACTUAL − ORDER)</div><table class="matrix" id="diffMatrix"></table></div>
+    </div>
+
+    <!-- ═══════════════ TRANSPORT REPORT TAB ═══════════════ -->
+    <div id="tab-transport" class="hidden">
+      <!-- Filter Bar -->
+      <div class="tr-filter-bar">
+        <select id="trWeek" onchange="loadTransportReport()" style="min-width:130px">
+          <option value="" data-i18n="trAllWeeks">สัปดาห์ทั้งหมด</option>
+        </select>
+        <select id="trHatchery" onchange="loadTransportReport()" style="min-width:145px">
+          <option value="" data-i18n="trAllHatcheries">โรงฟักทั้งหมด</option>
+        </select>
+        <button class="btn-secondary" onclick="loadTransportReport()" style="padding:6px 14px" data-i18n="trRefresh">🔄 รีเฟรช</button>
+        <button class="btn-secondary" onclick="exportTransportExcel()" style="padding:6px 14px;margin-left:auto" data-i18n="trExportExcel">📊 Export Excel</button>
+      </div>
+
+      <!-- KPI Dashboard -->
+      <div class="tr-kpi-grid">
+        <div class="tr-kpi-card time">
+          <div class="tr-kpi-label" data-i18n="trKpiAvgTime">⏱ เวลาขนส่งเฉลี่ย</div>
+          <div class="tr-kpi-value" id="trKpiAvgTime">—</div>
+          <div class="tr-kpi-sub" id="trKpiAvgTimeSub">ต่อรอบ</div>
+        </div>
+        <div class="tr-kpi-card dist">
+          <div class="tr-kpi-label" data-i18n="trKpiDist">📍 ระยะทางรวม</div>
+          <div class="tr-kpi-value" id="trKpiTotalDist">—</div>
+          <div class="tr-kpi-sub" id="trKpiDistSub">กม.</div>
+        </div>
+        <div class="tr-kpi-card doa">
+          <div class="tr-kpi-label" data-i18n="trKpiDOA">💀 DOA รวม</div>
+          <div class="tr-kpi-value" id="trKpiTotalDOA">—</div>
+          <div class="tr-kpi-sub" id="trKpiDOASub">ตัว</div>
+        </div>
+        <div class="tr-kpi-card doaPct">
+          <div class="tr-kpi-label" data-i18n="trKpiDOAPct">📊 DOA %</div>
+          <div class="tr-kpi-value" id="trKpiDOAPct">—</div>
+          <div class="tr-kpi-sub">ของยอดส่งจริงทั้งหมด</div>
+        </div>
+      </div>
+
+      <!-- Transport Table -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title" data-i18n="trTableTitle">🚚 รายงานการขนส่งโดยละเอียด</span>
+          <span id="trRecordCount" style="font-size:12px;color:var(--muted)"></span>
+        </div>
+        <div class="table-wrap" id="transportTableWrap">
+          <p style="text-align:center;padding:24px;color:var(--muted)">กรุณาโหลดข้อมูล...</p>
+        </div>
+      </div>
     </div>
 
     <div id="tab-admin" class="hidden">
@@ -522,6 +586,80 @@
 
 <div id="permModal" class="modal-overlay hidden"><div class="modal" style="max-width:560px"><div class="modal-header"><h2 data-i18n="permissionsTitle">จัดการสิทธิ์ผู้ใช้</h2><button class="modal-close" onclick="closePermModal()">&times;</button></div><div class="modal-body"><div id="permUserInfo" style="padding:10px 12px;background:var(--bg);border-radius:8px;margin-bottom:14px;font-size:13px"></div><div class="form-row"><label data-i18n="th_role">Role</label><select id="permRole"><option value="user" data-i18n="role_user">User</option><option value="admin" data-i18n="role_admin">Admin</option></select><p style="font-size:12px;color:var(--muted);margin:6px 0 0" data-i18n="permRoleHint">Admin = default ได้ทุกสิทธิ์</p></div><div class="section-label" data-i18n="permsLabel">สิทธิ์เฉพาะ (override)</div><div id="permsGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px"></div><div class="section-label" data-i18n="permHatcheriesLabel">โรงฟักที่อนุญาตให้แก้ไข</div><p style="font-size:12px;color:var(--muted);margin:0 0 6px" data-i18n="permHatcheriesHint">ไม่ติ๊กเลย = ได้ทุกโรงฟัก</p><div id="permHatcheriesGrid" class="perm-hatchery-grid"></div></div><div class="modal-footer"><button class="btn-secondary" onclick="closePermModal()" data-i18n="cancel">ยกเลิก</button><button class="btn-add" onclick="savePerm()" data-i18n="save">บันทึก</button></div></div></div>
 
+<!-- ════════════ TRANSPORT DATA MODAL ════════════ -->
+<div id="transportModal" class="modal-overlay hidden">
+  <div class="modal" style="max-width:540px">
+    <div class="modal-header">
+      <h2 data-i18n="trModalTitle">🚚 บันทึกข้อมูลการขนส่ง</h2>
+      <button class="modal-close" onclick="closeTransportModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <!-- Record Info (read-only) -->
+      <div class="tr-info-box" id="trInfoBox">
+        <div><div class="tr-info-label">ลูกค้า / ฟาร์ม</div><div class="tr-info-val" id="trInfoCustomer">—</div></div>
+        <div><div class="tr-info-label">โรงฟัก</div><div class="tr-info-val" id="trInfoHatchery">—</div></div>
+        <div><div class="tr-info-label">วันที่</div><div class="tr-info-val" id="trInfoDate">—</div></div>
+        <div><div class="tr-info-label">ยอดส่งจริง (ตัว)</div><div class="tr-info-val" id="trInfoActual">—</div></div>
+        <div><div class="tr-info-label">⏰ เวลาออกจากโรงฟัก</div><div class="tr-info-val" id="trInfoDeparture" style="color:#2563eb">—</div></div>
+        <div><div class="tr-info-label">📍 สถานที่ฟาร์ม</div><div class="tr-info-val" id="trInfoLocation" style="font-size:12px">—</div></div>
+      </div>
+
+      <!-- Arrival Time + Duration -->
+      <div class="form-grid-2">
+        <div class="form-row">
+          <label data-i18n="trArrivalTime">🕐 เวลาถึงฟาร์ม</label>
+          <input id="trArrivalTime" type="time" oninput="calcAndShowDuration()"/>
+        </div>
+        <div class="form-row">
+          <label data-i18n="trDurationLabel">⏱ ระยะเวลาขนส่ง</label>
+          <div id="trDurationDisplay" style="padding:8px 12px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:7px;font-size:15px;font-weight:700;color:#0369a1;min-height:38px;display:flex;align-items:center">—</div>
+        </div>
+      </div>
+
+      <!-- Driver + Distance -->
+      <div class="form-grid-2">
+        <div class="form-row">
+          <label data-i18n="trDriverLabel">🚛 คนขับรถ</label>
+          <input id="trDriverName" type="text" placeholder="ชื่อคนขับรถ"/>
+        </div>
+        <div class="form-row">
+          <label data-i18n="trDistLabel">📏 ระยะทาง (กม.) <span id="trDistAutoLabel" style="font-size:10px;color:#16a34a;font-weight:600;margin-left:2px"></span></label>
+          <input id="trDistanceKm" type="number" step="0.1" min="0" placeholder="0.0" oninput="document.getElementById('trDistAutoLabel').textContent=''"/>
+        </div>
+      </div>
+
+      <!-- DOA Section -->
+      <div class="tr-doa-box">
+        <div style="font-size:12px;font-weight:700;color:#991b1b;margin-bottom:10px" data-i18n="trDOASection">💀 ลูกไก่สูญเสีย / เสียหาย (DOA)</div>
+        <div class="form-grid-2">
+          <div class="form-row" style="margin:0">
+            <label style="font-size:12px" data-i18n="trDOACountLabel">จำนวน DOA (ตัว)</label>
+            <input id="trDOACount" type="number" min="0" step="1" placeholder="0" oninput="calcAndShowDOA()"/>
+          </div>
+          <div class="form-row" style="margin:0">
+            <label style="font-size:12px" data-i18n="trDOAPctLabel">DOA %</label>
+            <div id="trDOADisplay" style="padding:8px 12px;background:#fff;border:1px solid var(--border);border-radius:7px;font-size:15px;font-weight:700;min-height:38px;display:flex;align-items:center;color:var(--muted)">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notes -->
+      <div class="form-row">
+        <label data-i18n="trNotesLabel">📝 หมายเหตุการขนส่ง</label>
+        <textarea id="trTransportNotes" rows="2" placeholder="สภาพถนน, อุณหภูมิ, ปัญหาที่พบ..."></textarea>
+      </div>
+
+      <input type="hidden" id="trRecordId"/>
+      <input type="hidden" id="trTotalActual"/>
+      <input type="hidden" id="trDepTime"/>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeTransportModal()" data-i18n="cancel">ยกเลิก</button>
+      <button class="btn-add" onclick="saveTransportData()" data-i18n="trSaveBtn">💾 บันทึก</button>
+    </div>
+  </div>
+</div>
+
 <div id="estimateModal" class="modal-overlay hidden"><div class="modal" style="max-width:520px"><div class="modal-header"><h2 data-i18n="setEstimateTitle">ตั้งประมาณการ Hatchery</h2><button class="modal-close" onclick="closeEstimateModal()">&times;</button></div><div class="modal-body"><div class="form-row"><label data-i18n="lblPeriodType">ประเภทระยะเวลา</label><select id="eePeriodType" onchange="toggleEstimatePeriodFields()"><option value="week" data-i18n="byWeek">📅 รายสัปดาห์</option><option value="day" data-i18n="byDay">📆 รายวัน</option></select></div><div class="form-row hidden" id="eeDateRow"><label data-i18n="lblDate">วันที่</label><input id="eeDate" type="date"/></div><div class="form-row" id="eeWeekRow"><label data-i18n="lblWeek">สัปดาห์</label><input id="eeWeek" type="number" min="1" max="53"/></div><div class="form-row"><label data-i18n="lblHatchery">โรงฟัก</label><select id="eeHatchery"><option value="" data-i18n="chooseOption">-- เลือก --</option><option value="Chengkau">Chengkau</option><option value="Kluang">Kluang</option><option value="K.Kangsar">K.Kangsar</option><option value="Sg. Sayong">Sg. Sayong</option><option value="Kota">Kota</option></select></div><div class="form-row"><label data-i18n="lblEstimateTotal">Estimate Total</label><input id="eeTotal" type="number" min="0"/></div><div class="form-row"><label data-i18n="lblNotes">หมายเหตุ</label><input id="eeNotes" type="text"/></div></div><div class="modal-footer"><button class="btn-secondary" onclick="closeEstimateModal()" data-i18n="cancel">ยกเลิก</button><button class="btn-add" onclick="saveEstimate()" data-i18n="save">บันทึก</button></div></div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -546,6 +684,15 @@ try {
 } catch(e) { console.warn('Chart.js/ChartDataLabels not ready:', e); }
 
 const HATCHERIES = ['Chengkau','Kluang','K.Kangsar','Sg. Sayong','Kota','External'];
+// ── Hatchery GPS Coordinates (เพิ่มพิกัดจริงเพื่อคำนวณระยะทางอัตโนมัติ) ──────
+// วิธีหาพิกัด: เปิด Google Maps → คลิกขวาที่ตำแหน่งโรงฟัก → Copy coordinates
+const HATCHERY_COORDS = {
+  // 'Chengkau':  { lat: 5.9749, lng: 102.1379 },  // ← ใส่พิกัดจริง
+  // 'Kluang':    { lat: 2.0242, lng: 103.3181 },
+  // 'K.Kangsar': { lat: 4.7728, lng: 100.9483 },
+  // 'Sg. Sayong':{ lat: 4.3951, lng: 100.9750 },
+  // 'Kota':      { lat: 6.1218, lng: 102.2379 },
+};
 const CTYPES = ['Customer (Direct)','Contract Farm','Company Farm'];
 const CTYPE_CLASS = {'Customer (Direct)':'ctype-direct','Contract Farm':'ctype-contract','Company Farm':'ctype-company'};
 const ROW_CLASS = {'Customer (Direct)':'row-direct','Contract Farm':'row-contract','Company Farm':'row-company'};
@@ -560,7 +707,14 @@ const I18N = {
     setupTitle:'ตั้งค่า Supabase', setupSub:'กรอก URL + anon key', supabaseUrl:'URL', supabaseAnonKey:'Anon key', save:'บันทึก', cancel:'ยกเลิก', delete:'ลบ',
     signIn:'เข้าสู่ระบบ', signUp:'สมัครใช้งาน', loginGoogle:'เข้าสู่ระบบด้วย Google', or:'หรือ', email:'อีเมล', password:'รหัสผ่าน',
     noAccount:'ยังไม่มีบัญชี?', haveAccount:'มีบัญชีแล้ว?', changeSupabase:'⚙️ เปลี่ยน Supabase URL / key', realtime:'Real-time', logout:'ออกจากระบบ',
-    tabEntry:'📋 Order Entry', tabSummary:'📊 Summarize', tabAdmin:'⚙️ Admin',
+    tabEntry:'📋 Order Entry', tabSummary:'📊 Summarize', tabTransport:'🚚 Transport', tabAdmin:'⚙️ Admin',
+    trAllWeeks:'สัปดาห์ทั้งหมด', trAllHatcheries:'โรงฟักทั้งหมด', trRefresh:'🔄 รีเฟรช', trExportExcel:'📊 Export Excel',
+    trKpiAvgTime:'⏱ เวลาขนส่งเฉลี่ย', trKpiDist:'📍 ระยะทางรวม', trKpiDOA:'💀 DOA รวม', trKpiDOAPct:'📊 DOA %',
+    trTableTitle:'🚚 รายงานการขนส่งโดยละเอียด',
+    trModalTitle:'🚚 บันทึกข้อมูลการขนส่ง', trArrivalTime:'🕐 เวลาถึงฟาร์ม', trDurationLabel:'⏱ ระยะเวลา',
+    trDriverLabel:'🚛 คนขับรถ', trDistLabel:'📏 ระยะทาง (กม.)', trDOASection:'💀 ลูกไก่สูญเสีย / เสียหาย (DOA)',
+    trDOACountLabel:'จำนวน DOA (ตัว)', trDOAPctLabel:'DOA %', trNotesLabel:'📝 หมายเหตุการขนส่ง',
+    trSaveBtn:'💾 บันทึก', trAutoCalc:'(คำนวณอัตโนมัติ)', trDefaultDist:'(ค่าเริ่มต้น)',
     kpiTotal:'รายการทั้งหมด', kpiOrdered:'ยอดสั่ง (ตัว)', kpiActual:'ยอดส่งจริง (ตัว)', kpiDiff:'ส่วนต่าง', kpiDiffPct:'% ส่วนต่าง',
     allWeeks:'สัปดาห์ทั้งหมด', allHatcheries:'โรงฟักทั้งหมด', allCustomerTypes:'ประเภทลูกค้าทั้งหมด', allBreeds:'สายพันธุ์ทั้งหมด', searchCustomer:'🔍 ค้นหาชื่อลูกค้า/ฟาร์ม',
     addRecord:'+ เพิ่มรายการ', orderTable:'ตารางข้อมูล Order', byWeek:'📅 รายสัปดาห์', byDay:'📆 รายวัน', printBtn:'🖨️ พิมพ์',
@@ -598,7 +752,14 @@ const I18N = {
     setupTitle:'Setup Supabase', setupSub:'Enter URL + anon key', supabaseUrl:'URL', supabaseAnonKey:'Anon key', save:'Save', cancel:'Cancel', delete:'Delete',
     signIn:'Sign In', signUp:'Sign Up', loginGoogle:'Sign in with Google', or:'or', email:'Email', password:'Password',
     noAccount:"Don't have account?", haveAccount:'Have account?', changeSupabase:'⚙️ Change Supabase', realtime:'Real-time', logout:'Logout',
-    tabEntry:'📋 Order Entry', tabSummary:'📊 Summarize', tabAdmin:'⚙️ Admin',
+    tabEntry:'📋 Order Entry', tabSummary:'📊 Summarize', tabTransport:'🚚 Transport', tabAdmin:'⚙️ Admin',
+    trAllWeeks:'All Weeks', trAllHatcheries:'All Hatcheries', trRefresh:'🔄 Refresh', trExportExcel:'📊 Export Excel',
+    trKpiAvgTime:'⏱ Avg Transport Time', trKpiDist:'📍 Total Distance', trKpiDOA:'💀 Total DOA', trKpiDOAPct:'📊 DOA %',
+    trTableTitle:'🚚 Detailed Transport Report',
+    trModalTitle:'🚚 Record Transport Data', trArrivalTime:'🕐 Arrival Time at Farm', trDurationLabel:'⏱ Duration',
+    trDriverLabel:'🚛 Driver', trDistLabel:'📏 Distance (km)', trDOASection:'💀 Dead On Arrival (DOA)',
+    trDOACountLabel:'DOA Count (chicks)', trDOAPctLabel:'DOA %', trNotesLabel:'📝 Transport Notes',
+    trSaveBtn:'💾 Save', trAutoCalc:'(auto-calculated)', trDefaultDist:'(default)',
     kpiTotal:'Total', kpiOrdered:'Ordered', kpiActual:'Actual', kpiDiff:'Diff', kpiDiffPct:'Diff %',
     allWeeks:'All Weeks', allHatcheries:'All Hatcheries', allCustomerTypes:'All Customer Types', allBreeds:'All Breeds', searchCustomer:'🔍 Search',
     addRecord:'+ Add Record', orderTable:'Order Records', byWeek:'📅 By Week', byDay:'📆 By Day', printBtn:'🖨️ Print',
@@ -816,7 +977,7 @@ async function onLogin(user){
   subscribeRealtime();
 }
 async function loadProfiles(){const {data}=await sb.from('profiles').select('*').order('created_at');allProfiles=data||[];}
-async function loadRecords(){const {data}=await sb.from('doc_records').select('*').order('record_date',{ascending:false}).order('created_at',{ascending:false});allRecords=data||[];}
+async function loadRecords(){const {data}=await sb.from('doc_records').select('*').order('record_date',{ascending:false}).order('created_at',{ascending:false});allRecords=data||[];_trFiltersPopulated=false;}
 async function loadTargets(){const {data}=await sb.from('doc_targets').select('*').order('created_at',{ascending:false});allTargets=data||[];}
 async function loadEstimates(){const {data}=await sb.from('hatchery_estimates').select('*').order('created_at',{ascending:false});allEstimates=data||[];}
 
@@ -835,7 +996,11 @@ function subscribeRealtime(){
     .subscribe();
 }
 
-function switchTab(name){document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===name));['entry','summary','admin'].forEach(t=>document.getElementById('tab-'+t).classList.toggle('hidden',t!==name));}
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
+  ['entry','summary','transport','admin'].forEach(t=>document.getElementById('tab-'+t).classList.toggle('hidden',t!==name));
+  if(name==='transport') loadTransportReport();
+}
 function populateWeekFilters(){
   const weeks=[...new Set(allRecords.map(r=>r.week_no))].sort((a,b)=>b-a);
   const fW=document.getElementById('fWeek'), sW=document.getElementById('sumWeek');
@@ -1198,7 +1363,10 @@ function openCustomerModal(id){
     document.getElementById('custName').value=c.customer_name||'';
     document.getElementById('custCode').value=c.customer_code||'';
     document.getElementById('custType').value=c.customer_type||'';
-    document.getElementById('custFarmLocation').value=c.farm_location||'';
+    const _fLocEl=document.getElementById('custFarmLocation');
+    _fLocEl.value=c.farm_location||'';
+    if(c.farm_lat!=null)_fLocEl.dataset.lat=c.farm_lat; else delete _fLocEl.dataset.lat;
+    if(c.farm_lng!=null)_fLocEl.dataset.lng=c.farm_lng; else delete _fLocEl.dataset.lng;
     if(c.farm_location){const btn=document.getElementById('custLocationClear');if(btn)btn.style.display='block';}
     document.getElementById('custNumSheds').value=c.num_sheds??'';
     document.getElementById('custChickenCapacity').value=c.chicken_capacity??'';
@@ -1344,11 +1512,14 @@ async function importCustomers(fileInput) {
       // Support both header formats
       const name = String(row['customer_name*'] || row['customer_name'] || '').trim();
       if (!name || name === 'Required') continue; // skip hint row
+      const _iLat = parseFloat(row['farm_lat']); const _iLng = parseFloat(row['farm_lng']);
       const d = {
         customer_name:    name,
         customer_code:    String(row['customer_code'] || '').trim() || null,
         customer_type:    String(row['customer_type'] || '').trim() || null,
         farm_location:    String(row['farm_location'] || '').trim() || null,
+        farm_lat:         isNaN(_iLat) ? null : _iLat,
+        farm_lng:         isNaN(_iLng) ? null : _iLng,
         num_sheds:        parseInt(row['num_sheds'])        || null,
         chicken_capacity: parseInt(row['chicken_capacity']) || null,
         notes:            String(row['notes'] || '').trim() || null,
@@ -1374,7 +1545,10 @@ async function saveCustomer(){
   const id=document.getElementById('custId').value;
   const name=document.getElementById('custName').value.trim();
   if(!name)return toast(currentLang==='en'?'Please enter customer name':'กรุณากรอกชื่อลูกค้า','error');
-  const d={customer_name:name,customer_code:document.getElementById('custCode').value.trim()||null,customer_type:document.getElementById('custType').value||null,farm_location:document.getElementById('custFarmLocation').value.trim()||null,num_sheds:parseInt(document.getElementById('custNumSheds').value)||null,chicken_capacity:parseInt(document.getElementById('custChickenCapacity').value)||null,notes:document.getElementById('custNotes').value.trim()||null};
+  const _locInput=document.getElementById('custFarmLocation');
+  const _lat=_locInput.dataset.lat?parseFloat(_locInput.dataset.lat):null;
+  const _lng=_locInput.dataset.lng?parseFloat(_locInput.dataset.lng):null;
+  const d={customer_name:name,customer_code:document.getElementById('custCode').value.trim()||null,customer_type:document.getElementById('custType').value||null,farm_location:_locInput.value.trim()||null,farm_lat:_lat,farm_lng:_lng,num_sheds:parseInt(document.getElementById('custNumSheds').value)||null,chicken_capacity:parseInt(document.getElementById('custChickenCapacity').value)||null,notes:document.getElementById('custNotes').value.trim()||null};
   let error;
   if(id){({error}=await sb.from('customers').update(d).eq('id',id));}
   else{({error}=await sb.from('customers').insert(d));}
@@ -1738,6 +1912,251 @@ function renderParetoChart(rows) {
       }
     }
   });
+}
+
+// ===========================================================
+// TRANSPORT REPORT
+// ===========================================================
+let _trRecords = [];
+let _trFiltersPopulated = false;
+
+function loadTransportReport(){
+  if(!allRecords.length){
+    document.getElementById('transportTableWrap').innerHTML='<p style="text-align:center;padding:24px;color:var(--muted)">ยังไม่มีข้อมูล</p>';
+    renderTransportKPIs([]);
+    return;
+  }
+  // Populate filters once
+  if(!_trFiltersPopulated){
+    const weeks=[...new Set(allRecords.map(r=>r.week_no))].filter(Boolean).sort((a,b)=>b-a);
+    const wSel=document.getElementById('trWeek');
+    wSel.querySelectorAll('option:not(:first-child)').forEach(o=>o.remove());
+    weeks.forEach(w=>{const o=document.createElement('option');o.value=w;o.textContent=`Week ${w}`;wSel.appendChild(o);});
+    const hSel=document.getElementById('trHatchery');
+    hSel.querySelectorAll('option:not(:first-child)').forEach(o=>o.remove());
+    HATCHERIES.filter(h=>h!=='External').forEach(h=>{const o=document.createElement('option');o.value=h;o.textContent=h;hSel.appendChild(o);});
+    _trFiltersPopulated=true;
+  }
+  const wk=document.getElementById('trWeek').value;
+  const ht=document.getElementById('trHatchery').value;
+  let rows=allRecords.filter(r=>{
+    const total=(r.m_actual||0)+(r.f_actual||0)+(r.u_actual||0);
+    return total>0;
+  });
+  if(wk) rows=rows.filter(r=>String(r.week_no)===wk);
+  if(ht)  rows=rows.filter(r=>r.hatchery===ht);
+  _trRecords=rows;
+  renderTransportKPIs(rows);
+  renderTransportTable(rows);
+}
+
+function renderTransportKPIs(rows){
+  let totalMinsSum=0, countDur=0, totalDist=0, countDist=0, totalDOA=0, totalActual=0;
+  rows.forEach(r=>{
+    const d=r.departure_time, a=r.arrival_time;
+    if(d&&a){const dur=calcTransportDuration(d,a);if(dur.totalMins>0&&dur.totalMins<720){totalMinsSum+=dur.totalMins;countDur++;}}
+    if(r.distance_km>0){totalDist+=parseFloat(r.distance_km);countDist++;}
+    totalDOA+=(r.doa_count||0);
+    totalActual+=(r.m_actual||0)+(r.f_actual||0)+(r.u_actual||0);
+  });
+  const avgMins=countDur>0?Math.round(totalMinsSum/countDur):null;
+  const doaPct=totalActual>0?(totalDOA/totalActual*100):null;
+
+  // Avg time
+  document.getElementById('trKpiAvgTime').textContent=avgMins!=null?`${Math.floor(avgMins/60)} ชม. ${avgMins%60} น.`:'—';
+  document.getElementById('trKpiAvgTimeSub').textContent=countDur>0?`เฉลี่ยจาก ${countDur} รอบที่บันทึกเวลา`:'ยังไม่มีข้อมูลเวลา';
+  // Distance
+  document.getElementById('trKpiTotalDist').textContent=totalDist>0?totalDist.toFixed(1):'—';
+  document.getElementById('trKpiDistSub').textContent=countDist>0?`กม. รวม ${countDist} เที่ยว`:'ยังไม่มีข้อมูลระยะทาง';
+  // DOA
+  document.getElementById('trKpiTotalDOA').textContent=totalDOA.toLocaleString();
+  document.getElementById('trKpiDOASub').textContent=`ตัว จากยอดส่งรวม ${totalActual.toLocaleString()} ตัว`;
+  // DOA %
+  const doaEl=document.getElementById('trKpiDOAPct');
+  doaEl.textContent=doaPct!=null?doaPct.toFixed(2)+'%':'—';
+  doaEl.className='tr-kpi-value'+(doaPct==null?'':doaPct<=0.5?' doa-ok':doaPct<=2?' doa-warn':' doa-bad');
+}
+
+function renderTransportTable(rows){
+  const wrap=document.getElementById('transportTableWrap');
+  const count=document.getElementById('trRecordCount');
+  if(count) count.textContent=`${rows.length} รายการ`;
+  if(!rows.length){wrap.innerHTML='<p style="text-align:center;padding:24px;color:var(--muted)">ไม่พบข้อมูล</p>';return;}
+  rows=[...rows].sort((a,b)=>{
+    if(b.week_no!==a.week_no)return b.week_no-a.week_no;
+    return new Date(b.record_date)-new Date(a.record_date);
+  });
+  let h=`<table><thead><tr>
+    <th>วันที่</th><th>W</th><th>โรงฟัก</th><th>ลูกค้า</th>
+    <th style="text-align:right">ยอดส่ง</th>
+    <th style="text-align:center">เวลาออก</th><th style="text-align:center">เวลาถึง</th>
+    <th style="text-align:center">ใช้เวลา</th><th style="text-align:center">ระยะ(กม.)</th>
+    <th style="text-align:right">DOA(ตัว)</th><th style="text-align:center">DOA%</th>
+    <th>คนขับ</th><th></th>
+  </tr></thead><tbody>`;
+  rows.forEach(r=>{
+    const total=(r.m_actual||0)+(r.f_actual||0)+(r.u_actual||0);
+    const dep=r.departure_time?r.departure_time.slice(0,5):'—';
+    const arr=r.arrival_time?r.arrival_time.slice(0,5):'<span style="color:#d1d5db">—</span>';
+    let durTxt='<span style="color:#d1d5db">—</span>', durCls='';
+    if(r.departure_time&&r.arrival_time){
+      const dur=calcTransportDuration(r.departure_time,r.arrival_time);
+      if(dur.totalMins>0&&dur.totalMins<720){
+        durTxt=`${Math.floor(dur.totalMins/60)}ชม.${dur.totalMins%60}น.`;
+        durCls=dur.totalMins<=120?'doa-ok':dur.totalMins<=240?'doa-warn':'doa-bad';
+      }
+    }
+    const dist=r.distance_km!=null?parseFloat(r.distance_km).toFixed(1):'<span style="color:#d1d5db">—</span>';
+    const doa=r.doa_count||0;
+    let doaTxt=doa>0?doa.toLocaleString():'<span style="color:#d1d5db">—</span>', doaCls='';
+    let doaPctTxt='<span style="color:#d1d5db">—</span>';
+    if(total>0&&r.doa_count!=null){
+      const p=r.doa_count/total*100;
+      doaPctTxt=p.toFixed(2)+'%';
+      doaCls=p<=0.5?'doa-ok':p<=2?'doa-warn':'doa-bad';
+    }
+    const hasData=r.arrival_time||r.doa_count!=null||r.distance_km!=null;
+    h+=`<tr>
+      <td style="white-space:nowrap;font-size:12px">${r.record_date||''}</td>
+      <td style="text-align:center;font-weight:600">${r.week_no||''}</td>
+      <td><span style="font-size:11px;background:#f0f9ff;padding:2px 6px;border-radius:4px;color:#0369a1;white-space:nowrap">${r.hatchery||''}</span></td>
+      <td style="font-size:12px">${r.customer_name||''}</td>
+      <td style="text-align:right;font-weight:600">${total.toLocaleString()}</td>
+      <td style="text-align:center;font-size:12px">${dep}</td>
+      <td style="text-align:center;font-size:12px">${arr}</td>
+      <td style="text-align:center"><span class="${durCls}" style="font-size:12px">${durTxt}</span></td>
+      <td style="text-align:center;font-size:12px">${dist}</td>
+      <td style="text-align:right;font-size:12px">${doaTxt}</td>
+      <td style="text-align:center"><span class="${doaCls}" style="font-size:12px">${doaPctTxt}</span></td>
+      <td style="font-size:11px;color:var(--muted);white-space:nowrap">${r.driver_name||'—'}</td>
+      <td><button class="${hasData?'btn-secondary':'btn-add'}" onclick="openTransportModal('${r.id}')"
+        style="font-size:11px;padding:4px 9px;white-space:nowrap">${hasData?'✏️ แก้ไข':'📝 บันทึก'}</button></td>
+    </tr>`;
+  });
+  wrap.innerHTML=h+'</tbody></table>';
+}
+
+function calcTransportDuration(dep,arr){
+  const [dH,dM]=(dep||'00:00').split(':').map(Number);
+  const [aH,aM]=(arr||'00:00').split(':').map(Number);
+  let depM=dH*60+dM, arrM=aH*60+aM;
+  if(arrM<depM) arrM+=1440; // overnight
+  const totalMins=arrM-depM;
+  return {hrs:Math.floor(totalMins/60),mins:totalMins%60,totalMins};
+}
+
+function calcAndShowDuration(){
+  const dep=document.getElementById('trDepTime').value;
+  const arr=document.getElementById('trArrivalTime').value;
+  const el=document.getElementById('trDurationDisplay');
+  if(!dep||!arr){el.textContent='—';el.style.color='#0369a1';return;}
+  const d=calcTransportDuration(dep,arr);
+  if(d.totalMins<=0||d.totalMins>=720){el.textContent='⚠️ ตรวจสอบเวลา';el.style.color='#dc2626';return;}
+  el.textContent=`${d.hrs} ชม. ${d.mins} นาที`;
+  el.style.color=d.totalMins<=120?'#16a34a':d.totalMins<=240?'#d97706':'#dc2626';
+}
+
+function calcAndShowDOA(){
+  const doa=parseInt(document.getElementById('trDOACount').value)||0;
+  const total=parseInt(document.getElementById('trTotalActual').value)||0;
+  const el=document.getElementById('trDOADisplay');
+  if(!total){el.textContent='—';el.style.color='var(--muted)';return;}
+  const pct=doa/total*100;
+  el.textContent=pct.toFixed(2)+'%';
+  el.style.color=pct===0?'#6b7280':pct<=0.5?'#16a34a':pct<=2?'#d97706':'#dc2626';
+  el.style.fontWeight='700';
+}
+
+function haversineDistance(lat1,lng1,lat2,lng2){
+  const R=6371,toRad=x=>x*Math.PI/180;
+  const dLat=toRad(lat2-lat1),dLng=toRad(lng2-lng1);
+  const a=Math.sin(dLat/2)**2+Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLng/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+function openTransportModal(id){
+  const r=allRecords.find(x=>x.id===id);if(!r)return;
+  document.getElementById('trRecordId').value=id;
+  const total=(r.m_actual||0)+(r.f_actual||0)+(r.u_actual||0);
+  document.getElementById('trTotalActual').value=total;
+  document.getElementById('trDepTime').value=r.departure_time||'';
+  // Info
+  document.getElementById('trInfoCustomer').textContent=r.customer_name||'—';
+  document.getElementById('trInfoHatchery').textContent=r.hatchery||'—';
+  document.getElementById('trInfoDate').textContent=r.record_date||'—';
+  document.getElementById('trInfoActual').textContent=total.toLocaleString()+' ตัว';
+  document.getElementById('trInfoDeparture').textContent=r.departure_time?r.departure_time.slice(0,5):'(ยังไม่ได้กรอก — กรอกได้ใน Order Entry)';
+  document.getElementById('trInfoLocation').textContent=r.location||'(ไม่มีข้อมูล)';
+  // Editable
+  document.getElementById('trArrivalTime').value=r.arrival_time||'';
+  document.getElementById('trDriverName').value=r.driver_name||'';
+  document.getElementById('trDistanceKm').value=r.distance_km!=null?r.distance_km:'';
+  document.getElementById('trDOACount').value=r.doa_count!=null?r.doa_count:'';
+  document.getElementById('trTransportNotes').value=r.transport_notes||'';
+  document.getElementById('trDistAutoLabel').textContent='';
+  // Auto-calculate distance if not set
+  if(r.distance_km==null){
+    const cust=allCustomers.find(c=>c.customer_name===r.customer_name);
+    const hCoords=HATCHERY_COORDS[r.hatchery];
+    if(cust&&cust.farm_lat&&cust.farm_lng&&hCoords){
+      const straight=haversineDistance(hCoords.lat,hCoords.lng,parseFloat(cust.farm_lat),parseFloat(cust.farm_lng));
+      document.getElementById('trDistanceKm').value=(straight*1.3).toFixed(1);
+      document.getElementById('trDistAutoLabel').textContent=t('trAutoCalc');
+    } else if(cust&&cust.default_distance_km){
+      document.getElementById('trDistanceKm').value=cust.default_distance_km;
+      document.getElementById('trDistAutoLabel').textContent=t('trDefaultDist');
+    }
+  }
+  calcAndShowDuration();
+  calcAndShowDOA();
+  document.getElementById('transportModal').classList.remove('hidden');
+}
+
+function closeTransportModal(){document.getElementById('transportModal').classList.add('hidden');}
+
+async function saveTransportData(){
+  const id=document.getElementById('trRecordId').value;if(!id)return;
+  const arrVal=document.getElementById('trArrivalTime').value;
+  const doaVal=document.getElementById('trDOACount').value;
+  const distVal=document.getElementById('trDistanceKm').value;
+  const d={
+    arrival_time:arrVal||null,
+    doa_count:doaVal!==''?parseInt(doaVal):null,
+    distance_km:distVal!==''?parseFloat(distVal):null,
+    driver_name:document.getElementById('trDriverName').value.trim()||null,
+    transport_notes:document.getElementById('trTransportNotes').value.trim()||null
+  };
+  const {error}=await sb.from('doc_records').update(d).eq('id',id);
+  if(error){toast('Error: '+error.message,'error');return;}
+  const idx=allRecords.findIndex(r=>r.id===id);
+  if(idx>=0) Object.assign(allRecords[idx],d);
+  toast(currentLang==='en'?'Transport data saved':'บันทึกข้อมูลขนส่งสำเร็จ');
+  closeTransportModal();
+  loadTransportReport();
+}
+
+async function exportTransportExcel(){
+  if(!window.XLSX){toast('XLSX not ready','error');return;}
+  const data=_trRecords.map(r=>{
+    const total=(r.m_actual||0)+(r.f_actual||0)+(r.u_actual||0);
+    let durTxt='';
+    if(r.departure_time&&r.arrival_time){
+      const d=calcTransportDuration(r.departure_time,r.arrival_time);
+      if(d.totalMins>0&&d.totalMins<720) durTxt=`${d.hrs}h ${d.mins}m`;
+    }
+    return {
+      'Date':r.record_date,'Week':r.week_no,'Hatchery':r.hatchery,'Customer':r.customer_name,
+      'Location':r.location||'','Actual (chicks)':total,
+      'Departure':r.departure_time||'','Arrival':r.arrival_time||'','Duration':durTxt,
+      'Distance (km)':r.distance_km!=null?r.distance_km:'',
+      'DOA (chicks)':r.doa_count!=null?r.doa_count:'',
+      'DOA %':total>0&&r.doa_count!=null?(r.doa_count/total*100).toFixed(2)+'%':'',
+      'Driver':r.driver_name||'','Transport Notes':r.transport_notes||''
+    };
+  });
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(data),'Transport');
+  XLSX.writeFile(wb,`Transport_Report_${new Date().toISOString().slice(0,10)}.xlsx`);
 }
 
 // ===========================================================
