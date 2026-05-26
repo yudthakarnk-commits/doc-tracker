@@ -623,7 +623,7 @@
           <input id="trDriverName" type="text" data-i18n-placeholder="trDriverPlaceholder" placeholder="ชื่อคนขับรถ"/>
         </div>
         <div class="form-row">
-          <label data-i18n="trDistLabel">📏 ระยะทาง (กม.) <span id="trDistAutoLabel" style="font-size:10px;color:#16a34a;font-weight:600;margin-left:2px"></span></label>
+          <label><span data-i18n="trDistLabel">📏 ระยะทาง (กม.)</span> <span id="trDistAutoLabel" style="font-size:10px;color:#16a34a;font-weight:600;margin-left:2px"></span></label>
           <input id="trDistanceKm" type="number" step="0.1" min="0" placeholder="0.0" oninput="document.getElementById('trDistAutoLabel').textContent=''"/>
         </div>
       </div>
@@ -687,11 +687,11 @@ const HATCHERIES = ['Chengkau','Kluang','K.Kangsar','Sg. Sayong','Kota','Externa
 // ── Hatchery GPS Coordinates (เพิ่มพิกัดจริงเพื่อคำนวณระยะทางอัตโนมัติ) ──────
 // วิธีหาพิกัด: เปิด Google Maps → คลิกขวาที่ตำแหน่งโรงฟัก → Copy coordinates
 const HATCHERY_COORDS = {
-   'Chengkau':  { lat: 2.5396, lng: 102.1375 },
-   'Kluang':    { lat: 2.1507, lng: 103.4361 },
-   'K.Kangsar': { lat: 4.8332, lng: 100.8996 },
-   'Sg. Sayong':{ lat: 1.8034, lng: 103.6640 },
-   'Kota':      { lat: 2.5270, lng: 102.1478 },
+  'Chengkau':  { lat: 2.5396, lng: 102.1375 },
+  'Kluang':    { lat: 2.1507, lng: 103.4361 },
+  'K.Kangsar': { lat: 4.8332, lng: 100.8996 },
+  'Sg. Sayong':{ lat: 1.8034, lng: 103.6640 },
+  'Kota':      { lat: 2.5270, lng: 102.1478 },
 };
 const CTYPES = ['Customer (Direct)','Contract Farm','Company Farm'];
 const CTYPE_CLASS = {'Customer (Direct)':'ctype-direct','Contract Farm':'ctype-contract','Company Farm':'ctype-company'};
@@ -2087,7 +2087,8 @@ function haversineDistance(lat1,lng1,lat2,lng2){
 }
 
 function openTransportModal(id){
-  const r=allRecords.find(x=>x.id===id);if(!r)return;
+  const r=allRecords.find(x=>String(x.id)===String(id));
+  if(!r){console.warn('openTransportModal: record not found for id=',id,'allRecords count=',allRecords.length);return;}
   document.getElementById('trRecordId').value=id;
   const total=(r.m_actual||0)+(r.f_actual||0)+(r.u_actual||0);
   document.getElementById('trTotalActual').value=total;
