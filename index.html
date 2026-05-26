@@ -372,22 +372,22 @@
         <div class="tr-kpi-card time">
           <div class="tr-kpi-label" data-i18n="trKpiAvgTime">⏱ เวลาขนส่งเฉลี่ย</div>
           <div class="tr-kpi-value" id="trKpiAvgTime">—</div>
-          <div class="tr-kpi-sub" id="trKpiAvgTimeSub">ต่อรอบ</div>
+          <div class="tr-kpi-sub" id="trKpiAvgTimeSub" data-i18n="trKpiAvgTimeSubNoData">ยังไม่มีข้อมูลเวลา</div>
         </div>
         <div class="tr-kpi-card dist">
           <div class="tr-kpi-label" data-i18n="trKpiDist">📍 ระยะทางรวม</div>
           <div class="tr-kpi-value" id="trKpiTotalDist">—</div>
-          <div class="tr-kpi-sub" id="trKpiDistSub">กม.</div>
+          <div class="tr-kpi-sub" id="trKpiDistSub" data-i18n="trKpiDistSubNoData">ยังไม่มีข้อมูลระยะทาง</div>
         </div>
         <div class="tr-kpi-card doa">
           <div class="tr-kpi-label" data-i18n="trKpiDOA">💀 DOA รวม</div>
           <div class="tr-kpi-value" id="trKpiTotalDOA">—</div>
-          <div class="tr-kpi-sub" id="trKpiDOASub">ตัว</div>
+          <div class="tr-kpi-sub" id="trKpiDOASub">—</div>
         </div>
         <div class="tr-kpi-card doaPct">
           <div class="tr-kpi-label" data-i18n="trKpiDOAPct">📊 DOA %</div>
           <div class="tr-kpi-value" id="trKpiDOAPct">—</div>
-          <div class="tr-kpi-sub">ของยอดส่งจริงทั้งหมด</div>
+          <div class="tr-kpi-sub" id="trKpiDoaPerSub" data-i18n="trKpiDoaSub">ของยอดส่งจริงทั้งหมด</div>
         </div>
       </div>
 
@@ -596,12 +596,12 @@
     <div class="modal-body">
       <!-- Record Info (read-only) -->
       <div class="tr-info-box" id="trInfoBox">
-        <div><div class="tr-info-label">ลูกค้า / ฟาร์ม</div><div class="tr-info-val" id="trInfoCustomer">—</div></div>
-        <div><div class="tr-info-label">โรงฟัก</div><div class="tr-info-val" id="trInfoHatchery">—</div></div>
-        <div><div class="tr-info-label">วันที่</div><div class="tr-info-val" id="trInfoDate">—</div></div>
-        <div><div class="tr-info-label">ยอดส่งจริง (ตัว)</div><div class="tr-info-val" id="trInfoActual">—</div></div>
-        <div><div class="tr-info-label">⏰ เวลาออกจากโรงฟัก</div><div class="tr-info-val" id="trInfoDeparture" style="color:#2563eb">—</div></div>
-        <div><div class="tr-info-label">📍 สถานที่ฟาร์ม</div><div class="tr-info-val" id="trInfoLocation" style="font-size:12px">—</div></div>
+        <div><div class="tr-info-label" data-i18n="trInfoLabelCustomer">ลูกค้า / ฟาร์ม</div><div class="tr-info-val" id="trInfoCustomer">—</div></div>
+        <div><div class="tr-info-label" data-i18n="th_hatchery">โรงฟัก</div><div class="tr-info-val" id="trInfoHatchery">—</div></div>
+        <div><div class="tr-info-label" data-i18n="trInfoLabelDate">วันที่</div><div class="tr-info-val" id="trInfoDate">—</div></div>
+        <div><div class="tr-info-label" data-i18n="trInfoLabelActual">ยอดส่งจริง (ตัว)</div><div class="tr-info-val" id="trInfoActual">—</div></div>
+        <div><div class="tr-info-label" data-i18n="trInfoLabelDeparture">⏰ เวลาออกจากโรงฟัก</div><div class="tr-info-val" id="trInfoDeparture" style="color:#2563eb">—</div></div>
+        <div><div class="tr-info-label" data-i18n="trInfoLabelLocation">📍 สถานที่ฟาร์ม</div><div class="tr-info-val" id="trInfoLocation" style="font-size:12px">—</div></div>
       </div>
 
       <!-- Arrival Time + Duration -->
@@ -620,7 +620,7 @@
       <div class="form-grid-2">
         <div class="form-row">
           <label data-i18n="trDriverLabel">🚛 คนขับรถ</label>
-          <input id="trDriverName" type="text" placeholder="ชื่อคนขับรถ"/>
+          <input id="trDriverName" type="text" data-i18n-placeholder="trDriverPlaceholder" placeholder="ชื่อคนขับรถ"/>
         </div>
         <div class="form-row">
           <label data-i18n="trDistLabel">📏 ระยะทาง (กม.) <span id="trDistAutoLabel" style="font-size:10px;color:#16a34a;font-weight:600;margin-left:2px"></span></label>
@@ -646,7 +646,7 @@
       <!-- Notes -->
       <div class="form-row">
         <label data-i18n="trNotesLabel">📝 หมายเหตุการขนส่ง</label>
-        <textarea id="trTransportNotes" rows="2" placeholder="สภาพถนน, อุณหภูมิ, ปัญหาที่พบ..."></textarea>
+        <textarea id="trTransportNotes" rows="2" data-i18n-placeholder="trNotesPlaceholder" placeholder="สภาพถนน, อุณหภูมิ, ปัญหาที่พบ..."></textarea>
       </div>
 
       <input type="hidden" id="trRecordId"/>
@@ -687,11 +687,11 @@ const HATCHERIES = ['Chengkau','Kluang','K.Kangsar','Sg. Sayong','Kota','Externa
 // ── Hatchery GPS Coordinates (เพิ่มพิกัดจริงเพื่อคำนวณระยะทางอัตโนมัติ) ──────
 // วิธีหาพิกัด: เปิด Google Maps → คลิกขวาที่ตำแหน่งโรงฟัก → Copy coordinates
 const HATCHERY_COORDS = {
-  // 'Chengkau':  { lat: 5.9749, lng: 102.1379 },  // ← ใส่พิกัดจริง
-  // 'Kluang':    { lat: 2.0242, lng: 103.3181 },
-  // 'K.Kangsar': { lat: 4.7728, lng: 100.9483 },
-  // 'Sg. Sayong':{ lat: 4.3951, lng: 100.9750 },
-  // 'Kota':      { lat: 6.1218, lng: 102.2379 },
+   'Chengkau':  { lat: 2.5396, lng: 102.1375 },  ← ใส่พิกัดจริง
+   'Kluang':    { lat: 2.1507, lng: 103.4361 },
+   'K.Kangsar': { lat: 4.8332, lng: 100.8996 },
+   'Sg. Sayong':{ lat: 1.8034, lng: 103.6640 },
+   'Kota':      { lat: 2.5270, lng: 102.1478 },
 };
 const CTYPES = ['Customer (Direct)','Contract Farm','Company Farm'];
 const CTYPE_CLASS = {'Customer (Direct)':'ctype-direct','Contract Farm':'ctype-contract','Company Farm':'ctype-company'};
@@ -715,6 +715,12 @@ const I18N = {
     trDriverLabel:'🚛 คนขับรถ', trDistLabel:'📏 ระยะทาง (กม.)', trDOASection:'💀 ลูกไก่สูญเสีย / เสียหาย (DOA)',
     trDOACountLabel:'จำนวน DOA (ตัว)', trDOAPctLabel:'DOA %', trNotesLabel:'📝 หมายเหตุการขนส่ง',
     trSaveBtn:'💾 บันทึก', trAutoCalc:'(คำนวณอัตโนมัติ)', trDefaultDist:'(ค่าเริ่มต้น)',
+    trInfoLabelCustomer:'ลูกค้า / ฟาร์ม', trInfoLabelDate:'วันที่', trInfoLabelActual:'ยอดส่งจริง (ตัว)', trInfoLabelDeparture:'⏰ เวลาออกจากโรงฟัก', trInfoLabelLocation:'📍 สถานที่ฟาร์ม',
+    trDriverPlaceholder:'ชื่อคนขับรถ', trNotesPlaceholder:'สภาพถนน, อุณหภูมิ, ปัญหาที่พบ...',
+    trKpiDoaSub:'ของยอดส่งจริงทั้งหมด', trKpiAvgTimeSubNoData:'ยังไม่มีข้อมูลเวลา', trKpiDistSubNoData:'ยังไม่มีข้อมูลระยะทาง',
+    trUnitHr:'ชม.', trUnitMin:'น.',
+    trTh_date:'วันที่', trTh_sent:'ยอดส่ง', trTh_arrTime:'เวลาถึง', trTh_duration:'ใช้เวลา', trTh_dist:'ระยะ(กม.)', trTh_doaCount:'DOA(ตัว)', trTh_driver:'คนขับ',
+    trBtnEdit:'✏️ แก้ไข', trBtnRecord:'📝 บันทึก',
     kpiTotal:'รายการทั้งหมด', kpiOrdered:'ยอดสั่ง (ตัว)', kpiActual:'ยอดส่งจริง (ตัว)', kpiDiff:'ส่วนต่าง', kpiDiffPct:'% ส่วนต่าง',
     allWeeks:'สัปดาห์ทั้งหมด', allHatcheries:'โรงฟักทั้งหมด', allCustomerTypes:'ประเภทลูกค้าทั้งหมด', allBreeds:'สายพันธุ์ทั้งหมด', searchCustomer:'🔍 ค้นหาชื่อลูกค้า/ฟาร์ม',
     addRecord:'+ เพิ่มรายการ', orderTable:'ตารางข้อมูล Order', byWeek:'📅 รายสัปดาห์', byDay:'📆 รายวัน', printBtn:'🖨️ พิมพ์',
@@ -760,6 +766,12 @@ const I18N = {
     trDriverLabel:'🚛 Driver', trDistLabel:'📏 Distance (km)', trDOASection:'💀 Dead On Arrival (DOA)',
     trDOACountLabel:'DOA Count (chicks)', trDOAPctLabel:'DOA %', trNotesLabel:'📝 Transport Notes',
     trSaveBtn:'💾 Save', trAutoCalc:'(auto-calculated)', trDefaultDist:'(default)',
+    trInfoLabelCustomer:'Customer / Farm', trInfoLabelDate:'Date', trInfoLabelActual:'Actual (chicks)', trInfoLabelDeparture:'⏰ Departure Time', trInfoLabelLocation:'📍 Farm Location',
+    trDriverPlaceholder:'Driver name', trNotesPlaceholder:'Road condition, temperature, issues...',
+    trKpiDoaSub:'of total actual delivered', trKpiAvgTimeSubNoData:'No time data yet', trKpiDistSubNoData:'No distance data',
+    trUnitHr:'hr', trUnitMin:'min',
+    trTh_date:'Date', trTh_sent:'Qty', trTh_arrTime:'Arrival', trTh_duration:'Duration', trTh_dist:'Dist(km)', trTh_doaCount:'DOA', trTh_driver:'Driver',
+    trBtnEdit:'✏️ Edit', trBtnRecord:'📝 Record',
     kpiTotal:'Total', kpiOrdered:'Ordered', kpiActual:'Actual', kpiDiff:'Diff', kpiDiffPct:'Diff %',
     allWeeks:'All Weeks', allHatcheries:'All Hatcheries', allCustomerTypes:'All Customer Types', allBreeds:'All Breeds', searchCustomer:'🔍 Search',
     addRecord:'+ Add Record', orderTable:'Order Records', byWeek:'📅 By Week', byDay:'📆 By Day', printBtn:'🖨️ Print',
@@ -1963,14 +1975,14 @@ function renderTransportKPIs(rows){
   const doaPct=totalActual>0?(totalDOA/totalActual*100):null;
 
   // Avg time
-  document.getElementById('trKpiAvgTime').textContent=avgMins!=null?`${Math.floor(avgMins/60)} ชม. ${avgMins%60} น.`:'—';
-  document.getElementById('trKpiAvgTimeSub').textContent=countDur>0?`เฉลี่ยจาก ${countDur} รอบที่บันทึกเวลา`:'ยังไม่มีข้อมูลเวลา';
+  document.getElementById('trKpiAvgTime').textContent=avgMins!=null?`${Math.floor(avgMins/60)} ${t('trUnitHr')} ${avgMins%60} ${t('trUnitMin')}`:'—';
+  document.getElementById('trKpiAvgTimeSub').textContent=countDur>0?(currentLang==='en'?`Avg of ${countDur} trip(s)`:`เฉลี่ยจาก ${countDur} รอบที่บันทึกเวลา`):t('trKpiAvgTimeSubNoData');
   // Distance
   document.getElementById('trKpiTotalDist').textContent=totalDist>0?totalDist.toFixed(1):'—';
-  document.getElementById('trKpiDistSub').textContent=countDist>0?`กม. รวม ${countDist} เที่ยว`:'ยังไม่มีข้อมูลระยะทาง';
+  document.getElementById('trKpiDistSub').textContent=countDist>0?(currentLang==='en'?`km across ${countDist} trip(s)`:`กม. รวม ${countDist} เที่ยว`):t('trKpiDistSubNoData');
   // DOA
   document.getElementById('trKpiTotalDOA').textContent=totalDOA.toLocaleString();
-  document.getElementById('trKpiDOASub').textContent=`ตัว จากยอดส่งรวม ${totalActual.toLocaleString()} ตัว`;
+  document.getElementById('trKpiDOASub').textContent=currentLang==='en'?`chicks from ${totalActual.toLocaleString()} total`:`ตัว จากยอดส่งรวม ${totalActual.toLocaleString()} ตัว`;
   // DOA %
   const doaEl=document.getElementById('trKpiDOAPct');
   doaEl.textContent=doaPct!=null?doaPct.toFixed(2)+'%':'—';
@@ -1980,19 +1992,19 @@ function renderTransportKPIs(rows){
 function renderTransportTable(rows){
   const wrap=document.getElementById('transportTableWrap');
   const count=document.getElementById('trRecordCount');
-  if(count) count.textContent=`${rows.length} รายการ`;
-  if(!rows.length){wrap.innerHTML='<p style="text-align:center;padding:24px;color:var(--muted)">ไม่พบข้อมูล</p>';return;}
+  if(count) count.textContent=`${rows.length} ${t('records')}`;
+  if(!rows.length){wrap.innerHTML=`<p style="text-align:center;padding:24px;color:var(--muted)">${t('noResult')}</p>`;return;}
   rows=[...rows].sort((a,b)=>{
     if(b.week_no!==a.week_no)return b.week_no-a.week_no;
     return new Date(b.record_date)-new Date(a.record_date);
   });
   let h=`<table><thead><tr>
-    <th>วันที่</th><th>W</th><th>โรงฟัก</th><th>ลูกค้า</th>
-    <th style="text-align:right">ยอดส่ง</th>
-    <th style="text-align:center">เวลาออก</th><th style="text-align:center">เวลาถึง</th>
-    <th style="text-align:center">ใช้เวลา</th><th style="text-align:center">ระยะ(กม.)</th>
-    <th style="text-align:right">DOA(ตัว)</th><th style="text-align:center">DOA%</th>
-    <th>คนขับ</th><th></th>
+    <th>${t('trTh_date')}</th><th>W</th><th>${t('th_hatchery')}</th><th>${t('th_customer')}</th>
+    <th style="text-align:right">${t('trTh_sent')}</th>
+    <th style="text-align:center">${t('th_depTime')}</th><th style="text-align:center">${t('trTh_arrTime')}</th>
+    <th style="text-align:center">${t('trTh_duration')}</th><th style="text-align:center">${t('trTh_dist')}</th>
+    <th style="text-align:right">${t('trTh_doaCount')}</th><th style="text-align:center">${t('trDOAPctLabel')}</th>
+    <th>${t('trTh_driver')}</th><th></th>
   </tr></thead><tbody>`;
   rows.forEach(r=>{
     const total=(r.m_actual||0)+(r.f_actual||0)+(r.u_actual||0);
@@ -2002,7 +2014,7 @@ function renderTransportTable(rows){
     if(r.departure_time&&r.arrival_time){
       const dur=calcTransportDuration(r.departure_time,r.arrival_time);
       if(dur.totalMins>0&&dur.totalMins<720){
-        durTxt=`${Math.floor(dur.totalMins/60)}ชม.${dur.totalMins%60}น.`;
+        durTxt=`${Math.floor(dur.totalMins/60)}${t('trUnitHr')}${dur.totalMins%60}${t('trUnitMin')}`;
         durCls=dur.totalMins<=120?'doa-ok':dur.totalMins<=240?'doa-warn':'doa-bad';
       }
     }
@@ -2030,7 +2042,7 @@ function renderTransportTable(rows){
       <td style="text-align:center"><span class="${doaCls}" style="font-size:12px">${doaPctTxt}</span></td>
       <td style="font-size:11px;color:var(--muted);white-space:nowrap">${r.driver_name||'—'}</td>
       <td><button class="${hasData?'btn-secondary':'btn-add'}" onclick="openTransportModal('${r.id}')"
-        style="font-size:11px;padding:4px 9px;white-space:nowrap">${hasData?'✏️ แก้ไข':'📝 บันทึก'}</button></td>
+        style="font-size:11px;padding:4px 9px;white-space:nowrap">${hasData?t('trBtnEdit'):t('trBtnRecord')}</button></td>
     </tr>`;
   });
   wrap.innerHTML=h+'</tbody></table>';
