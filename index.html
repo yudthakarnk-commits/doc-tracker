@@ -1409,19 +1409,29 @@ function setCustLocMode(mode) {
   }
 }
 
-function attachCustLocationAutocomplete() {
+async function attachCustLocationAutocomplete() {
   try {
-    if (!window.google || !google.maps || !google.maps.places) {
+    if (!window.google || !google.maps) {
       toast('Google Maps ยังโหลดไม่เสร็จ — ใช้โหมดพิมพ์เองแทน', 'info');
       setCustLocMode('manual'); return;
     }
     const wrap  = document.getElementById('custLocationWrap');
     const input = document.getElementById('custFarmLocation');
     if (!input || !wrap) return;
-    if (google.maps.places.PlaceAutocompleteElement) {
+
+    // ใช้ importLibrary เพื่อให้ใช้ได้กับ API key รุ่นใหม่ (post-2024)
+    let PAEClass = null;
+    try {
+      const lib = await google.maps.importLibrary('places');
+      PAEClass = lib.PlaceAutocompleteElement || null;
+    } catch(e) {
+      PAEClass = google.maps.places?.PlaceAutocompleteElement || null;
+    }
+
+    if (PAEClass) {
       if (!_custLocationPAE) {
         input.style.display = 'none';
-        _custLocationPAE = new google.maps.places.PlaceAutocompleteElement({ requestedLanguage: currentLang });
+        _custLocationPAE = new PAEClass({ requestedLanguage: currentLang, requestedRegion: 'MY' });
         wrap.insertBefore(_custLocationPAE, input);
         _custLocationPAE.addEventListener('gmp-placeselect', async ({ place }) => {
           await place.fetchFields({ fields: ['displayName', 'formattedAddress', 'location'] });
@@ -1433,6 +1443,12 @@ function attachCustLocationAutocomplete() {
           if (btn) btn.style.display = 'block';
           showCustLocationPreview(lat, lng);
         });
+        _custLocationPAE.addEventListener('input', () => {
+          const v = _custLocationPAE.inputValue || '';
+          const btn = document.getElementById('custLocationClear');
+          if (btn) btn.style.display = v ? 'block' : 'none';
+          if (!v) { input.value = ''; delete input.dataset.lat; delete input.dataset.lng; }
+        });
       } else {
         _custLocationPAE.style.display = '';
         input.style.display = 'none';
@@ -1441,7 +1457,7 @@ function attachCustLocationAutocomplete() {
       const btn = document.getElementById('custLocationClear');
       if (btn) btn.style.display = input.value ? 'block' : 'none';
     } else {
-      // Fallback legacy Autocomplete
+      // Fallback: legacy Autocomplete (สำหรับ API key รุ่นเก่า)
       if (!window._custLocationAC) {
         window._custLocationAC = new google.maps.places.Autocomplete(input, { fields: ['formatted_address','geometry','name'] });
         window._custLocationAC.addListener('place_changed', () => {
@@ -1454,7 +1470,11 @@ function attachCustLocationAutocomplete() {
         });
       }
     }
-  } catch(e) { console.log('Cust location PAE error:', e); setCustLocMode('manual'); }
+  } catch(e) {
+    console.warn('Cust location PAE error:', e);
+    toast('ไม่สามารถโหลด Google Places ได้', 'info');
+    setCustLocMode('manual');
+  }
 }
 
 function showCustLocationPreview(lat, lng) {
