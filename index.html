@@ -557,12 +557,14 @@
       </div>
       <div class="form-row">
         <label data-i18n="lblFarmLocation">📍 สถานที่ฟาร์ม</label>
-        <div style="display:flex;gap:6px;margin-bottom:7px">
+        <div style="display:flex;gap:6px;margin-bottom:7px;flex-wrap:wrap;align-items:center">
           <button type="button" id="custLocModeGoogleBtn" onclick="setCustLocMode('google')" style="font-size:12px;padding:4px 12px;border-radius:6px;border:1px solid var(--border);background:#fff;cursor:pointer">🗺 Google Maps</button>
           <button type="button" id="custLocModeManualBtn" onclick="setCustLocMode('manual')" data-i18n="custLocManual" style="font-size:12px;padding:4px 12px;border-radius:6px;border:1px solid var(--border);background:var(--primary);color:#fff;cursor:pointer">✏️ พิมพ์เอง</button>
+          <button type="button" id="custGeocodeBtn" onclick="geocodeCustLocation()" style="font-size:12px;padding:4px 12px;border-radius:6px;border:1px solid #10b981;background:#ecfdf5;color:#065f46;cursor:pointer" data-i18n-title="custGeocodeTitle">📍 หาพิกัด</button>
+          <span id="custCoordStatus" style="font-size:11px;color:var(--muted)"></span>
         </div>
         <div class="location-wrap" id="custLocationWrap">
-          <input id="custFarmLocation" type="text" data-i18n-placeholder="custLocationPlaceholder" placeholder="ชื่อสถานที่ หรือที่อยู่ฟาร์ม" autocomplete="off"/>
+          <input id="custFarmLocation" type="text" data-i18n-placeholder="custLocationPlaceholder" placeholder="ชื่อสถานที่ หรือที่อยู่ฟาร์ม" autocomplete="off" oninput="updateCustCoordStatus()"/>
           <button type="button" class="location-clear-btn" id="custLocationClear" onclick="clearCustLocation()" style="display:none">✕</button>
         </div>
         <div id="custLocationMap" style="height:180px;border-radius:8px;margin-top:8px;border:1px solid var(--border);display:none;overflow:hidden"></div>
@@ -704,6 +706,8 @@ const I18N = {
     lblDepartureTime:'เวลาเดินทาง', lblLocation:'📍 สถานที่ฟาร์ม', lblLocationPlaceholder:'🔍 ค้นหาชื่อฟาร์ม, สถานที่, หรือที่อยู่...', th_depTime:'เวลาออก', th_location:'สถานที่',
     rLocationPlaceholder:'ดึงจากข้อมูลลูกค้า (แก้ไขได้)', lblLocationEditHint:'ดึงมาจากข้อมูลลูกค้า — แก้ไขได้ตามต้องการ',
     custLocManual:'✏️ พิมพ์เอง', custLocationPlaceholder:'ชื่อสถานที่ หรือที่อยู่ฟาร์ม',
+    custGeocodeTitle:'แปลงที่อยู่ข้อความ → พิกัด GPS อัตโนมัติ (ต้องการอินเทอร์เน็ต)',
+    custCoordOk:'✅ มีพิกัด (คำนวณระยะทางได้)', custCoordMissing:'⚠️ ไม่มีพิกัด — กด 📍 หาพิกัด หรือเลือกจาก Google Maps',
     lblDONumber:'หมายเลขบิล', exportSaleReportBtn:'📊 Export Sale Report', exportSaleReportTitle:'Export รายงานการขาย', srAllHatcheries:'ทุกโรงฟัก', srWeekLabel:'สัปดาห์', srHatcheryLabel:'โรงฟัก', srExportBtn:'Export',
     setupTitle:'ตั้งค่า Supabase', setupSub:'กรอก URL + anon key', supabaseUrl:'URL', supabaseAnonKey:'Anon key', save:'บันทึก', cancel:'ยกเลิก', delete:'ลบ',
     signIn:'เข้าสู่ระบบ', signUp:'สมัครใช้งาน', loginGoogle:'เข้าสู่ระบบด้วย Google', or:'หรือ', email:'อีเมล', password:'รหัสผ่าน',
@@ -758,6 +762,8 @@ const I18N = {
     lblDepartureTime:'Departure Time', lblLocation:'📍 Farm Location', lblLocationPlaceholder:'🔍 Search farm name, location, or address...', th_depTime:'Dep. Time', th_location:'Location',
     rLocationPlaceholder:'Auto-filled from customer (editable)', lblLocationEditHint:'Auto-filled from customer — can be edited',
     custLocManual:'✏️ Manual', custLocationPlaceholder:'Farm name or address',
+    custGeocodeTitle:'Convert text address → GPS coordinates automatically (requires internet)',
+    custCoordOk:'✅ Coordinates saved (distance calculation ready)', custCoordMissing:'⚠️ No coordinates — click 📍 Get Coords or select from Google Maps',
     lblDONumber:'DO. Number', exportSaleReportBtn:'📊 Export Sale Report', exportSaleReportTitle:'Export Sale Report', srAllHatcheries:'All Hatcheries', srWeekLabel:'Week', srHatcheryLabel:'Hatchery', srExportBtn:'Export',
     setupTitle:'Setup Supabase', setupSub:'Enter URL + anon key', supabaseUrl:'URL', supabaseAnonKey:'Anon key', save:'Save', cancel:'Cancel', delete:'Delete',
     signIn:'Sign In', signUp:'Sign Up', loginGoogle:'Sign in with Google', or:'or', email:'Email', password:'Password',
@@ -1394,6 +1400,7 @@ function openCustomerModal(id){
     if(delBtn)delBtn.classList.remove('hidden');
   }else{if(delBtn)delBtn.classList.add('hidden');}
   document.getElementById('customerModal').classList.remove('hidden');
+  updateCustCoordStatus();
 }
 function closeCustomerModal(){document.getElementById('customerModal').classList.add('hidden');}
 
@@ -1450,6 +1457,7 @@ async function attachCustLocationAutocomplete() {
           const btn = document.getElementById('custLocationClear');
           if (btn) btn.style.display = 'block';
           showCustLocationPreview(lat, lng);
+          updateCustCoordStatus();
         });
         _custLocationPAE.addEventListener('input', () => {
           const v = _custLocationPAE.inputValue || '';
@@ -1517,6 +1525,51 @@ function clearCustLocation() {
   if (mapDiv)  mapDiv.style.display  = 'none';
   if (infoBar) infoBar.style.display = 'none';
   if (btn)     btn.style.display     = 'none';
+  updateCustCoordStatus();
+}
+
+// ── อัปเดตสถานะพิกัด (มี/ไม่มี lat/lng) ─────────────────────
+function updateCustCoordStatus() {
+  const input  = document.getElementById('custFarmLocation');
+  const status = document.getElementById('custCoordStatus');
+  if (!status) return;
+  const hasCoord = !!(input && input.dataset.lat && input.dataset.lng);
+  const hasText  = !!(input && input.value.trim());
+  if (!hasText) { status.textContent = ''; return; }
+  status.textContent  = hasCoord ? t('custCoordOk') : t('custCoordMissing');
+  status.style.color  = hasCoord ? '#065f46' : '#b45309';
+}
+
+// ── Geocode ที่อยู่ข้อความ → lat/lng ─────────────────────────
+async function geocodeCustLocation() {
+  const input = document.getElementById('custFarmLocation');
+  const btn   = document.getElementById('custGeocodeBtn');
+  if (!input || !input.value.trim()) { toast(currentLang==='en'?'Please enter an address first':'กรุณากรอกที่อยู่ก่อน','info'); return; }
+  if (!window.google || !google.maps) { toast('Google Maps ยังโหลดไม่เสร็จ','info'); return; }
+  if (btn) { btn.disabled=true; btn.textContent='⏳...'; }
+  try {
+    const { Geocoder } = await google.maps.importLibrary('geocoding');
+    const geocoder = new Geocoder();
+    geocoder.geocode({ address: input.value.trim(), region: 'MY' }, (results, status) => {
+      if (btn) { btn.disabled=false; btn.textContent='📍 '+( currentLang==='en'?'Get Coords':'หาพิกัด'); }
+      if (status === 'OK' && results && results[0]) {
+        const loc = results[0].geometry.location;
+        input.dataset.lat = loc.lat();
+        input.dataset.lng = loc.lng();
+        input.value = results[0].formatted_address;
+        const clearBtn = document.getElementById('custLocationClear');
+        if (clearBtn) clearBtn.style.display = 'block';
+        showCustLocationPreview(loc.lat(), loc.lng());
+        updateCustCoordStatus();
+        toast('✅ '+(currentLang==='en'?'Coordinates found — click Save to keep':'ได้พิกัดแล้ว — กด Save เพื่อบันทึก'),'success');
+      } else {
+        toast((currentLang==='en'?'Address not found: ':'หาสถานที่ไม่พบ: ')+status,'error');
+      }
+    });
+  } catch(e) {
+    if (btn) { btn.disabled=false; btn.textContent='📍 '+(currentLang==='en'?'Get Coords':'หาพิกัด'); }
+    toast('Geocoder error: '+e.message,'error');
+  }
 }
 
 // ── Customer Import / Template ──────────────────────────────
