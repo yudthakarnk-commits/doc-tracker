@@ -1140,8 +1140,26 @@ async function saveRecord(){
     await queueOfflineRecord(data);
     toast('💾 บันทึก Offline — จะ Sync เมื่อมีเน็ต','info'); closeModal(); return;
   }
-  let error; if(id){({error}=await sb.from('doc_records').update(data).eq('id',id))}else{data.user_id=currentUser.id;({error}=await sb.from('doc_records').insert(data))}
-  if(error) return toast(error.message,'error'); toast(id?t('toastUpdated'):t('toastSaved'),'success'); closeModal();
+  let error, savedRow;
+  if(id){
+    const res=await sb.from('doc_records').update(data).eq('id',id).select();
+    error=res.error; savedRow=res.data?.[0];
+    // ถ้าไม่มี row กลับมา (RLS block หรือ id ไม่ตรง) แจ้งเตือน
+    if(!error&&(!res.data||res.data.length===0)) return toast(currentLang==='en'?'Update failed — no matching record (check permissions)':'อัปเดตไม่สำเร็จ — ไม่พบ record หรือไม่มีสิทธิ์แก้ไข','error');
+  } else {
+    data.user_id=currentUser.id;
+    const res=await sb.from('doc_records').insert(data).select();
+    error=res.error; savedRow=res.data?.[0];
+  }
+  if(error) return toast(error.message,'error');
+  // อัปเดต allRecords ทันที (ไม่รอ Realtime) เพื่อให้ตารางแสดงข้อมูลใหม่ทันที
+  if(savedRow){
+    if(id){const i=allRecords.findIndex(r=>String(r.id)===String(id));if(i>=0)allRecords[i]=savedRow;}
+    else allRecords.unshift(savedRow);
+  }
+  toast(id?t('toastUpdated'):t('toastSaved'),'success');
+  closeModal();
+  populateWeekFilters(); renderEntry();
 }
 async function deleteRecord(){const id=document.getElementById('rId').value;if(!id||!confirm(t('confirmDelete')))return;const {error}=await sb.from('doc_records').delete().eq('id',id);if(error) return toast(error.message,'error');toast(t('toastDeleted'),'success');closeModal();}
 
