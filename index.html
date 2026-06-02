@@ -364,6 +364,7 @@
           <option value="" data-i18n="trAllHatcheries">โรงฟักทั้งหมด</option>
         </select>
         <button class="btn-secondary" onclick="loadTransportReport()" style="padding:6px 14px" data-i18n="trRefresh">🔄 รีเฟรช</button>
+        <button id="trCalcDistBtn" class="btn-secondary" onclick="batchCalcDistances()" style="padding:6px 14px" data-i18n="trCalcDist" data-i18n-title="trCalcDistTitle">📐 คำนวณระยะทาง</button>
         <button class="btn-secondary" onclick="exportTransportExcel()" style="padding:6px 14px;margin-left:auto" data-i18n="trExportExcel">📊 Export Excel</button>
       </div>
 
@@ -721,6 +722,9 @@ const I18N = {
     trUnitHr:'ชม.', trUnitMin:'น.',
     trTh_date:'วันที่', trTh_sent:'ยอดส่ง', trTh_arrTime:'เวลาถึง', trTh_duration:'ใช้เวลา', trTh_dist:'ระยะ(กม.)', trTh_doaCount:'DOA(ตัว)', trTh_driver:'คนขับ',
     trBtnEdit:'✏️ แก้ไข', trBtnRecord:'📝 บันทึก',
+    trCalcDist:'📐 คำนวณระยะทาง', trCalcDistTitle:'คำนวณและบันทึกระยะทางอัตโนมัติสำหรับทุกรายการที่ยังไม่มีข้อมูล (ต้องมีพิกัดฟาร์มลูกค้าและ HATCHERY_COORDS)',
+    trCalcNone:'ไม่มีรายการที่คำนวณได้ — ตรวจสอบพิกัดฟาร์มลูกค้าและ HATCHERY_COORDS',
+    trCalcDone:'รายการสำเร็จ',
     kpiTotal:'รายการทั้งหมด', kpiOrdered:'ยอดสั่ง (ตัว)', kpiActual:'ยอดส่งจริง (ตัว)', kpiDiff:'ส่วนต่าง', kpiDiffPct:'% ส่วนต่าง',
     allWeeks:'สัปดาห์ทั้งหมด', allHatcheries:'โรงฟักทั้งหมด', allCustomerTypes:'ประเภทลูกค้าทั้งหมด', allBreeds:'สายพันธุ์ทั้งหมด', searchCustomer:'🔍 ค้นหาชื่อลูกค้า/ฟาร์ม',
     addRecord:'+ เพิ่มรายการ', orderTable:'ตารางข้อมูล Order', byWeek:'📅 รายสัปดาห์', byDay:'📆 รายวัน', printBtn:'🖨️ พิมพ์',
@@ -772,6 +776,9 @@ const I18N = {
     trUnitHr:'hr', trUnitMin:'min',
     trTh_date:'Date', trTh_sent:'Qty', trTh_arrTime:'Arrival', trTh_duration:'Duration', trTh_dist:'Dist(km)', trTh_doaCount:'DOA', trTh_driver:'Driver',
     trBtnEdit:'✏️ Edit', trBtnRecord:'📝 Record',
+    trCalcDist:'📐 Calc Dist', trCalcDistTitle:'Auto-calculate & save distances for all records with no distance data (requires customer farm coordinates and HATCHERY_COORDS)',
+    trCalcNone:'No records to calculate — check customer farm coordinates and HATCHERY_COORDS',
+    trCalcDone:'records done',
     kpiTotal:'Total', kpiOrdered:'Ordered', kpiActual:'Actual', kpiDiff:'Diff', kpiDiffPct:'Diff %',
     allWeeks:'All Weeks', allHatcheries:'All Hatcheries', allCustomerTypes:'All Customer Types', allBreeds:'All Breeds', searchCustomer:'🔍 Search',
     addRecord:'+ Add Record', orderTable:'Order Records', byWeek:'📅 By Week', byDay:'📆 By Day', printBtn:'🖨️ Print',
@@ -808,6 +815,7 @@ function setLanguage(lang){ currentLang=lang; localStorage.setItem('LANG',lang);
 function applyLanguage(){
   document.querySelectorAll('[data-i18n]').forEach(el=>{ const v=t(el.dataset.i18n); if(v) el.textContent=v; });
   document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>{ const v=t(el.getAttribute('data-i18n-placeholder')); if(v) el.placeholder=v; });
+  document.querySelectorAll('[data-i18n-title]').forEach(el=>{ const v=t(el.getAttribute('data-i18n-title')); if(v) el.title=v; });
   document.querySelectorAll('.lang-toggle button').forEach(b=>{ b.classList.toggle('active', b.dataset.lang===currentLang); });
   // WOP placeholder language
   const wopEl = document.getElementById('rEggAge');
@@ -1982,6 +1990,39 @@ function loadTransportReport(){
   renderTransportTable(rows);
 }
 
+async function batchCalcDistances(){
+  const btn=document.getElementById('trCalcDistBtn');
+  if(btn){btn.disabled=true;btn.textContent='⏳ ...';}
+  const wk=document.getElementById('trWeek').value;
+  const ht=document.getElementById('trHatchery').value;
+  // รวบรวมรายการที่คำนวณได้ (ยังไม่มี distance_km + มีพิกัดครบ)
+  const targets=allRecords.filter(r=>{
+    const total=(r.m_actual||0)+(r.f_actual||0)+(r.u_actual||0);
+    if(!total||r.distance_km!=null)return false;
+    if(wk&&String(r.week_no)!==wk)return false;
+    if(ht&&r.hatchery!==ht)return false;
+    const c=allCustomers.find(x=>x.customer_name===r.customer_name);
+    const h=HATCHERY_COORDS[r.hatchery];
+    return !!(c&&c.farm_lat&&c.farm_lng&&h);
+  });
+  if(!targets.length){
+    toast(t('trCalcNone'),'info');
+    if(btn){btn.disabled=false;btn.textContent=t('trCalcDist');}
+    return;
+  }
+  let ok=0,err=0;
+  for(const r of targets){
+    const c=allCustomers.find(x=>x.customer_name===r.customer_name);
+    const h=HATCHERY_COORDS[r.hatchery];
+    const dist=parseFloat((haversineDistance(h.lat,h.lng,parseFloat(c.farm_lat),parseFloat(c.farm_lng))*1.3).toFixed(1));
+    const {error}=await sb.from('doc_records').update({distance_km:dist}).eq('id',r.id);
+    if(error){err++;}else{ok++;const i=allRecords.findIndex(x=>x.id===r.id);if(i>=0)allRecords[i].distance_km=dist;}
+  }
+  toast(`📐 ${ok} ${t('trCalcDone')}${err>0?`, ${err} error`:''}`,err>0?'info':'success');
+  if(btn){btn.disabled=false;btn.textContent=t('trCalcDist');}
+  loadTransportReport();
+}
+
 function renderTransportKPIs(rows){
   let totalMinsSum=0, countDur=0, totalDist=0, countDist=0, totalDOA=0, totalActual=0;
   rows.forEach(r=>{
@@ -2038,7 +2079,19 @@ function renderTransportTable(rows){
         durCls=dur.totalMins<=120?'doa-ok':dur.totalMins<=240?'doa-warn':'doa-bad';
       }
     }
-    const dist=r.distance_km!=null?parseFloat(r.distance_km).toFixed(1):'<span style="color:#d1d5db">—</span>';
+    let dist;
+    if(r.distance_km!=null){
+      dist=parseFloat(r.distance_km).toFixed(1);
+    } else {
+      const _dc=allCustomers.find(c=>c.customer_name===r.customer_name);
+      const _hc=HATCHERY_COORDS[r.hatchery];
+      if(_dc&&_dc.farm_lat&&_dc.farm_lng&&_hc){
+        const _km=(haversineDistance(_hc.lat,_hc.lng,parseFloat(_dc.farm_lat),parseFloat(_dc.farm_lng))*1.3).toFixed(1);
+        dist=`<span style="color:#9ca3af;font-style:italic" title="${currentLang==='en'?'Estimated (not saved yet)':'ประมาณการ (ยังไม่ได้บันทึก)'}">~${_km}</span>`;
+      } else {
+        dist='<span style="color:#d1d5db">—</span>';
+      }
+    }
     const doa=r.doa_count||0;
     let doaTxt=doa>0?doa.toLocaleString():'<span style="color:#d1d5db">—</span>', doaCls='';
     let doaPctTxt='<span style="color:#d1d5db">—</span>';
