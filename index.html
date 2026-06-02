@@ -1540,36 +1540,54 @@ function updateCustCoordStatus() {
   status.style.color  = hasCoord ? '#065f46' : '#b45309';
 }
 
-// ── Geocode ที่อยู่ข้อความ → lat/lng ─────────────────────────
-async function geocodeCustLocation() {
+// ── หาพิกัดจากข้อความ (ใช้ Places AutocompleteService — ไม่ต้องเปิด Geocoding API) ──
+function geocodeCustLocation() {
   const input = document.getElementById('custFarmLocation');
   const btn   = document.getElementById('custGeocodeBtn');
-  if (!input || !input.value.trim()) { toast(currentLang==='en'?'Please enter an address first':'กรุณากรอกที่อยู่ก่อน','info'); return; }
-  if (!window.google || !google.maps) { toast('Google Maps ยังโหลดไม่เสร็จ','info'); return; }
+  const query = input?.value.trim();
+  if (!query) { toast(currentLang==='en'?'Please enter an address first':'กรุณากรอกที่อยู่ก่อน','info'); return; }
+  if (!window.google || !google.maps || !google.maps.places) { toast('Google Maps ยังโหลดไม่เสร็จ','info'); return; }
   if (btn) { btn.disabled=true; btn.textContent='⏳...'; }
-  try {
-    const { Geocoder } = await google.maps.importLibrary('geocoding');
-    const geocoder = new Geocoder();
-    geocoder.geocode({ address: input.value.trim(), region: 'MY' }, (results, status) => {
-      if (btn) { btn.disabled=false; btn.textContent='📍 '+( currentLang==='en'?'Get Coords':'หาพิกัด'); }
-      if (status === 'OK' && results && results[0]) {
-        const loc = results[0].geometry.location;
-        input.dataset.lat = loc.lat();
-        input.dataset.lng = loc.lng();
-        input.value = results[0].formatted_address;
-        const clearBtn = document.getElementById('custLocationClear');
-        if (clearBtn) clearBtn.style.display = 'block';
-        showCustLocationPreview(loc.lat(), loc.lng());
-        updateCustCoordStatus();
-        toast('✅ '+(currentLang==='en'?'Coordinates found — click Save to keep':'ได้พิกัดแล้ว — กด Save เพื่อบันทึก'),'success');
-      } else {
-        toast((currentLang==='en'?'Address not found: ':'หาสถานที่ไม่พบ: ')+status,'error');
+
+  const resetBtn = () => { if(btn){btn.disabled=false;btn.textContent='📍 '+(currentLang==='en'?'Get Coords':'หาพิกัด');} };
+
+  // Step 1: หา placeId จาก AutocompleteService (ใช้ Places API เดียวกับ PAE)
+  const acSvc = new google.maps.places.AutocompleteService();
+  acSvc.getPlacePredictions(
+    { input: query, componentRestrictions: { country: 'my' } },
+    (predictions, acStatus) => {
+      if (acStatus !== google.maps.places.PlacesServiceStatus.OK || !predictions?.length) {
+        resetBtn();
+        toast(currentLang==='en'
+          ? 'Address not found — try switching to Google Maps mode and selecting from the dropdown'
+          : 'หาสถานที่ไม่พบ — ลองกดปุ่ม Google Maps แล้วเลือกจาก dropdown แทน', 'error');
+        return;
       }
-    });
-  } catch(e) {
-    if (btn) { btn.disabled=false; btn.textContent='📍 '+(currentLang==='en'?'Get Coords':'หาพิกัด'); }
-    toast('Geocoder error: '+e.message,'error');
-  }
+      // Step 2: ดึงพิกัดจาก placeId
+      const svcDiv = document.getElementById('custLocationMap') || document.createElement('div');
+      const placesSvc = new google.maps.places.PlacesService(svcDiv);
+      placesSvc.getDetails(
+        { placeId: predictions[0].place_id, fields: ['geometry','formatted_address'] },
+        (place, detailStatus) => {
+          resetBtn();
+          if (detailStatus === google.maps.places.PlacesServiceStatus.OK && place?.geometry) {
+            const lat = place.geometry.location.lat();
+            const lng = place.geometry.location.lng();
+            input.dataset.lat = lat;
+            input.dataset.lng = lng;
+            input.value = place.formatted_address || query;
+            const clearBtn = document.getElementById('custLocationClear');
+            if (clearBtn) clearBtn.style.display = 'block';
+            showCustLocationPreview(lat, lng);
+            updateCustCoordStatus();
+            toast('✅ '+(currentLang==='en'?'Coordinates found — click Save':'ได้พิกัดแล้ว — กด Save เพื่อบันทึก'),'success');
+          } else {
+            toast((currentLang==='en'?'Could not get coordinates: ':'ไม่สามารถดึงพิกัดได้: ')+detailStatus,'error');
+          }
+        }
+      );
+    }
+  );
 }
 
 // ── Customer Import / Template ──────────────────────────────
