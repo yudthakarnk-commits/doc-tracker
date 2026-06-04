@@ -199,9 +199,15 @@
   <div class="modal" style="max-width:340px">
     <div class="modal-header"><h2>🔲 QR Code</h2><button class="modal-close" onclick="document.getElementById('qrShowModal').classList.add('hidden')">&times;</button></div>
     <div class="modal-body" style="text-align:center">
-      <div id="qrCodeWrap" style="display:flex;justify-content:center;align-items:center;min-height:244px;margin-bottom:12px"></div>
-      <div id="qrShowInfo" style="font-size:12px;color:var(--muted);line-height:1.6"></div>
-      <button class="btn-secondary" style="margin-top:12px;width:100%" onclick="downloadQRCode()">⬇️ Download QR</button>
+      <div id="qrCodeWrap" style="display:flex;justify-content:center;align-items:center;min-height:244px;margin-bottom:8px"></div>
+      <div id="qrShowInfo" style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:10px"></div>
+      <!-- Delivery Note (scrollable, copyable) -->
+      <textarea id="qrDeliveryNote" readonly rows="7"
+        style="width:100%;font-size:11px;font-family:monospace;padding:8px 10px;border:1px solid var(--border);border-radius:7px;background:#f9fafb;resize:none;text-align:left;line-height:1.5;color:#374151"></textarea>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn-secondary" style="flex:1" onclick="copyDeliveryNote()">📋 Copy Note</button>
+        <button class="btn-secondary" style="flex:1" onclick="downloadQRCode()">⬇️ Download QR</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1001,6 +1007,18 @@ async function onLogin(user){
   applyPermissionsToUI(); populateWeekFilters(); renderEntry(); renderSummary();
   if(hasPermission('view_admin_tab')){renderAdminTable();renderTargetsTable();renderEstimatesTable();renderCustomersTable();}
   subscribeRealtime();
+  // ── เปิด Record จาก QR URL (?record=uuid) ─────────────────
+  const _qrParam = new URLSearchParams(window.location.search).get('record');
+  if(_qrParam){
+    const _qrRec = allRecords.find(r=>r.id===_qrParam);
+    if(_qrRec){
+      setTimeout(()=>{ openEditModal(_qrParam); toast('📲 เปิด Record จาก QR Code','success'); }, 600);
+    } else {
+      toast('QR: ไม่พบ Record ID นี้ในระบบ','error');
+    }
+    // ล้าง param ออกจาก URL โดยไม่ reload
+    history.replaceState(null,'',window.location.pathname);
+  }
 }
 async function loadProfiles(){const {data}=await sb.from('profiles').select('*').order('created_at');allProfiles=data||[];}
 async function loadRecords(){const {data}=await sb.from('doc_records').select('*').order('record_date',{ascending:false}).order('created_at',{ascending:false});allRecords=data||[];_trFiltersPopulated=false;}
@@ -2559,8 +2577,14 @@ function handleQRResult(data) {
   const openBtn = document.getElementById('qrOpenRecord');
   resultBox.classList.remove('hidden');
   resultText.textContent = data;
+  // รองรับทั้ง DOCT://uuid และ URL ?record=uuid (format ใหม่)
+  let recordId = null;
   if (data.startsWith('DOCT://')) {
-    const recordId = data.replace('DOCT://', '').trim();
+    recordId = data.replace('DOCT://', '').trim();
+  } else {
+    try { const u=new URL(data); recordId=u.searchParams.get('record')||null; } catch(e){}
+  }
+  if (recordId) {
     openBtn.style.display = 'inline-flex';
     openBtn.dataset.recordId = recordId;
     toast('✅ พบ QR Code ของระบบ', 'success');
@@ -2608,29 +2632,96 @@ function _loadQRLib() {
   });
 }
 
+// สร้าง QR data เป็น Delivery Note ครบถ้วน
+function _buildQRDeliveryNote(rec) {
+  const n = (v) => (v ?? 0).toLocaleString();
+  const lines = [
+    '=== DOC DELIVERY NOTE ===',
+    `Customer : ${rec.customer_name || '-'}${rec.customer_code ? ' ('+rec.customer_code+')' : ''}`,
+    `Type     : ${rec.customer_type || '-'}`,
+    `Date     : ${rec.record_date || '-'} | Week ${rec.week_no || '-'} ${rec.day_name || ''}`,
+    `Hatchery : ${rec.hatchery || '-'}`,
+    rec.breed ? `Breed    : ${rec.breed}` : '',
+    '---',
+  ];
+  // Ordered
+  const totOrd = (rec.m_ordered||0)+(rec.f_ordered||0)+(rec.u_ordered||0);
+  if (totOrd > 0)
+    lines.push(`Ordered  : M=${n(rec.m_ordered)} F=${n(rec.f_ordered)} U=${n(rec.u_ordered)} | Total=${n(totOrd)}`);
+  // Actual
+  const totAct = (rec.m_actual||0)+(rec.f_actual||0)+(rec.u_actual||0);
+  lines.push(`Actual   : M=${n(rec.m_actual)} F=${n(rec.f_actual)} U=${n(rec.u_actual)} | Total=${n(totAct)}`);
+  // Weight
+  const wParts = [
+    rec.avg_weight_m     ? `M:${rec.avg_weight_m}g`     : '',
+    rec.avg_weight_f     ? `F:${rec.avg_weight_f}g`     : '',
+    rec.avg_weight_mixed ? `Mix:${rec.avg_weight_mixed}g` : '',
+  ].filter(Boolean);
+  if (wParts.length) lines.push(`Avg Wgt  : ${wParts.join(' | ')}`);
+  if (rec.egg_age) lines.push(`WOP/Egg Age: ${rec.egg_age}`);
+  lines.push('---');
+  // Logistics
+  if (rec.do_number)      lines.push(`DO No.   : ${rec.do_number}`);
+  if (rec.truck_plate)    lines.push(`Truck    : ${rec.truck_plate}`);
+  if (rec.departure_time) lines.push(`Dep Time : ${rec.departure_time.slice(0,5)}`);
+  if (rec.location)       lines.push(`Farm Loc : ${rec.location}`);
+  // Vaccine
+  if (rec.vaccine_sc)     lines.push(`Vacc S/C : ${rec.vaccine_sc}`);
+  if (rec.vaccine_spray)  lines.push(`Vacc Spray: ${rec.vaccine_spray}`);
+  if (rec.notes)          lines.push(`Notes    : ${rec.notes}`);
+  lines.push('---');
+  lines.push(`Ref: DOCT://${rec.id}`);
+  return lines.filter(l => l !== '').join('\n');
+}
+
 async function showRecordQR() {
   const id = document.getElementById('rId').value;
   if (!id) { toast('กรุณาบันทึก Record ก่อนสร้าง QR', 'info'); return; }
   _currentQRRecordId = id;
   const rec = allRecords.find(r => r.id === id);
+  // ปิด record modal ก่อน (z-index เท่ากัน — record modal ซ้อนทับ qr modal)
+  closeModal();
   const modal = document.getElementById('qrShowModal');
   modal.classList.remove('hidden');
   const wrap = document.getElementById('qrCodeWrap');
   const info = document.getElementById('qrShowInfo');
-  const qrData = 'DOCT://' + id;
+  const noteArea = document.getElementById('qrDeliveryNote');
+
+  // QR data = URL ที่เปิดแอปแล้วโหลด record อัตโนมัติ
+  const appBase = window.location.href.split('?')[0];
+  const qrUrl   = `${appBase}?record=${id}`;
+
+  // Delivery Note สำหรับแสดงใน textarea
+  const note = rec ? _buildQRDeliveryNote(rec) : `DOCT://${id}`;
+  if (noteArea) noteArea.value = note;
+
   if (rec) {
-    info.innerHTML = `<strong>${esc(rec.customer_name||'')}</strong><br>${rec.record_date||''} · ${esc(rec.hatchery||'')}<br><span style="font-size:11px;font-family:monospace;color:var(--muted)">${qrData}</span>`;
+    const totAct = (rec.m_actual||0)+(rec.f_actual||0)+(rec.u_actual||0);
+    info.innerHTML = `<strong>${esc(rec.customer_name||'')}</strong> · ${esc(rec.hatchery||'')}<br>`
+      + `${rec.record_date||''} · ${esc(rec.breed||'')} · <strong>${totAct.toLocaleString()} chicks</strong><br>`
+      + `<span style="font-size:10px;color:#10b981">📲 สแกน QR แล้วกดลิงก์ → เปิด record ได้เลย</span>`;
   } else {
-    info.textContent = qrData;
+    info.textContent = qrUrl;
   }
+
   const ready = await _loadQRLib();
   if (!ready) { toast('ไม่สามารถโหลด QR library ได้ — ตรวจสอบ Internet', 'error'); return; }
-  // qrcodejs: ล้าง div เก่าแล้วสร้างใหม่
   wrap.innerHTML = '';
   new QRCode(wrap, {
-    text: qrData, width: 240, height: 240,
+    text: qrUrl, width: 240, height: 240,
     colorDark: '#111827', colorLight: '#ffffff',
-    correctLevel: QRCode.CorrectLevel.H
+    correctLevel: QRCode.CorrectLevel.L   // URL สั้น → ใช้ L ได้ QR ชัดขึ้น
+  });
+}
+
+function copyDeliveryNote() {
+  const ta = document.getElementById('qrDeliveryNote');
+  if (!ta || !ta.value) { toast('ไม่มีข้อมูล', 'info'); return; }
+  navigator.clipboard?.writeText(ta.value).then(()=>{
+    toast('📋 คัดลอก Delivery Note แล้ว','success');
+  }).catch(()=>{
+    ta.select(); document.execCommand('copy');
+    toast('📋 คัดลอกแล้ว','success');
   });
 }
 
