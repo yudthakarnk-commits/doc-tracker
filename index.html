@@ -79,7 +79,7 @@
   .qr-result-box{padding:14px;background:#f0fdf4;border-top:1px solid #bbf7d0;font-size:13px}
   .qr-result-label{font-size:11px;color:var(--muted);font-weight:600;margin-bottom:4px;text-transform:uppercase}
   /* ── QR Code display ── */
-  #qrCodeCanvas{display:block;margin:0 auto;border-radius:8px}
+  #qrCodeWrap canvas,#qrCodeWrap img{display:block;margin:0 auto;border-radius:8px;max-width:240px}
 
   gmp-place-autocomplete{width:100%;--gmp-place-autocomplete-border-radius:8px;--gmp-place-autocomplete-border-color:var(--border);--gmp-place-autocomplete-border-width:1px;--gmp-place-autocomplete-background-color:var(--surface);--gmp-place-autocomplete-color:var(--text);--gmp-place-autocomplete-font-size:14px;--gmp-place-autocomplete-font-family:inherit;--gmp-place-autocomplete-input-padding:9px 36px 9px 12px;--gmp-place-autocomplete-placeholder-color:var(--muted);--gmp-place-autocomplete-focus-outline-color:var(--primary)}
   .location-clear-btn:hover{color:var(--danger)}
@@ -199,7 +199,7 @@
   <div class="modal" style="max-width:340px">
     <div class="modal-header"><h2>🔲 QR Code</h2><button class="modal-close" onclick="document.getElementById('qrShowModal').classList.add('hidden')">&times;</button></div>
     <div class="modal-body" style="text-align:center">
-      <canvas id="qrCodeCanvas" style="border-radius:8px;margin-bottom:12px"></canvas>
+      <div id="qrCodeWrap" style="display:flex;justify-content:center;align-items:center;min-height:244px;margin-bottom:12px"></div>
       <div id="qrShowInfo" style="font-size:12px;color:var(--muted);line-height:1.6"></div>
       <button class="btn-secondary" style="margin-top:12px;width:100%" onclick="downloadQRCode()">⬇️ Download QR</button>
     </div>
@@ -672,7 +672,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js" async></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" async></script>
 
 <script>
 // ===========================================================
@@ -2588,21 +2588,22 @@ function openRecordFromQR() {
 // ===========================================================
 let _currentQRRecordId = null;
 
-// โหลด QR library แบบ dynamic พร้อม fallback CDN
+// โหลด qrcodejs (davidshimjs) แบบ dynamic พร้อม fallback
 function _loadQRLib() {
   return new Promise(resolve => {
-    if (typeof QRCode !== 'undefined' && QRCode.toCanvas) { resolve(true); return; }
-    const tryLoad = (url, next) => {
+    // qrcodejs: ตรวจว่า QRCode เป็น constructor (ไม่ใช่ .toCanvas)
+    if (typeof QRCode === 'function') { resolve(true); return; }
+    const tryLoad = (url, fallback) => {
       const s = document.createElement('script');
       s.src = url;
-      s.onload  = () => resolve(typeof QRCode !== 'undefined' && !!QRCode.toCanvas);
-      s.onerror = () => next ? tryLoad(next, null) : resolve(false);
+      s.onload  = () => resolve(typeof QRCode === 'function');
+      s.onerror = () => fallback ? tryLoad(fallback, null) : resolve(false);
       document.head.appendChild(s);
     };
-    // Primary: jsdelivr v1.5.4 → Fallback: unpkg v1.5.4
+    // Primary: Cloudflare CDN → Fallback: jsdelivr
     tryLoad(
-      'https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js',
-      'https://unpkg.com/qrcode@1.5.4/build/qrcode.min.js'
+      'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js',
+      'https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js'
     );
   });
 }
@@ -2614,32 +2615,38 @@ async function showRecordQR() {
   const rec = allRecords.find(r => r.id === id);
   const modal = document.getElementById('qrShowModal');
   modal.classList.remove('hidden');
-  const canvas = document.getElementById('qrCodeCanvas');
-  const info  = document.getElementById('qrShowInfo');
+  const wrap = document.getElementById('qrCodeWrap');
+  const info = document.getElementById('qrShowInfo');
   const qrData = 'DOCT://' + id;
   if (rec) {
     info.innerHTML = `<strong>${esc(rec.customer_name||'')}</strong><br>${rec.record_date||''} · ${esc(rec.hatchery||'')}<br><span style="font-size:11px;font-family:monospace;color:var(--muted)">${qrData}</span>`;
   } else {
     info.textContent = qrData;
   }
-  // รอให้ library โหลด (ถ้ายังไม่มี จะโหลดใหม่อัตโนมัติ)
   const ready = await _loadQRLib();
   if (!ready) { toast('ไม่สามารถโหลด QR library ได้ — ตรวจสอบ Internet', 'error'); return; }
-  QRCode.toCanvas(canvas, qrData, { width: 240, margin: 2, color: { dark: '#111827', light: '#ffffff' } }, err => {
-    if (err) toast('QR Error: ' + err.message, 'error');
+  // qrcodejs: ล้าง div เก่าแล้วสร้างใหม่
+  wrap.innerHTML = '';
+  new QRCode(wrap, {
+    text: qrData, width: 240, height: 240,
+    colorDark: '#111827', colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.H
   });
 }
 
 function downloadQRCode() {
-  const canvas = document.getElementById('qrCodeCanvas');
-  if (!canvas) return;
+  // qrcodejs สร้าง <canvas> หรือ <img> ไว้ใน wrap div
+  const wrap = document.getElementById('qrCodeWrap');
+  const canvas = wrap?.querySelector('canvas');
+  const img    = wrap?.querySelector('img');
+  if (!canvas && !img) { toast('ยังไม่มี QR code — กด QR ก่อน', 'info'); return; }
   const rec = allRecords.find(r => r.id === _currentQRRecordId);
   const filename = rec
     ? ('QR_' + (rec.customer_name || 'record') + '_' + (rec.record_date || '')).replace(/[^a-zA-Z0-9_\-]/g, '_') + '.png'
     : 'QR_Record.png';
   const link = document.createElement('a');
   link.download = filename;
-  link.href = canvas.toDataURL('image/png');
+  link.href = canvas ? canvas.toDataURL('image/png') : img.src;
   link.click();
 }
 
