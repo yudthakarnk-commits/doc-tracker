@@ -672,7 +672,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js" async></script>
 
 <script>
 // ===========================================================
@@ -2588,7 +2588,26 @@ function openRecordFromQR() {
 // ===========================================================
 let _currentQRRecordId = null;
 
-function showRecordQR() {
+// โหลด QR library แบบ dynamic พร้อม fallback CDN
+function _loadQRLib() {
+  return new Promise(resolve => {
+    if (typeof QRCode !== 'undefined' && QRCode.toCanvas) { resolve(true); return; }
+    const tryLoad = (url, next) => {
+      const s = document.createElement('script');
+      s.src = url;
+      s.onload  = () => resolve(typeof QRCode !== 'undefined' && !!QRCode.toCanvas);
+      s.onerror = () => next ? tryLoad(next, null) : resolve(false);
+      document.head.appendChild(s);
+    };
+    // Primary: jsdelivr v1.5.4 → Fallback: unpkg v1.5.4
+    tryLoad(
+      'https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js',
+      'https://unpkg.com/qrcode@1.5.4/build/qrcode.min.js'
+    );
+  });
+}
+
+async function showRecordQR() {
   const id = document.getElementById('rId').value;
   if (!id) { toast('กรุณาบันทึก Record ก่อนสร้าง QR', 'info'); return; }
   _currentQRRecordId = id;
@@ -2596,20 +2615,19 @@ function showRecordQR() {
   const modal = document.getElementById('qrShowModal');
   modal.classList.remove('hidden');
   const canvas = document.getElementById('qrCodeCanvas');
-  const info = document.getElementById('qrShowInfo');
+  const info  = document.getElementById('qrShowInfo');
   const qrData = 'DOCT://' + id;
   if (rec) {
-    info.innerHTML = `<strong>${esc(rec.customer_name || '')}</strong><br>${rec.record_date || ''} · ${esc(rec.hatchery || '')}<br><span style="font-size:11px;font-family:monospace;color:var(--muted)">${qrData}</span>`;
+    info.innerHTML = `<strong>${esc(rec.customer_name||'')}</strong><br>${rec.record_date||''} · ${esc(rec.hatchery||'')}<br><span style="font-size:11px;font-family:monospace;color:var(--muted)">${qrData}</span>`;
   } else {
     info.textContent = qrData;
   }
-  if (typeof QRCode !== 'undefined' && QRCode.toCanvas) {
-    QRCode.toCanvas(canvas, qrData, { width: 240, margin: 2, color: { dark: '#111827', light: '#ffffff' } }, err => {
-      if (err) toast('QR Error: ' + err.message, 'error');
-    });
-  } else {
-    toast('QR library ยังไม่โหลด', 'error');
-  }
+  // รอให้ library โหลด (ถ้ายังไม่มี จะโหลดใหม่อัตโนมัติ)
+  const ready = await _loadQRLib();
+  if (!ready) { toast('ไม่สามารถโหลด QR library ได้ — ตรวจสอบ Internet', 'error'); return; }
+  QRCode.toCanvas(canvas, qrData, { width: 240, margin: 2, color: { dark: '#111827', light: '#ffffff' } }, err => {
+    if (err) toast('QR Error: ' + err.message, 'error');
+  });
 }
 
 function downloadQRCode() {
