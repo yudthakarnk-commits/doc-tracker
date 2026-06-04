@@ -205,8 +205,8 @@
       <textarea id="qrDeliveryNote" readonly rows="7"
         style="width:100%;font-size:11px;font-family:monospace;padding:8px 10px;border:1px solid var(--border);border-radius:7px;background:#f9fafb;resize:none;text-align:left;line-height:1.5;color:#374151"></textarea>
       <div style="display:flex;gap:8px;margin-top:8px">
-        <button class="btn-secondary" style="flex:1" onclick="copyDeliveryNote()">📋 Copy Note</button>
-        <button class="btn-secondary" style="flex:1" onclick="downloadQRCode()">⬇️ Download QR</button>
+        <button class="btn-secondary" style="flex:1" onclick="copyDeliveryNote()" data-i18n="qrCopyNote">📋 Copy Note</button>
+        <button class="btn-secondary" style="flex:1" onclick="downloadQRCode()" data-i18n="qrDownloadQR">⬇️ Download QR</button>
       </div>
     </div>
   </div>
@@ -735,6 +735,14 @@ const I18N = {
     trCalcDist:'📐 คำนวณระยะทาง', trCalcDistTitle:'คำนวณและบันทึกระยะทางอัตโนมัติสำหรับทุกรายการที่ยังไม่มีข้อมูล (ต้องมีพิกัดฟาร์มลูกค้าและ HATCHERY_COORDS)',
     trCalcNone:'ไม่มีรายการที่คำนวณได้ — ตรวจสอบพิกัดฟาร์มลูกค้าและ HATCHERY_COORDS',
     trCalcDone:'รายการสำเร็จ',
+    qrScanHint:'📲 สแกน QR แล้วกดลิงก์ → เปิด record ได้เลย',
+    qrNoLib:'ไม่สามารถโหลด QR library ได้ — ตรวจสอบ Internet',
+    qrSaveFirst:'กรุณาบันทึก Record ก่อนสร้าง QR',
+    qrCopied:'📋 คัดลอก Delivery Note แล้ว', qrCopiedShort:'📋 คัดลอกแล้ว', qrNoData:'ไม่มีข้อมูล',
+    qrFound:'✅ พบ QR Code ของระบบ', qrScanned:'📷 สแกนได้: ',
+    qrOpenedRecord:'📲 เปิด Record จาก QR Code', qrRecordNotFound:'QR: ไม่พบ Record ID นี้ในระบบ',
+    qrCopyNote:'📋 Copy Note', qrDownloadQR:'⬇️ Download QR',
+    qrCameraError:'❌ ไม่สามารถเปิดกล้องได้: ', qrRecordNotFound2:'❌ ไม่พบ Record ID นี้ในระบบ', qrNotReady:'ยังไม่มี QR code — กด QR ก่อน',
     kpiTotal:'รายการทั้งหมด', kpiOrdered:'ยอดสั่ง (ตัว)', kpiActual:'ยอดส่งจริง (ตัว)', kpiDiff:'ส่วนต่าง', kpiDiffPct:'% ส่วนต่าง',
     allWeeks:'สัปดาห์ทั้งหมด', allHatcheries:'โรงฟักทั้งหมด', allCustomerTypes:'ประเภทลูกค้าทั้งหมด', allBreeds:'สายพันธุ์ทั้งหมด', searchCustomer:'🔍 ค้นหาชื่อลูกค้า/ฟาร์ม',
     addRecord:'+ เพิ่มรายการ', orderTable:'ตารางข้อมูล Order', byWeek:'📅 รายสัปดาห์', byDay:'📆 รายวัน', printBtn:'🖨️ พิมพ์',
@@ -791,6 +799,14 @@ const I18N = {
     trCalcDist:'📐 Calc Dist', trCalcDistTitle:'Auto-calculate & save distances for all records with no distance data (requires customer farm coordinates and HATCHERY_COORDS)',
     trCalcNone:'No records to calculate — check customer farm coordinates and HATCHERY_COORDS',
     trCalcDone:'records done',
+    qrScanHint:'📲 Scan QR then tap the link → opens record directly',
+    qrNoLib:'Failed to load QR library — check Internet connection',
+    qrSaveFirst:'Please save the Record first before generating QR',
+    qrCopied:'📋 Delivery Note copied', qrCopiedShort:'📋 Copied', qrNoData:'No data',
+    qrFound:'✅ System QR Code detected', qrScanned:'📷 Scanned: ',
+    qrOpenedRecord:'📲 Record opened from QR Code', qrRecordNotFound:'QR: Record ID not found in system',
+    qrCopyNote:'📋 Copy Note', qrDownloadQR:'⬇️ Download QR',
+    qrCameraError:'❌ Cannot open camera: ', qrRecordNotFound2:'❌ Record ID not found in system', qrNotReady:'No QR code yet — click QR button first',
     kpiTotal:'Total', kpiOrdered:'Ordered', kpiActual:'Actual', kpiDiff:'Diff', kpiDiffPct:'Diff %',
     allWeeks:'All Weeks', allHatcheries:'All Hatcheries', allCustomerTypes:'All Customer Types', allBreeds:'All Breeds', searchCustomer:'🔍 Search',
     addRecord:'+ Add Record', orderTable:'Order Records', byWeek:'📅 By Week', byDay:'📆 By Day', printBtn:'🖨️ Print',
@@ -1012,9 +1028,9 @@ async function onLogin(user){
   if(_qrParam){
     const _qrRec = allRecords.find(r=>r.id===_qrParam);
     if(_qrRec){
-      setTimeout(()=>{ openEditModal(_qrParam); toast('📲 เปิด Record จาก QR Code','success'); }, 600);
+      setTimeout(()=>{ openEditModal(_qrParam); toast(t('qrOpenedRecord'),'success'); }, 600);
     } else {
-      toast('QR: ไม่พบ Record ID นี้ในระบบ','error');
+      toast(t('qrRecordNotFound'),'error');
     }
     // ล้าง param ออกจาก URL โดยไม่ reload
     history.replaceState(null,'',window.location.pathname);
@@ -2534,7 +2550,7 @@ async function startQRCamera() {
     await video.play();
     _qrAnimFrame = requestAnimationFrame(scanQRFrame);
   } catch(e) {
-    toast('❌ ไม่สามารถเปิดกล้องได้: ' + e.message, 'error');
+    toast(t('qrCameraError') + e.message, 'error');
     closeQRScanner();
   }
 }
@@ -2587,10 +2603,10 @@ function handleQRResult(data) {
   if (recordId) {
     openBtn.style.display = 'inline-flex';
     openBtn.dataset.recordId = recordId;
-    toast('✅ พบ QR Code ของระบบ', 'success');
+    toast(t('qrFound'), 'success');
   } else {
     openBtn.style.display = 'none';
-    toast('📷 สแกนได้: ' + data.substring(0, 50), 'info');
+    toast(t('qrScanned') + data.substring(0, 50), 'info');
   }
   stopQRCamera();
 }
@@ -2603,7 +2619,7 @@ function openRecordFromQR() {
   if (rec) {
     openEditModal(recordId);
   } else {
-    toast('❌ ไม่พบ Record ID นี้ในระบบ', 'error');
+    toast(t('qrRecordNotFound2'), 'error');
   }
 }
 
@@ -2676,7 +2692,7 @@ function _buildQRDeliveryNote(rec) {
 
 async function showRecordQR() {
   const id = document.getElementById('rId').value;
-  if (!id) { toast('กรุณาบันทึก Record ก่อนสร้าง QR', 'info'); return; }
+  if (!id) { toast(t('qrSaveFirst'), 'info'); return; }
   _currentQRRecordId = id;
   const rec = allRecords.find(r => r.id === id);
   // ปิด record modal ก่อน (z-index เท่ากัน — record modal ซ้อนทับ qr modal)
@@ -2699,13 +2715,13 @@ async function showRecordQR() {
     const totAct = (rec.m_actual||0)+(rec.f_actual||0)+(rec.u_actual||0);
     info.innerHTML = `<strong>${esc(rec.customer_name||'')}</strong> · ${esc(rec.hatchery||'')}<br>`
       + `${rec.record_date||''} · ${esc(rec.breed||'')} · <strong>${totAct.toLocaleString()} chicks</strong><br>`
-      + `<span style="font-size:10px;color:#10b981">📲 สแกน QR แล้วกดลิงก์ → เปิด record ได้เลย</span>`;
+      + `<span style="font-size:10px;color:#10b981">${t('qrScanHint')}</span>`;
   } else {
     info.textContent = qrUrl;
   }
 
   const ready = await _loadQRLib();
-  if (!ready) { toast('ไม่สามารถโหลด QR library ได้ — ตรวจสอบ Internet', 'error'); return; }
+  if (!ready) { toast(t('qrNoLib'), 'error'); return; }
   wrap.innerHTML = '';
   new QRCode(wrap, {
     text: qrUrl, width: 240, height: 240,
@@ -2716,12 +2732,12 @@ async function showRecordQR() {
 
 function copyDeliveryNote() {
   const ta = document.getElementById('qrDeliveryNote');
-  if (!ta || !ta.value) { toast('ไม่มีข้อมูล', 'info'); return; }
+  if (!ta || !ta.value) { toast(t('qrNoData'), 'info'); return; }
   navigator.clipboard?.writeText(ta.value).then(()=>{
-    toast('📋 คัดลอก Delivery Note แล้ว','success');
+    toast(t('qrCopied'),'success');
   }).catch(()=>{
     ta.select(); document.execCommand('copy');
-    toast('📋 คัดลอกแล้ว','success');
+    toast(t('qrCopiedShort'),'success');
   });
 }
 
@@ -2730,7 +2746,7 @@ function downloadQRCode() {
   const wrap = document.getElementById('qrCodeWrap');
   const canvas = wrap?.querySelector('canvas');
   const img    = wrap?.querySelector('img');
-  if (!canvas && !img) { toast('ยังไม่มี QR code — กด QR ก่อน', 'info'); return; }
+  if (!canvas && !img) { toast(t('qrNotReady'), 'info'); return; }
   const rec = allRecords.find(r => r.id === _currentQRRecordId);
   const filename = rec
     ? ('QR_' + (rec.customer_name || 'record') + '_' + (rec.record_date || '')).replace(/[^a-zA-Z0-9_\-]/g, '_') + '.png'
