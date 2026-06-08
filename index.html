@@ -426,6 +426,41 @@
         </div>
         <div class="table-wrap" id="customersTableWrap"></div>
       </div>
+
+      <!-- ── Activity Log ── -->
+      <div class="card" style="margin-top:14px">
+        <div class="card-header">
+          <span class="card-title">📋 Activity Log</span>
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+            <select id="logFilterUser" onchange="loadActivityLog()" style="font-size:12px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;max-width:160px">
+              <option value="">👤 All Users</option>
+            </select>
+            <select id="logFilterAction" onchange="loadActivityLog()" style="font-size:12px;padding:4px 8px;border:1px solid var(--border);border-radius:6px">
+              <option value="">All Actions</option>
+              <option value="login">🔐 Login</option>
+              <option value="create_record">➕ New Record</option>
+              <option value="update_record">✏️ Edit Record</option>
+              <option value="delete_record">🗑️ Delete Record</option>
+              <option value="save_transport">💾 Transport Data</option>
+              <option value="create_customer">➕ New Customer</option>
+              <option value="update_customer">✏️ Edit Customer</option>
+              <option value="delete_customer">🗑️ Delete Customer</option>
+              <option value="import_customers">📥 Import Customers</option>
+              <option value="export_excel">📊 Export Entry</option>
+              <option value="export_transport">📊 Export Transport</option>
+              <option value="download_qr">🔲 Download QR</option>
+              <option value="batch_calc_dist">📐 Calc Distances</option>
+            </select>
+            <input type="date" id="logFilterDate" onchange="loadActivityLog()" style="font-size:12px;padding:4px 8px;border:1px solid var(--border);border-radius:6px"/>
+            <button class="btn-secondary" onclick="loadActivityLog()" style="font-size:12px;padding:5px 12px">🔄 Refresh</button>
+            <button class="btn-secondary" onclick="exportActivityLog()" style="font-size:12px;padding:5px 12px;margin-left:auto">📊 Export Log</button>
+          </div>
+        </div>
+        <div class="table-wrap" id="activityLogWrap" style="max-height:450px;overflow-y:auto">
+          <p style="text-align:center;padding:24px;color:var(--muted)">🔄 Click Refresh to load activity log</p>
+        </div>
+        <div id="activityLogCount" style="font-size:12px;color:var(--muted);padding:5px 12px;border-top:1px solid var(--border)"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -1036,11 +1071,118 @@ async function onLogin(user){
     // ล้าง param ออกจาก URL โดยไม่ reload
     history.replaceState(null,'',window.location.pathname);
   }
+  logActivity('login','auth','',currentUser.email);  // ← log login
 }
 async function loadProfiles(){const {data}=await sb.from('profiles').select('*').order('created_at');allProfiles=data||[];}
 async function loadRecords(){const {data}=await sb.from('doc_records').select('*').order('record_date',{ascending:false}).order('created_at',{ascending:false});allRecords=data||[];_trFiltersPopulated=false;}
 async function loadTargets(){const {data}=await sb.from('doc_targets').select('*').order('created_at',{ascending:false});allTargets=data||[];}
 async function loadEstimates(){const {data}=await sb.from('hatchery_estimates').select('*').order('created_at',{ascending:false});allEstimates=data||[];}
+
+// ══════════════════════════════════════════════════════════════
+// ACTIVITY LOGGER
+// ══════════════════════════════════════════════════════════════
+const ACTION_LABELS = {
+  login:'🔐 Login', logout:'🚪 Logout',
+  create_record:'➕ New Record', update_record:'✏️ Edit Record', delete_record:'🗑️ Delete Record',
+  save_transport:'💾 Transport Data',
+  create_customer:'➕ New Customer', update_customer:'✏️ Edit Customer', delete_customer:'🗑️ Delete Customer',
+  import_customers:'📥 Import Customers',
+  export_excel:'📊 Export Entry Excel', export_transport:'📊 Export Transport Excel',
+  download_qr:'🔲 Download QR', batch_calc_dist:'📐 Calc Distances',
+};
+
+async function logActivity(action, targetType='', targetId='', targetDesc='', details={}) {
+  try {
+    if (!currentUser || !sb) return;
+    await sb.from('activity_logs').insert({
+      user_id: currentUser.id,
+      user_email: currentUser.email,
+      user_name: currentProfile?.name || currentProfile?.email || currentUser.email,
+      action, target_type: targetType,
+      target_id: String(targetId||'').slice(0,100),
+      target_desc: String(targetDesc||'').slice(0,300),
+      details
+    });
+  } catch(e) { /* silent — table may not exist yet */ }
+}
+
+async function loadActivityLog() {
+  const wrap = document.getElementById('activityLogWrap');
+  if (!wrap) return;
+  wrap.innerHTML = `<p style="text-align:center;padding:20px;color:var(--muted)">⏳ Loading...</p>`;
+  const userF   = document.getElementById('logFilterUser')?.value  || '';
+  const actionF = document.getElementById('logFilterAction')?.value || '';
+  const dateF   = document.getElementById('logFilterDate')?.value   || '';
+  try {
+    let q = sb.from('activity_logs').select('*').order('created_at',{ascending:false}).limit(500);
+    if (userF)   q = q.eq('user_id', userF);
+    if (actionF) q = q.eq('action', actionF);
+    if (dateF)   q = q.gte('created_at', dateF+'T00:00:00').lte('created_at', dateF+'T23:59:59');
+    const {data, error} = await q;
+    if (error) {
+      wrap.innerHTML = error.code==='42P01'
+        ? `<p style="text-align:center;padding:24px;color:var(--muted)">⚠️ ตาราง <code>activity_logs</code> ยังไม่มีในฐานข้อมูล<br><small>กรุณารัน SQL Schema ที่อยู่ในไฟล์ index.html</small></p>`
+        : `<p style="text-align:center;padding:20px;color:var(--danger)">${error.message}</p>`;
+      return;
+    }
+    // Populate user dropdown from results
+    const userSel = document.getElementById('logFilterUser');
+    if (userSel && data?.length) {
+      const saved = userSel.value;
+      const users = [...new Map(data.map(r=>[r.user_id,{id:r.user_id,email:r.user_email||r.user_id}])).values()];
+      userSel.innerHTML = `<option value="">👤 All Users</option>`;
+      users.forEach(u => { const o=document.createElement('option'); o.value=u.id; o.textContent=u.email; userSel.appendChild(o); });
+      userSel.value = saved;
+    }
+    renderActivityLog(data || []);
+  } catch(e) {
+    wrap.innerHTML = `<p style="text-align:center;padding:20px;color:var(--danger)">Error: ${e.message}</p>`;
+  }
+}
+
+function renderActivityLog(logs) {
+  const wrap    = document.getElementById('activityLogWrap');
+  const countEl = document.getElementById('activityLogCount');
+  if (!wrap) return;
+  if (countEl) countEl.textContent = `${logs.length} ${currentLang==='en'?'records':'รายการ'}`;
+  if (!logs.length) { wrap.innerHTML = `<p style="text-align:center;padding:24px;color:var(--muted)">${currentLang==='en'?'No activity logs found':'ไม่พบ Activity Log'}</p>`; return; }
+  const rowBg = a => a.startsWith('delete')?'#fff5f5': a.startsWith('create')?'#f0fff4': (a.startsWith('export')||a==='download_qr')?'#fffbeb': a==='login'?'#eff6ff': '';
+  let h = `<table><thead><tr>
+    <th style="white-space:nowrap">${currentLang==='en'?'Date / Time':'วันเวลา'}</th>
+    <th>${currentLang==='en'?'User':'ผู้ใช้'}</th>
+    <th>${currentLang==='en'?'Action':'การกระทำ'}</th>
+    <th>${currentLang==='en'?'Description':'รายละเอียด'}</th>
+  </tr></thead><tbody>`;
+  logs.forEach(log => {
+    const dt = new Date(log.created_at);
+    const dtStr = dt.toLocaleDateString()+' '+dt.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    const label = ACTION_LABELS[log.action] || log.action;
+    h += `<tr style="background:${rowBg(log.action||'')}">
+      <td style="font-size:11px;white-space:nowrap;color:var(--muted)">${dtStr}</td>
+      <td style="font-size:11px;max-width:160px;overflow:hidden;text-overflow:ellipsis" title="${esc(log.user_email||'')}">
+        ${esc((log.user_email||'').split('@')[0])}</td>
+      <td style="white-space:nowrap;font-size:12px"><span style="padding:2px 7px;border-radius:4px;background:#f3f4f6;font-size:11px">${label}</span></td>
+      <td style="font-size:12px;max-width:260px">${esc(log.target_desc||log.target_type||'-')}</td>
+    </tr>`;
+  });
+  wrap.innerHTML = h + '</tbody></table>';
+}
+
+async function exportActivityLog() {
+  const {data} = await sb.from('activity_logs').select('*').order('created_at',{ascending:false}).limit(5000);
+  if (!data?.length) { toast(currentLang==='en'?'No data':'ไม่มีข้อมูล','error'); return; }
+  const headers = ['Date/Time','User Email','User Name','Action','Target Type','Target ID','Description'];
+  const rows = data.map(l=>[
+    new Date(l.created_at).toLocaleString(), l.user_email||'', l.user_name||'',
+    l.action||'', l.target_type||'', l.target_id||'', l.target_desc||''
+  ]);
+  const ws = XLSX.utils.aoa_to_sheet([headers,...rows]);
+  ws['!cols'] = [20,28,20,22,14,36,44].map(w=>({wch:w}));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Activity Log');
+  XLSX.writeFile(wb,`ActivityLog_${new Date().toISOString().slice(0,10)}.xlsx`);
+  toast('📊 Exported Activity Log','success');
+}
 
 function subscribeRealtime(){
   if(realtimeChannel) return;
@@ -1061,6 +1203,7 @@ function switchTab(name){
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
   ['entry','summary','transport','admin'].forEach(t=>document.getElementById('tab-'+t).classList.toggle('hidden',t!==name));
   if(name==='transport') loadTransportReport();
+  if(name==='admin' && hasPermission('view_admin_tab')) loadActivityLog();
 }
 function populateWeekFilters(){
   const weeks=[...new Set(allRecords.map(r=>r.week_no))].sort((a,b)=>b-a);
@@ -1192,11 +1335,22 @@ async function saveRecord(){
     if(id){const i=allRecords.findIndex(r=>String(r.id)===String(id));if(i>=0)allRecords[i]=savedRow;}
     else allRecords.unshift(savedRow);
   }
+  // log
+  logActivity(id?'update_record':'create_record','record', savedRow?.id||id||'',
+    `${data.customer_name} | ${data.record_date} | ${data.hatchery}`,
+    {week_no:data.week_no, hatchery:data.hatchery, total_actual:(data.m_actual||0)+(data.f_actual||0)+(data.u_actual||0)});
   toast(id?t('toastUpdated'):t('toastSaved'),'success');
   closeModal();
   populateWeekFilters(); renderEntry();
 }
-async function deleteRecord(){const id=document.getElementById('rId').value;if(!id||!confirm(t('confirmDelete')))return;const {error}=await sb.from('doc_records').delete().eq('id',id);if(error) return toast(error.message,'error');toast(t('toastDeleted'),'success');closeModal();}
+async function deleteRecord(){
+  const id=document.getElementById('rId').value;if(!id||!confirm(t('confirmDelete')))return;
+  const _r=allRecords.find(r=>r.id===id);
+  const {error}=await sb.from('doc_records').delete().eq('id',id);
+  if(error) return toast(error.message,'error');
+  logActivity('delete_record','record',id, _r?`${_r.customer_name} | ${_r.record_date} | ${_r.hatchery}`:'');
+  toast(t('toastDeleted'),'success');closeModal();
+}
 
 function renderSummary(){
   const mode=document.getElementById('sumMode').value;
@@ -1713,6 +1867,7 @@ async function importCustomers(fileInput) {
       }
     }
     const msg = `✅ Import: +${added} ใหม่, ${updated} อัปเดต${errors > 0 ? `, ⚠️ ${errors} error` : ''}`;
+    logActivity('import_customers','bulk','',`Added:${added} Updated:${updated} Errors:${errors}`, {file:fileInput.files[0]?.name||''});
     toast(msg, errors > 0 ? 'info' : 'success');
     await loadCustomers(); renderCustomersTable();
   } catch(e) {
@@ -1732,19 +1887,26 @@ async function saveCustomer(){
   if(id){({error}=await sb.from('customers').update(d).eq('id',id));}
   else{({error}=await sb.from('customers').insert(d));}
   if(error)return toast(error.message,'error');
+  logActivity(id?'update_customer':'create_customer','customer',id||'',
+    `${d.customer_name}${d.customer_code?' ('+d.customer_code+')':''}`,
+    {farm_lat:d.farm_lat, farm_lng:d.farm_lng});
   toast(t('toastSaved'),'success');closeCustomerModal();await loadCustomers();renderCustomersTable();
 }
 async function deleteCustomer(id){
   if(!confirm(t('confirmDeleteCustomer')))return;
+  const _c=allCustomers.find(c=>c.id===id);
   const {error}=await sb.from('customers').delete().eq('id',id);
   if(error)return toast(error.message,'error');
+  logActivity('delete_customer','customer',id,_c?_c.customer_name:'');
   toast(t('toastDeleted'),'success');await loadCustomers();renderCustomersTable();
 }
 async function deleteCustomerFromModal(){
   const id=document.getElementById('custId').value;
   if(!id||!confirm(t('confirmDeleteCustomer')))return;
+  const _c=allCustomers.find(c=>c.id===id);
   const {error}=await sb.from('customers').delete().eq('id',id);
   if(error)return toast(error.message,'error');
+  logActivity('delete_customer','customer',id,_c?_c.customer_name:'');
   toast(t('toastDeleted'),'success');closeCustomerModal();await loadCustomers();renderCustomersTable();
 }
 // Customer Autocomplete in Add Record
@@ -1790,6 +1952,7 @@ function resetCustomize(){if(!confirm('Reset?'))return;localStorage.removeItem('
 function applySavedCustomize(){const p=getCustomizePrefs();if(p.theme)setTheme(p.theme);applySectionVisibility();}
 
 function exportEntryExcel(){
+  logActivity('export_excel','export','',`${allRecords.length} records`);
   const f=allRecords; if(!f.length)return toast('No data','error');
   const h=['Wk','Date','Day','Hatchery','External Source','Customer Type','Customer/Farm','Breed','DO. Number','M Ord','F Ord','U Ord','Total Ord','M Act','F Act','U Act','Total Act','Diff','Diff %','Unit Price','Total Amount','Truck Plate','Departure Time','Location','Avg Wgt M','Avg Wgt F','Avg Wgt Mixed','Egg Age','Vaccine S/C','Vaccine Spray','Notes'];
   const d=f.map(r=>[r.week_no,r.record_date,r.day_name,r.hatchery,r.external_source,r.customer_type,r.customer_name,r.breed,r.do_number,r.m_ordered,r.f_ordered,r.u_ordered,r.total_ordered,r.m_actual,r.f_actual,r.u_actual,r.total_actual,r.diff,r.total_ordered?((r.diff||0)/r.total_ordered*100).toFixed(2)+'%':'',r.unit_price,r.total_amount,r.truck_plate,r.departure_time,r.location,r.avg_weight_m,r.avg_weight_f,r.avg_weight_mixed,r.egg_age,r.vaccine_sc,r.vaccine_spray,r.notes]);
@@ -2157,6 +2320,7 @@ async function batchCalcDistances(){
     const {error}=await sb.from('doc_records').update({distance_km:dist}).eq('id',r.id);
     if(error){err++;}else{ok++;const i=allRecords.findIndex(x=>x.id===r.id);if(i>=0)allRecords[i].distance_km=dist;}
   }
+  logActivity('batch_calc_dist','transport','',`${ok} records calculated, ${err} errors`);
   toast(`📐 ${ok} ${t('trCalcDone')}${err>0?`, ${err} error`:''}`,err>0?'info':'success');
   if(btn){btn.disabled=false;btn.textContent=t('trCalcDist');}
   loadTransportReport();
@@ -2355,12 +2519,17 @@ async function saveTransportData(){
   if(error){toast('Error: '+error.message,'error');return;}
   const idx=allRecords.findIndex(r=>r.id===id);
   if(idx>=0) Object.assign(allRecords[idx],d);
+  const _tr=allRecords[idx];
+  logActivity('save_transport','transport',id,
+    _tr?`${_tr.customer_name} | ${_tr.record_date} | DOA:${d.doa_count||0} Dist:${d.distance_km||0}km`:'',
+    {distance_km:d.distance_km, doa_count:d.doa_count, driver:d.driver_name});
   toast(currentLang==='en'?'Transport data saved':'บันทึกข้อมูลขนส่งสำเร็จ');
   closeTransportModal();
   loadTransportReport();
 }
 
 async function exportTransportExcel(){
+  logActivity('export_transport','export','',`${_trRecords?.length||0} records`);
   if(!window.XLSX){toast('XLSX not ready','error');return;}
   const data=_trRecords.map(r=>{
     const total=(r.m_actual||0)+(r.f_actual||0)+(r.u_actual||0);
@@ -2764,6 +2933,7 @@ function downloadQRCode() {
   const img    = wrap?.querySelector('img');
   if (!canvas && !img) { toast(t('qrNotReady'), 'info'); return; }
   const rec = allRecords.find(r => r.id === _currentQRRecordId);
+  logActivity('download_qr','qr',_currentQRRecordId||'', rec?`${rec.customer_name} | ${rec.record_date}`:'');
   const filename = rec
     ? ('QR_' + (rec.customer_name || 'record') + '_' + (rec.record_date || '')).replace(/[^a-zA-Z0-9_\-]/g, '_') + '.png'
     : 'QR_Record.png';
