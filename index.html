@@ -1502,15 +1502,26 @@ async function attachCustLocationAutocomplete() {
         _custLocationPAE = new PAEClass({ requestedLanguage: currentLang, requestedRegion: 'MY' });
         wrap.insertBefore(_custLocationPAE, input);
         _custLocationPAE.addEventListener('gmp-placeselect', async ({ place }) => {
-          await place.fetchFields({ fields: ['displayName', 'formattedAddress', 'location'] });
-          const addr = place.formattedAddress || place.displayName || '';
-          input.value = addr;
-          const lat = place.location.lat(), lng = place.location.lng();
-          input.dataset.lat = lat; input.dataset.lng = lng;
-          const btn = document.getElementById('custLocationClear');
-          if (btn) btn.style.display = 'block';
-          showCustLocationPreview(lat, lng);
-          updateCustCoordStatus();
+          try {
+            await place.fetchFields({ fields: ['displayName', 'formattedAddress', 'location'] });
+            const addr = place.formattedAddress || place.displayName || '';
+            input.value = addr;
+            // รองรับทั้ง LatLng object (.lat() method) และ plain object ({lat, lng})
+            const loc = place.location;
+            if (!loc) throw new Error('location is null');
+            const lat = typeof loc.lat === 'function' ? loc.lat() : loc.lat;
+            const lng = typeof loc.lng === 'function' ? loc.lng() : loc.lng;
+            input.dataset.lat = lat; input.dataset.lng = lng;
+            // sync ข้อความกลับเข้า PAE ด้วย (ป้องกัน inputValue เป็น stale)
+            try { _custLocationPAE.inputValue = addr; } catch(e) {}
+            const btn = document.getElementById('custLocationClear');
+            if (btn) btn.style.display = 'block';
+            showCustLocationPreview(lat, lng);
+            updateCustCoordStatus();
+          } catch(e) {
+            console.warn('gmp-placeselect error:', e);
+            toast((currentLang==='en'?'Could not get coordinates from this place: ':'ไม่สามารถดึงพิกัดได้: ')+e.message,'error');
+          }
         });
         _custLocationPAE.addEventListener('input', () => {
           const v = _custLocationPAE.inputValue || '';
@@ -1597,7 +1608,11 @@ function updateCustCoordStatus() {
 function geocodeCustLocation() {
   const input = document.getElementById('custFarmLocation');
   const btn   = document.getElementById('custGeocodeBtn');
-  const query = input?.value.trim();
+  // ใน Google Maps mode: input ถูกซ่อน ให้อ่านจาก PAE inputValue ด้วย
+  let query = input?.value.trim() || '';
+  if (!query && _custLocationPAE) {
+    try { query = (_custLocationPAE.inputValue || '').trim(); } catch(e) {}
+  }
   if (!query) { toast(currentLang==='en'?'Please enter an address first':'กรุณากรอกที่อยู่ก่อน','info'); return; }
   if (!window.google || !google.maps || !google.maps.places) { toast('Google Maps ยังโหลดไม่เสร็จ','info'); return; }
   if (btn) { btn.disabled=true; btn.textContent='⏳...'; }
