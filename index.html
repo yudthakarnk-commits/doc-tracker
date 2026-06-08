@@ -412,23 +412,9 @@
     </div>
 
     <div id="tab-admin" class="hidden">
-      <div class="card"><div class="card-header"><span class="card-title" data-i18n="manageUsers">จัดการผู้ใช้</span></div><div class="table-wrap"><table><thead><tr><th data-i18n="th_email">อีเมล</th><th data-i18n="th_name">ชื่อ</th><th data-i18n="th_role">Role</th><th data-i18n="th_registered">สมัครเมื่อ</th><th data-i18n="th_perms">สิทธิ์</th><th></th></tr></thead><tbody id="adminTbody"></tbody></table></div></div>
-      <div class="card" style="margin-top:14px"><div class="card-header"><span class="card-title" data-i18n="bookingTargetsTitle">Booking Targets</span><div style="display:flex;gap:8px;align-items:center"><select id="targetsViewSelect" onchange="setTargetsView(this.value)"><option value="week" data-i18n="byWeek">📅 รายสัปดาห์</option><option value="day" data-i18n="byDay">📆 รายวัน</option></select><button class="btn-add" onclick="openTargetModal()" data-i18n="addTarget">+ ตั้งเป้าหมาย</button></div></div><div class="table-wrap" id="targetsTableWrap"></div></div>
-      <div class="card" style="margin-top:14px"><div class="card-header"><span class="card-title" data-i18n="hatcheryEstTitle">Hatchery Estimate</span><div style="display:flex;gap:8px;align-items:center"><select id="estimatesViewSelect" onchange="setEstimatesView(this.value)"><option value="week" data-i18n="byWeek">📅 รายสัปดาห์</option><option value="day" data-i18n="byDay">📆 รายวัน</option></select><button class="btn-add" onclick="openEstimateModal()" data-i18n="addEstimate">+ เพิ่ม Estimate</button></div></div><div class="table-wrap" id="estimatesTableWrap"></div></div>
-      <div class="card" style="margin-top:14px">
-        <div class="card-header">
-          <span class="card-title" data-i18n="customersTitle">📋 ข้อมูลอ้างอิงลูกค้า</span>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <button class="btn-secondary" onclick="downloadCustomerTemplate()" style="font-size:12px;padding:6px 12px" title="ดาวน์โหลด Excel Template">📄 Template</button>
-            <label class="btn-secondary" style="font-size:12px;padding:6px 12px;cursor:pointer;margin:0" title="นำเข้าข้อมูลลูกค้าจาก Excel">📥 Import<input type="file" id="custImportFile" accept=".xlsx,.xls,.csv" style="display:none" onchange="importCustomers(this)"/></label>
-            <button class="btn-add" onclick="openCustomerModal()" data-i18n="addCustomer">+ เพิ่มลูกค้า</button>
-          </div>
-        </div>
-        <div class="table-wrap" id="customersTableWrap"></div>
-      </div>
 
-      <!-- ── Activity Log ── -->
-      <div class="card" style="margin-top:14px">
+      <!-- ── Activity Log (อยู่ด้านบนสุด) ── -->
+      <div class="card">
         <div class="card-header">
           <span class="card-title">📋 Activity Log</span>
           <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
@@ -456,10 +442,55 @@
             <button class="btn-secondary" onclick="exportActivityLog()" style="font-size:12px;padding:5px 12px;margin-left:auto">📊 Export Log</button>
           </div>
         </div>
-        <div class="table-wrap" id="activityLogWrap" style="max-height:450px;overflow-y:auto">
+        <div class="table-wrap" id="activityLogWrap" style="max-height:260px;overflow-y:auto">
           <p style="text-align:center;padding:24px;color:var(--muted)">🔄 Click Refresh to load activity log</p>
         </div>
         <div id="activityLogCount" style="font-size:12px;color:var(--muted);padding:5px 12px;border-top:1px solid var(--border)"></div>
+      </div>
+
+      <!-- ── Manage Users ── -->
+      <div class="card" style="margin-top:14px">
+        <div class="card-header"><span class="card-title" data-i18n="manageUsers">จัดการผู้ใช้</span></div>
+        <div class="table-wrap" style="max-height:260px;overflow-y:auto">
+          <table><thead><tr><th data-i18n="th_email">อีเมล</th><th data-i18n="th_name">ชื่อ</th><th data-i18n="th_role">Role</th><th data-i18n="th_registered">สมัครเมื่อ</th><th data-i18n="th_perms">สิทธิ์</th><th></th></tr></thead><tbody id="adminTbody"></tbody></table>
+        </div>
+      </div>
+
+      <!-- ── Booking Targets ── -->
+      <div class="card" style="margin-top:14px">
+        <div class="card-header"><span class="card-title" data-i18n="bookingTargetsTitle">Booking Targets</span><div style="display:flex;gap:8px;align-items:center"><select id="targetsViewSelect" onchange="setTargetsView(this.value)"><option value="week" data-i18n="byWeek">📅 รายสัปดาห์</option><option value="day" data-i18n="byDay">📆 รายวัน</option></select><button class="btn-add" onclick="openTargetModal()" data-i18n="addTarget">+ ตั้งเป้าหมาย</button></div></div>
+        <div class="table-wrap" id="targetsTableWrap" style="max-height:260px;overflow-y:auto"></div>
+      </div>
+
+      <!-- ── Hatchery Estimate ── -->
+      <div class="card" style="margin-top:14px">
+        <div class="card-header"><span class="card-title" data-i18n="hatcheryEstTitle">Hatchery Estimate</span><div style="display:flex;gap:8px;align-items:center"><select id="estimatesViewSelect" onchange="setEstimatesView(this.value)"><option value="week" data-i18n="byWeek">📅 รายสัปดาห์</option><option value="day" data-i18n="byDay">📆 รายวัน</option></select><button class="btn-add" onclick="openEstimateModal()" data-i18n="addEstimate">+ เพิ่ม Estimate</button></div></div>
+        <div class="table-wrap" id="estimatesTableWrap" style="max-height:260px;overflow-y:auto"></div>
+      </div>
+
+      <!-- ── Customer Reference + Map ── -->
+      <div class="card" style="margin-top:14px">
+        <div class="card-header">
+          <span class="card-title" data-i18n="customersTitle">📋 ข้อมูลอ้างอิงลูกค้า</span>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <button class="btn-secondary" onclick="toggleCustomerMap()" id="custMapToggleBtn" style="font-size:12px;padding:6px 12px">🗺 Show Map</button>
+            <button class="btn-secondary" onclick="downloadCustomerTemplate()" style="font-size:12px;padding:6px 12px" title="Download Excel Template">📄 Template</button>
+            <label class="btn-secondary" style="font-size:12px;padding:6px 12px;cursor:pointer;margin:0">📥 Import<input type="file" id="custImportFile" accept=".xlsx,.xls,.csv" style="display:none" onchange="importCustomers(this)"/></label>
+            <button class="btn-add" onclick="openCustomerModal()" data-i18n="addCustomer">+ เพิ่มลูกค้า</button>
+          </div>
+        </div>
+        <!-- Map (ซ่อนไว้ก่อน) -->
+        <div id="customerMapWrap" style="display:none;padding:0 0 10px">
+          <div id="customerMapDiv" style="height:380px;border-radius:8px;border:1px solid var(--border);overflow:hidden"></div>
+          <div id="custMapLegend" style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);padding:7px 4px 0">
+            <span>🏭 <strong>Hatchery</strong></span>
+            <span style="color:#2563eb">● Customer (Direct)</span>
+            <span style="color:#d97706">● Contract Farm</span>
+            <span style="color:#16a34a">● Company Farm</span>
+            <span style="color:#6b7280">● Other</span>
+          </div>
+        </div>
+        <div class="table-wrap" id="customersTableWrap" style="max-height:260px;overflow-y:auto"></div>
       </div>
     </div>
   </div>
@@ -1502,7 +1533,7 @@ function applyPermissionsToUI(){
   document.querySelectorAll('[onclick*="openEstimateModal"]').forEach(b=>b.style.display=hasPermission('manage_estimates')?'':'none');
 }
 
-let tgView='week', tgSortCol='', tgSortDir=1;
+let tgView='week', tgSortCol='created_at', tgSortDir=-1;  // ล่าสุดขึ้นก่อน
 function setTargetsView(v){tgView=v;renderTargetsTable();}
 function tgSort(col){if(tgSortCol===col)tgSortDir*=-1;else{tgSortCol=col;tgSortDir=1;}renderTargetsTable();}
 function renderTargetsTable(){
@@ -1526,7 +1557,7 @@ async function saveTarget(){
 }
 async function deleteTarget(id){if(!confirm('Delete?'))return;await sb.from('doc_targets').delete().eq('id',id);toast('Deleted','success');}
 
-let estView='week', estSortCol='', estSortDir=1;
+let estView='week', estSortCol='created_at', estSortDir=-1;  // ล่าสุดขึ้นก่อน
 function setEstimatesView(v){estView=v;renderEstimatesTable();}
 function estSort(col){if(estSortCol===col)estSortDir*=-1;else{estSortCol=col;estSortDir=1;}renderEstimatesTable();}
 function renderEstimatesTable(){
@@ -1550,8 +1581,79 @@ async function saveEstimate(){
 }
 async function deleteEstimate(id){if(!confirm('Delete?'))return;await sb.from('hatchery_estimates').delete().eq('id',id);toast('Deleted','success');}
 
+// ═══════════════════════════════════════════════════════════
+// CUSTOMER + HATCHERY MAP
+// ═══════════════════════════════════════════════════════════
+let _customerMap = null, _customerMapMarkers = [], _custMapVisible = false;
+
+function toggleCustomerMap() {
+  const wrap = document.getElementById('customerMapWrap');
+  const btn  = document.getElementById('custMapToggleBtn');
+  _custMapVisible = !_custMapVisible;
+  if (wrap) wrap.style.display = _custMapVisible ? 'block' : 'none';
+  if (btn)  btn.textContent = _custMapVisible ? '🗺 Hide Map' : '🗺 Show Map';
+  if (_custMapVisible) setTimeout(() => renderCustomerMap(), 120);
+}
+
+function renderCustomerMap() {
+  const mapDiv = document.getElementById('customerMapDiv');
+  if (!mapDiv) return;
+  if (!window.google || !google.maps) { mapDiv.innerHTML='<p style="text-align:center;padding:30px;color:var(--muted)">Google Maps ยังโหลดไม่เสร็จ</p>'; return; }
+  const custPts = allCustomers.filter(c=>c.farm_lat&&c.farm_lng)
+    .map(c=>({lat:parseFloat(c.farm_lat),lng:parseFloat(c.farm_lng),customer:c}));
+  const hatPts  = Object.entries(HATCHERY_COORDS)
+    .map(([name,v])=>({lat:v.lat,lng:v.lng,name}));
+  const allPts  = [...custPts,...hatPts];
+  if (!allPts.length) { mapDiv.innerHTML='<p style="text-align:center;padding:30px;color:var(--muted)">ยังไม่มีพิกัด — บันทึกพิกัดลูกค้าก่อน</p>'; return; }
+  // ──── สร้าง / อัปเดต Map ─────────────────────────────────
+  const center = allPts.reduce((a,p)=>({lat:a.lat+p.lat/allPts.length,lng:a.lng+p.lng/allPts.length}),{lat:0,lng:0});
+  if (!_customerMap) {
+    _customerMap = new google.maps.Map(mapDiv, { center, zoom:8, mapTypeControl:false, streetViewControl:false, fullscreenControl:true });
+  }
+  // ──── ล้าง markers เก่า ──────────────────────────────────
+  _customerMapMarkers.forEach(m=>m.setMap(null));
+  _customerMapMarkers = [];
+  const bounds = new google.maps.LatLngBounds();
+  // ──── Hatchery markers (star icon) ──────────────────────
+  hatPts.forEach(h=>{
+    const m = new google.maps.Marker({
+      position:{lat:h.lat,lng:h.lng}, map:_customerMap, title:`🏭 ${h.name}`,
+      icon:{path:google.maps.SymbolPath.FORWARD_CLOSED_ARROW,scale:6,fillColor:'#f59e0b',fillOpacity:1,strokeColor:'#fff',strokeWeight:2,rotation:0}
+    });
+    const info = new google.maps.InfoWindow({content:`<b>🏭 ${esc(h.name)}</b><br><small>${h.lat.toFixed(5)}, ${h.lng.toFixed(5)}</small>`});
+    m.addListener('click',()=>info.open(_customerMap,m));
+    _customerMapMarkers.push(m); bounds.extend({lat:h.lat,lng:h.lng});
+  });
+  // ──── Customer markers (colored circles by type) ─────────
+  const typeColor={'Customer (Direct)':'#2563eb','Contract Farm':'#d97706','Company Farm':'#16a34a'};
+  custPts.forEach(p=>{
+    const c=p.customer, col=typeColor[c.customer_type]||'#6b7280';
+    const m = new google.maps.Marker({
+      position:{lat:p.lat,lng:p.lng}, map:_customerMap, title:c.customer_name,
+      icon:{path:google.maps.SymbolPath.CIRCLE,scale:8,fillColor:col,fillOpacity:0.85,strokeColor:'#fff',strokeWeight:2}
+    });
+    const dist = (() => {
+      const hc = HATCHERY_COORDS[c.hatchery_default||''];
+      if (!hc) return ''; // no default hatchery
+      try { const km=(haversineDistance(hc.lat,hc.lng,p.lat,p.lng)*1.3).toFixed(1); return `<br>~${km} km from hatchery`; } catch(e){ return ''; }
+    })();
+    const info = new google.maps.InfoWindow({content:
+      `<b>${esc(c.customer_name)}</b>${c.customer_code?` <span style="color:#6b7280">(${esc(c.customer_code)})</span>`:''}<br>` +
+      `<span style="color:${col}">${esc(c.customer_type||'')}</span><br>` +
+      `${esc(c.farm_location||'')}${dist}<br>` +
+      `<small style="color:#9ca3af">${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}</small>` +
+      `<br><button onclick="openCustomerModal('${esc(c.id)}')" style="margin-top:4px;font-size:11px;padding:2px 8px;border:1px solid #e5e7eb;border-radius:4px;cursor:pointer;background:#fff">✏️ Edit</button>`
+    });
+    m.addListener('click',()=>info.open(_customerMap,m));
+    _customerMapMarkers.push(m); bounds.extend({lat:p.lat,lng:p.lng});
+  });
+  if (allPts.length>1) _customerMap.fitBounds(bounds,{top:40,right:40,bottom:40,left:40});
+  else _customerMap.setCenter({lat:allPts[0].lat,lng:allPts[0].lng});
+  google.maps.event.trigger(_customerMap,'resize');
+}
+
 // ===== Customer Reference =====
-let allCustomers=[], custSortCol='customer_name', custSortDir=1;
+let allCustomers=[], custSortCol='created_at', custSortDir=-1;  // ล่าสุดขึ้นก่อน
 async function loadCustomers(){try{const {data}=await sb.from('customers').select('*').order('customer_name');allCustomers=data||[];}catch(e){allCustomers=[];}}
 function custSort(col){if(custSortCol===col)custSortDir*=-1;else{custSortCol=col;custSortDir=1;}renderCustomersTable();}
 function renderCustomersTable(){
@@ -1890,7 +1992,7 @@ async function saveCustomer(){
   logActivity(id?'update_customer':'create_customer','customer',id||'',
     `${d.customer_name}${d.customer_code?' ('+d.customer_code+')':''}`,
     {farm_lat:d.farm_lat, farm_lng:d.farm_lng});
-  toast(t('toastSaved'),'success');closeCustomerModal();await loadCustomers();renderCustomersTable();
+  toast(t('toastSaved'),'success');closeCustomerModal();await loadCustomers();renderCustomersTable();if(_custMapVisible)renderCustomerMap();
 }
 async function deleteCustomer(id){
   if(!confirm(t('confirmDeleteCustomer')))return;
