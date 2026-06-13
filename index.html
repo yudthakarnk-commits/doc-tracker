@@ -272,7 +272,7 @@
       <div class="toolbar">
         <select id="fWeek" onchange="renderEntry()"><option value="" data-i18n="allWeeks">สัปดาห์ทั้งหมด</option></select>
         <select id="fHatchery" onchange="renderEntry()"><option value="" data-i18n="allHatcheries">โรงฟักทั้งหมด</option><option>Chengkau</option><option>Kluang</option><option>K.Kangsar</option><option>Sg. Sayong</option><option>Kota</option><option>External</option></select>
-        <select id="fCType" onchange="renderEntry()"><option value="" data-i18n="allCustomerTypes">ประเภทลูกค้าทั้งหมด</option><option>Customer (Direct)</option><option>Contract Farm</option><option>Company Farm</option></select>
+        <select id="fCType" onchange="renderEntry()"><option value="" data-i18n="allCustomerTypes">ประเภทลูกค้าทั้งหมด</option><option>Customer</option><option>Contract Farm</option><option>Company Farm</option></select>
         <select id="fBreed" onchange="renderEntry()"><option value="" data-i18n="allBreeds">สายพันธุ์ทั้งหมด</option><option>COBB</option><option>ROSS</option></select>
         <input type="search" id="fSearch" data-i18n-placeholder="searchCustomer" placeholder="🔍 ค้นหาชื่อลูกค้า/ฟาร์ม..." oninput="renderEntry()"/>
         
@@ -484,7 +484,7 @@
           <div id="customerMapDiv" style="height:380px;border-radius:8px;border:1px solid var(--border);overflow:hidden"></div>
           <div id="custMapLegend" style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);padding:7px 4px 0">
             <span>🏭 <strong>Hatchery</strong></span>
-            <span style="color:#2563eb">● Customer (Direct)</span>
+            <span style="color:#2563eb">● Customer</span>
             <span style="color:#d97706">● Contract Farm</span>
             <span style="color:#16a34a">● Company Farm</span>
             <span style="color:#6b7280">● Other</span>
@@ -511,7 +511,7 @@
           <select id="rHatchery" required onchange="onHatcheryChange()"><option value="" data-i18n="chooseOption">-- เลือก --</option><option value="Chengkau">Chengkau</option><option value="Kluang">Kluang</option><option value="K.Kangsar">K.Kangsar</option><option value="Sg. Sayong">Sg. Sayong</option><option value="Kota">Kota</option><option value="External">🛒 External (Buy-in)</option></select>
         </div>
         <div class="form-row"><label data-i18n="lblCType">Customer Type</label>
-          <select id="rCType" required><option value="" data-i18n="chooseOption">-- เลือก --</option><option value="Customer (Direct)">Customer (Direct)</option><option value="Contract Farm">Contract Farm</option><option value="Company Farm">Company Farm</option></select>
+          <select id="rCType" required><option value="" data-i18n="chooseOption">-- เลือก --</option><option value="Customer">Customer</option><option value="Contract Farm">Contract Farm</option><option value="Company Farm">Company Farm</option></select>
         </div>
       </div>
       <div class="form-grid-2">
@@ -626,7 +626,7 @@
         <div class="form-row"><label data-i18n="lblCustomerCode">รหัสลูกค้า</label><input id="custCode" type="text" placeholder="e.g. BRC-001"/></div>
       </div>
       <div class="form-row"><label data-i18n="lblCType">ประเภทลูกค้า</label>
-        <select id="custType"><option value="" data-i18n="chooseOption">-- เลือก --</option><option value="Customer (Direct)">Customer (Direct)</option><option value="Contract Farm">Contract Farm</option><option value="Company Farm">Company Farm</option></select>
+        <select id="custType"><option value="" data-i18n="chooseOption">-- เลือก --</option><option value="Customer">Customer</option><option value="Contract Farm">Contract Farm</option><option value="Company Farm">Company Farm</option></select>
       </div>
       <div class="form-row">
         <label data-i18n="lblFarmLocation">📍 สถานที่ฟาร์ม</label>
@@ -656,7 +656,7 @@
   </div>
 </div>
 
-<div id="targetModal" class="modal-overlay hidden"><div class="modal" style="max-width:520px"><div class="modal-header"><h2 data-i18n="setTargetTitle">ตั้งเป้าหมาย Booking</h2><button class="modal-close" onclick="closeTargetModal()">&times;</button></div><div class="modal-body"><div class="form-row"><label data-i18n="lblPeriodType">ประเภทระยะเวลา</label><select id="tPeriodType" onchange="togglePeriodFields()"><option value="day" data-i18n="byDay">📆 รายวัน</option><option value="week" data-i18n="byWeek">📅 รายสัปดาห์</option></select></div><div class="form-row" id="tDateRow"><label data-i18n="lblDate">วันที่</label><input id="tDate" type="date"/></div><div class="form-row hidden" id="tWeekRow"><label data-i18n="lblWeek">สัปดาห์</label><input id="tWeek" type="number" min="1" max="53"/></div><div class="form-row"><label data-i18n="lblCType">ประเภทลูกค้า</label><select id="tCustomerType"><option value="" data-i18n="chooseOption">-- เลือก --</option><option value="Customer (Direct)">Customer (Direct)</option><option value="Contract Farm">Contract Farm</option><option value="Company Farm">Company Farm</option></select></div><div class="form-row"><label data-i18n="lblBooking">Booking (จำนวนที่จอง)</label><input id="tBooking" type="number" min="0"/></div></div><div class="modal-footer"><button class="btn-secondary" onclick="closeTargetModal()" data-i18n="cancel">ยกเลิก</button><button class="btn-add" onclick="saveTarget()" data-i18n="save">บันทึก</button></div></div></div>
+<div id="targetModal" class="modal-overlay hidden"><div class="modal" style="max-width:520px"><div class="modal-header"><h2 data-i18n="setTargetTitle">ตั้งเป้าหมาย Booking</h2><button class="modal-close" onclick="closeTargetModal()">&times;</button></div><div class="modal-body"><div class="form-row"><label data-i18n="lblPeriodType">ประเภทระยะเวลา</label><select id="tPeriodType" onchange="togglePeriodFields()"><option value="day" data-i18n="byDay">📆 รายวัน</option><option value="week" data-i18n="byWeek">📅 รายสัปดาห์</option></select></div><div class="form-row" id="tDateRow"><label data-i18n="lblDate">วันที่</label><input id="tDate" type="date"/></div><div class="form-row hidden" id="tWeekRow"><label data-i18n="lblWeek">สัปดาห์</label><input id="tWeek" type="number" min="1" max="53"/></div><div class="form-row"><label data-i18n="lblCType">ประเภทลูกค้า</label><select id="tCustomerType"><option value="" data-i18n="chooseOption">-- เลือก --</option><option value="Customer">Customer</option><option value="Contract Farm">Contract Farm</option><option value="Company Farm">Company Farm</option></select></div><div class="form-row"><label data-i18n="lblBooking">Booking (จำนวนที่จอง)</label><input id="tBooking" type="number" min="0"/></div></div><div class="modal-footer"><button class="btn-secondary" onclick="closeTargetModal()" data-i18n="cancel">ยกเลิก</button><button class="btn-add" onclick="saveTarget()" data-i18n="save">บันทึก</button></div></div></div>
 
 <div id="customizeModal" class="modal-overlay hidden"><div class="modal" style="max-width:520px"><div class="modal-header"><h2 data-i18n="customizeTitle">⚙️ ปรับแต่งการแสดงผล</h2><button class="modal-close" onclick="closeCustomizeModal()">&times;</button></div><div class="modal-body"><div class="section-label" data-i18n="customSectionsLabel">เลือก section ที่ต้องการแสดง</div><div id="customSectionsList" style="display:grid;grid-template-columns:1fr;gap:6px;font-size:13px"></div><div class="section-label" style="margin-top:16px" data-i18n="customDisplayLabel">รูปแบบค่าที่แสดง (Diff)</div><div style="display:flex;gap:6px;flex-wrap:wrap"><label style="flex:1;min-width:90px;display:flex;align-items:center;gap:6px;padding:8px;background:var(--bg);border-radius:6px;cursor:pointer"><input type="radio" name="diffMode" value="number"> <span data-i18n="modeNumber">ตัวเลข</span></label><label style="flex:1;min-width:90px;display:flex;align-items:center;gap:6px;padding:8px;background:var(--bg);border-radius:6px;cursor:pointer"><input type="radio" name="diffMode" value="percent"> <span data-i18n="modePercent">เปอร์เซ็นต์</span></label><label style="flex:1;min-width:90px;display:flex;align-items:center;gap:6px;padding:8px;background:var(--bg);border-radius:6px;cursor:pointer"><input type="radio" name="diffMode" value="both" checked> <span data-i18n="modeBoth">ทั้งสองอย่าง</span></label></div><div class="section-label" style="margin-top:16px" data-i18n="customThemeLabel">สี Theme หลัก</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="theme-btn" onclick="setTheme('blue')" data-theme="blue" style="flex:1;min-width:80px;padding:8px;background:#2563eb;color:white;border:none;border-radius:6px;font-weight:600;cursor:pointer">Blue</button><button class="theme-btn" onclick="setTheme('green')" data-theme="green" style="flex:1;min-width:80px;padding:8px;background:#16a34a;color:white;border:none;border-radius:6px;font-weight:600;cursor:pointer">Green</button><button class="theme-btn" onclick="setTheme('purple')" data-theme="purple" style="flex:1;min-width:80px;padding:8px;background:#7c3aed;color:white;border:none;border-radius:6px;font-weight:600;cursor:pointer">Purple</button><button class="theme-btn" onclick="setTheme('orange')" data-theme="orange" style="flex:1;min-width:80px;padding:8px;background:#ea580c;color:white;border:none;border-radius:6px;font-weight:600;cursor:pointer">Orange</button><button class="theme-btn" onclick="setTheme('slate')" data-theme="slate" style="flex:1;min-width:80px;padding:8px;background:#475569;color:white;border:none;border-radius:6px;font-weight:600;cursor:pointer">Slate</button></div></div><div class="modal-footer"><button class="btn-danger" onclick="resetCustomize()" data-i18n="resetDefault">รีเซ็ต</button><button class="btn-secondary" onclick="closeCustomizeModal()" data-i18n="close">ปิด</button></div></div></div>
 
@@ -769,9 +769,9 @@ const HATCHERY_COORDS = {
   'Sg. Sayong':{ lat: 1.8034, lng: 103.6640 },
   'Kota':      { lat: 2.5270, lng: 102.1478 },
 };
-const CTYPES = ['Customer (Direct)','Contract Farm','Company Farm'];
-const CTYPE_CLASS = {'Customer (Direct)':'ctype-direct','Contract Farm':'ctype-contract','Company Farm':'ctype-company'};
-const ROW_CLASS = {'Customer (Direct)':'row-direct','Contract Farm':'row-contract','Company Farm':'row-company'};
+const CTYPES = ['Customer','Contract Farm','Company Farm'];
+const CTYPE_CLASS = {'Customer':'ctype-direct','Contract Farm':'ctype-contract','Company Farm':'ctype-company'};
+const ROW_CLASS = {'Customer':'row-direct','Contract Farm':'row-contract','Company Farm':'row-company'};
 
 const I18N = {
   th: {
@@ -1625,7 +1625,7 @@ function renderCustomerMap() {
     _customerMapMarkers.push(m); bounds.extend({lat:h.lat,lng:h.lng});
   });
   // ──── Customer markers (colored circles by type) ─────────
-  const typeColor={'Customer (Direct)':'#2563eb','Contract Farm':'#d97706','Company Farm':'#16a34a'};
+  const typeColor={'Customer':'#2563eb','Contract Farm':'#d97706','Company Farm':'#16a34a'};
   custPts.forEach(p=>{
     const c=p.customer, col=typeColor[c.customer_type]||'#6b7280';
     const m = new google.maps.Marker({
@@ -1917,7 +1917,7 @@ function geocodeCustLocation() {
 // ── Customer Import / Template ──────────────────────────────
 function downloadCustomerTemplate() {
   const headers = ['customer_name*','customer_code','customer_type','farm_location','num_sheds','chicken_capacity','notes'];
-  const hint    = ['Required','Optional','Customer (Direct) / Contract Farm / Company Farm','Optional','Number','Number','Optional'];
+  const hint    = ['Required','Optional','Customer / Contract Farm / Company Farm','Optional','Number','Number','Optional'];
   const example = ['ฟาร์มตัวอย่าง จ.เชียงใหม่','CMI-001','Contract Farm','อ.สันทราย จ.เชียงใหม่','4','20000','หมายเหตุเพิ่มเติม'];
   const ws = XLSX.utils.aoa_to_sheet([headers, hint, example]);
   ws['!cols'] = headers.map((h,i) => ({ wch: i === 2 ? 32 : i === 3 ? 28 : 18 }));
