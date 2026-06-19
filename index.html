@@ -43,6 +43,7 @@
   .diff-pos{color:var(--success);font-weight:600} .diff-neg{color:var(--danger);font-weight:600} .diff-zero{color:var(--muted)} .table-wrap{overflow-x:auto;max-height:600px;overflow-y:auto} .table-action{background:none;border:none;padding:3px 6px;color:var(--muted);border-radius:4px;font-size:14px;cursor:pointer} .table-action:hover{background:var(--bg);color:var(--text)} .empty-state{text-align:center;padding:50px 20px;color:var(--muted)}
   #tab-admin .table-wrap{max-height:420px}
   .sort-th{cursor:pointer;user-select:none;white-space:nowrap} .sort-th:hover{background:rgba(99,102,241,0.1)!important}
+  .trend-range-btn{background:#f3f4f6;border:1px solid var(--border);padding:3px 9px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;color:#6b7280;transition:all .15s} .trend-range-btn:hover{background:#e5e7eb;color:#374151} .trend-range-active{background:#374151!important;color:#fff!important;border-color:#374151!important}
   .cust-ac-wrap{position:relative}
   .cust-ac{position:absolute;left:0;right:0;top:calc(100% + 2px);z-index:9999;background:#ffffff;border:2px solid var(--primary);border-radius:10px;max-height:260px;overflow-y:auto;box-shadow:0 12px 32px rgba(37,99,235,.18),0 2px 8px rgba(0,0,0,.12);display:none}
   .cust-ac-item{padding:10px 14px;cursor:pointer;font-size:13px;display:flex;align-items:flex-start;gap:10px;border-bottom:1px solid #f3f4f6;background:#ffffff} .cust-ac-item:last-child{border-bottom:none} .cust-ac-item:hover,.cust-ac-item:focus{background:#eff6ff}
@@ -338,7 +339,18 @@
         </div>
       </div>
       <div class="trend-grid" data-section="charts1">
-        <div class="chart-card"><h4 data-i18n="chartTrend">📈 แนวโน้มรายสัปดาห์ + Forecast</h4><canvas id="trendLine"></canvas></div>
+        <div class="chart-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <h4 data-i18n="chartTrend" style="margin:0">📈 แนวโน้มรายสัปดาห์ + Forecast</h4>
+            <div style="display:flex;gap:4px">
+              <button onclick="setTrendWindow(4)"  id="trendBtn4"  class="trend-range-btn">1M</button>
+              <button onclick="setTrendWindow(13)" id="trendBtn13" class="trend-range-btn trend-range-active">3M</button>
+              <button onclick="setTrendWindow(26)" id="trendBtn26" class="trend-range-btn">6M</button>
+              <button onclick="setTrendWindow(52)" id="trendBtn52" class="trend-range-btn">1Y</button>
+            </div>
+          </div>
+          <canvas id="trendLine"></canvas>
+        </div>
         <div class="chart-card"><h4 data-i18n="chartBreed">🐔 แยกตามสายพันธุ์ (%)</h4><canvas id="trendBreed"></canvas></div>
       </div>
       <div class="trend-grid" data-section="charts2">
@@ -1419,17 +1431,26 @@ function renderDeliveryReport(scopedRows) {
 }
 
 let chartTrend=null,chartBreed=null,chartHat=null,chartCt=null,chartSexHat=null,chartMF=null,chartPareto=null;
+let trendWindowWeeks=13, _lastScopedRows=[];
+function setTrendWindow(n){
+  trendWindowWeeks=n;
+  [4,13,26,52].forEach(w=>{const b=document.getElementById('trendBtn'+w);if(b)b.classList.toggle('trend-range-active',w===n);});
+  renderTrendCharts(_lastScopedRows);
+}
 function renderTrendCharts(scopedRows){
-  const wTot={}; allRecords.forEach(r=>{if(!wTot[r.week_no])wTot[r.week_no]={o:0,a:0};wTot[r.week_no].o+=(r.total_ordered||0);wTot[r.week_no].a+=(r.total_actual||0);});
-  const weeks=Object.keys(wTot).map(Number).sort((a,b)=>a-b).slice(-8);
+  _lastScopedRows=scopedRows;
+  // Date-aware week grouping (handles year rollover correctly)
+  const wMap={}; allRecords.forEach(r=>{if(!r.record_date)return;const d=new Date(r.record_date),dy=d.getDay(),m=new Date(d);m.setDate(d.getDate()-(dy===0?6:dy-1));const k=m.toISOString().slice(0,10);if(!wMap[k])wMap[k]={o:0,a:0,wn:r.week_no};wMap[k].o+=(r.total_ordered||0);wMap[k].a+=(r.total_actual||0);});
+  const weekKeys=Object.keys(wMap).sort().slice(-trendWindowWeeks);
   // Moving Average Forecast (4-week)
-  const last4=weeks.slice(-4);
-  const ma4=last4.length>=2?Math.round(last4.reduce((s,w)=>s+(wTot[w]?.a||0),0)/last4.length):null;
-  const nextWk=weeks.length>0?weeks[weeks.length-1]+1:null;
-  const trendLabels=[...weeks.map(w=>'W'+w),...(ma4!==null?['W'+nextWk+' ⟶']:[] )];
-  const ordData=[...weeks.map(w=>wTot[w].o),...(ma4!==null?[null]:[])];
-  const actData=[...weeks.map(w=>wTot[w].a),...(ma4!==null?[null]:[])];
-  const fctData=ma4!==null?[...Array(weeks.length-1).fill(null),wTot[weeks[weeks.length-1]]?.a||0,ma4]:[];
+  const last4keys=weekKeys.slice(-4);
+  const ma4=last4keys.length>=2?Math.round(last4keys.reduce((s,k)=>s+(wMap[k]?.a||0),0)/last4keys.length):null;
+  const lastWn=weekKeys.length>0?wMap[weekKeys[weekKeys.length-1]].wn:null;
+  const nextWk=lastWn!==null?lastWn+1:null;
+  const trendLabels=[...weekKeys.map(k=>'W'+wMap[k].wn),...(ma4!==null?['W'+nextWk+' ⟶']:[])];
+  const ordData=[...weekKeys.map(k=>wMap[k].o),...(ma4!==null?[null]:[])];
+  const actData=[...weekKeys.map(k=>wMap[k].a),...(ma4!==null?[null]:[])];
+  const fctData=ma4!==null?[...Array(weekKeys.length-1).fill(null),wMap[weekKeys[weekKeys.length-1]]?.a||0,ma4]:[];
   const trendDatasets=[
     {label:'Ordered',data:ordData,borderColor:'#2563eb',backgroundColor:'rgba(37,99,235,.1)',fill:true,tension:.3,spanGaps:false},
     {label:'Actual',data:actData,borderColor:'#10b981',backgroundColor:'rgba(16,185,129,.1)',fill:true,tension:.3,spanGaps:false}
