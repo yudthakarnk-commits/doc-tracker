@@ -9,7 +9,7 @@
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-<meta name="apple-mobile-web-app-title" content="DOC Tracker" />
+<meta name="apple-mobile-web-app-title" content="DOC Tracker™" />
 <link rel="apple-touch-icon" href="icon-192.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -225,7 +225,7 @@
 <div id="loginScreen" class="center-screen hidden">
   <div class="lang-toggle lang-toggle-floating"><button data-lang="th" onclick="setLanguage('th')">ไทย</button><button data-lang="en" onclick="setLanguage('en')">EN</button></div>
   <div class="auth-card">
-    <h1 id="loginTitle" data-i18n="signIn">เข้าสู่ระบบ</h1><p class="sub">DOC Tracker</p>
+    <h1 id="loginTitle" data-i18n="signIn">เข้าสู่ระบบ</h1><p class="sub">DOC Tracker™</p>
     <button class="btn-google" onclick="loginGoogle()">
       <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.7-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 18.9 13 24 13c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2c-2 1.5-4.5 2.4-7.2 2.4-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.1 5.6l6.2 5.2c-.4.4 6.6-4.8 6.6-14.8 0-1.3-.1-2.7-.4-3.5z"/></svg>
       <span data-i18n="loginGoogle">เข้าสู่ระบบด้วย Google</span>
@@ -242,7 +242,7 @@
 
 <div id="app" class="hidden">
   <div class="topbar">
-    <div class="logo">🐣 DOC Tracker — Planning vs Actual</div>
+    <div class="logo">🐣 DOC Tracker™ — Planning vs Actual</div>
     <div class="user-info">
       <div class="lang-toggle"><button data-lang="th" onclick="setLanguage('th')">ไทย</button><button data-lang="en" onclick="setLanguage('en')">EN</button></div>
       <span class="live-status"><span class="live-dot"></span><span data-i18n="realtime">Real-time</span></span>
@@ -823,7 +823,7 @@ const I18N = {
     th_bToH:'B→H %', th_hToO:'H→O %', th_oToA:'O→A %', th_fulfill:'Fulfill %', th_status:'สถานะ', th_customer:'ลูกค้า', th_notes:'หมายเหตุ',
     exportPdfBtn:'📥 Export PDF', exportExcelBtn:'📊 Export Excel', btnImportCSV:'📥 Import CSV', btnLoadTemplate:'📄 โหลด Template',
     hatcheryEstTitle:'Hatchery Estimate', addEstimate:'+ เพิ่ม Estimate', setEstimateTitle:'ตั้งประมาณการ Hatchery', lblEstimateTotal:'Estimate Total', confirmDeleteEst:'ลบประมาณการนี้?',
-    pdfReportTitle:'DOC Tracker — Summary Report', permissionsTitle:'จัดการสิทธิ์ผู้ใช้', permsLabel:'สิทธิ์เฉพาะ (override)', th_perms:'สิทธิ์', permRoleHint:'Admin = default ได้ทุกสิทธิ์',
+    pdfReportTitle:'DOC Tracker™ — Summary Report', permissionsTitle:'จัดการสิทธิ์ผู้ใช้', permsLabel:'สิทธิ์เฉพาะ (override)', th_perms:'สิทธิ์', permRoleHint:'Admin = default ได้ทุกสิทธิ์',
     role_user:'User', role_admin:'Admin', perm_manage_users:'จัดการ User', perm_manage_targets:'จัดการ Targets', perm_manage_estimates:'จัดการ Estimates',
     perm_edit_all_records:'แก้ไข Records คนอื่น', perm_export_pdf:'Export PDF ได้', perm_view_admin_tab:'เห็นแท็บ Admin', permHatcheriesLabel:'โรงฟักที่อนุญาต', permHatcheriesHint:'ไม่ติ๊ก = ได้ทุกโรงฟัก',
     th_createdAt:'สร้างเมื่อ', showAll:'แสดงทั้งหมด', show10Latest:'แสดง 10 ล่าสุด', lblExternalSource:'🛒 ซื้อจากที่ไหน', manageUsers:'จัดการผู้ใช้',
@@ -887,7 +887,7 @@ const I18N = {
     th_bToH:'B→H %', th_hToO:'H→O %', th_oToA:'O→A %', th_fulfill:'Fulfill %', th_status:'Status', th_customer:'Customer', th_notes:'Notes',
     exportPdfBtn:'📥 Export PDF', exportExcelBtn:'📊 Export Excel', btnImportCSV:'📥 Import CSV', btnLoadTemplate:'📄 Load Template',
     hatcheryEstTitle:'Hatchery Estimate', addEstimate:'+ Add Estimate', setEstimateTitle:'Set Estimate', lblEstimateTotal:'Estimate Total', confirmDeleteEst:'Delete?',
-    pdfReportTitle:'DOC Tracker Summary', permissionsTitle:'Permissions', permsLabel:'Permissions (override)', th_perms:'Perms', permRoleHint:'Admin = all perms',
+    pdfReportTitle:'DOC Tracker™ Summary', permissionsTitle:'Permissions', permsLabel:'Permissions (override)', th_perms:'Perms', permRoleHint:'Admin = all perms',
     role_user:'User', role_admin:'Admin', perm_manage_users:'Manage Users', perm_manage_targets:'Manage Targets', perm_manage_estimates:'Manage Estimates',
     perm_edit_all_records:'Edit All Records', perm_export_pdf:'Export PDF', perm_view_admin_tab:'View Admin Tab', permHatcheriesLabel:'Allowed Hatcheries', permHatcheriesHint:'None = all',
     th_createdAt:'Created', showAll:'Show All', show10Latest:'Show 10 Latest', lblExternalSource:'🛒 Buy-in source', manageUsers:'Manage Users',
@@ -2121,7 +2121,7 @@ async function exportPDF(){
   const ol=document.createElement('div');ol.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999999;display:flex;align-items:center;justify-content:center';ol.innerHTML='<div style="background:white;padding:30px;border-radius:12px;text-align:center">⏳ Generating PDF...</div>';document.body.appendChild(ol);
   const cvs=[...tab.querySelectorAll('canvas')], imgs=[]; cvs.forEach(c=>{const img=document.createElement('img');img.src=c.toDataURL();img.style.cssText='max-width:100%;display:block;margin:0 auto;max-height:280px';c.parentNode.insertBefore(img,c);c.style.display='none';imgs.push(img);});
   const tb=tab.querySelector('.toolbar'); const od=tb?tb.style.display:''; if(tb)tb.style.display='none';
-  const hd=document.createElement('div');hd.style.cssText='margin-bottom:20px;padding-bottom:14px';hd.innerHTML=`<h2>DOC Tracker Report</h2><p>${new Date().toLocaleString()}</p>`;tab.insertBefore(hd,tab.firstChild);
+  const hd=document.createElement('div');hd.style.cssText='margin-bottom:20px;padding-bottom:14px';hd.innerHTML=`<h2>DOC Tracker™ Report</h2><p>${new Date().toLocaleString()}</p>`;tab.insertBefore(hd,tab.firstChild);
   await new Promise(r=>setTimeout(r,500));
   try{
     const pdf=new window.jspdf.jsPDF({orientation:'landscape',unit:'mm',format:'a3',compress:true}), pw=pdf.internal.pageSize.getWidth(), ph=pdf.internal.pageSize.getHeight(), m=10, cw=pw-m*2, ch=ph-m*2;
