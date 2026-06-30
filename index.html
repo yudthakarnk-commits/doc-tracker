@@ -3343,14 +3343,28 @@ async function showCustomerPortalQR() {
   new QRCode(wrap, { text: url, width: 240, height: 240, colorDark: '#111827', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.L });
 }
 
-function shareQRLink() {
+async function shareQRLink() {
   const d = _currentQRShareData;
   if (!d || !d.url) { toast(t('qrNoData'), 'info'); return; }
+  const text = `${d.text ? d.text + '\n' : ''}${d.url}`;
+  // พยายามแชร์เป็นรูปภาพ QR ก่อน (ตรงกับสิ่งที่ผู้ใช้เห็นบนจอ)
+  const wrap = document.getElementById('qrCodeWrap');
+  const canvas = wrap?.querySelector('canvas');
+  if (canvas && navigator.canShare) {
+    try {
+      const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+      const file = new File([blob], 'qrcode.png', { type: 'image/png' });
+      if (navigator.canShare({ files: [file] })) {
+        try { await navigator.share({ files: [file], title: d.title, text }); }
+        catch (e) { /* ผู้ใช้กดยกเลิก — ไม่ต้องทำอะไรต่อ */ }
+        return;
+      }
+    } catch (e) { /* สร้างไฟล์ไม่สำเร็จ — ใช้วิธีแชร์ลิงก์แทน */ }
+  }
   if (navigator.share) {
     navigator.share({ title: d.title, text: d.text, url: d.url }).catch(()=>{});
   } else {
-    const waUrl = `https://wa.me/?text=${encodeURIComponent((d.text?d.text+'\n':'')+d.url)}`;
-    window.open(waUrl, '_blank');
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   }
 }
 
