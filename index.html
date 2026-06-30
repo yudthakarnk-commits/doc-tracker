@@ -28,7 +28,7 @@
   .auth-card{background:#fff;padding:36px 30px;border-radius:14px;box-shadow:0 20px 50px rgba(0,0,0,.15);width:100%;max-width:420px;position:relative;z-index:2}
   .auth-card h1{margin:0 0 6px;font-size:22px;text-align:center} .auth-card .sub{color:var(--muted);text-align:center;margin:0 0 24px;font-size:13px}
   .auth-card label{display:block;font-weight:500;margin:12px 0 5px;font-size:13px} .auth-card input{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px} .auth-card input:focus{outline:none;border-color:var(--primary)}
-  .btn{padding:11px;border-radius:8px;border:none;font-weight:600;font-size:14px;cursor:pointer;transition:all .15s} .btn-primary{background:var(--primary);color:#fff;width:100%;margin-top:14px} .btn-primary:hover{background:var(--primary-dark)}
+  .btn{padding:11px;border-radius:8px;border:none;font-weight:600;font-size:14px;cursor:pointer;transition:all .15s} .btn-primary{background:var(--primary);color:#fff;width:100%;margin-top:14px} .btn-primary:hover{background:var(--primary-dark)} .btn:disabled{opacity:.5;cursor:not-allowed}
   .btn-google{background:#fff;color:#374151;border:1px solid var(--border);width:100%;display:flex;align-items:center;justify-content:center;gap:10px;padding:11px} .btn-google:hover{background:#f9fafb}
   .divider{display:flex;align-items:center;margin:18px 0;color:var(--muted);font-size:12px} .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)} .divider span{padding:0 12px}
   .login-link{text-align:center;margin-top:14px;font-size:13px} .login-link a{color:var(--primary);text-decoration:none;cursor:pointer} .alert{padding:9px 12px;border-radius:6px;margin-top:12px;font-size:13px} .alert-error{background:#fef2f2;color:#991b1b;border:1px solid #fecaca} .alert-success{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0}
@@ -238,6 +238,27 @@
     <p class="login-link"><span id="loginSwitchText" data-i18n="noAccount">ยังไม่มีบัญชี?</span> <a id="loginSwitchLink" onclick="toggleLoginMode()" data-i18n="signUp">สมัครใช้งาน</a></p>
     <div id="loginAlert" class="alert hidden"></div>
     <p id="resetSetupLink" class="login-link hidden" style="margin-top:18px;font-size:12px;color:var(--muted)"><a onclick="resetSetup()" style="color:var(--muted)" data-i18n="changeSupabase">⚙️ เปลี่ยน Supabase URL / key</a></p>
+  </div>
+</div>
+
+<div id="driverScreen" class="center-screen hidden">
+  <div class="auth-card" style="max-width:420px">
+    <h1>🚚 Driver Update</h1>
+    <p class="sub">DOC Tracker™ — ไม่ต้อง Login</p>
+    <div id="driverInfo" style="margin:14px 0;padding:14px;background:var(--bg);border-radius:10px;font-size:14px;line-height:1.9"></div>
+    <div id="driverStatusBadge" style="margin-bottom:12px;text-align:center"></div>
+    <button class="btn btn-primary" id="driverDepartBtn" onclick="driverSetStatus('departed')" style="margin-bottom:8px;width:100%">🚛 ออกจากโรงฟัก (Departed)</button>
+    <button class="btn btn-primary" id="driverArriveBtn" onclick="driverSetStatus('arrived')" style="width:100%;background:#16a34a;border-color:#16a34a">📍 ถึงปลายทาง (Arrived)</button>
+    <div id="driverAlert" class="alert hidden" style="margin-top:14px"></div>
+  </div>
+</div>
+
+<div id="portalScreen" class="center-screen hidden" style="align-items:flex-start;padding-top:40px">
+  <div class="auth-card" style="max-width:720px;width:100%">
+    <h1 id="portalCustName">📦 Order History</h1>
+    <p class="sub" id="portalCustCode"></p>
+    <div id="portalOrdersWrap" style="margin-top:16px;max-height:70vh;overflow-y:auto"></div>
+    <div id="portalAlert" class="alert hidden" style="margin-top:14px"></div>
   </div>
 </div>
 
@@ -602,7 +623,7 @@
       </div>
       <div class="form-row"><label data-i18n="lblNotes">Notes</label><textarea id="rNotes" rows="2"></textarea></div>
     </div>
-    <div class="modal-footer"><button class="btn-danger hidden" id="rDeleteBtn" onclick="deleteRecord()" data-i18n="delete">ลบ</button><button class="btn-secondary hidden" id="rQRBtn" onclick="showRecordQR()" title="Generate QR Code">🔲 QR</button><button class="btn-secondary" onclick="closeModal()" data-i18n="cancel">ยกเลิก</button><button class="btn-add" onclick="saveRecord()" data-i18n="save">บันทึก</button></div>
+    <div class="modal-footer"><button class="btn-danger hidden" id="rDeleteBtn" onclick="deleteRecord()" data-i18n="delete">ลบ</button><button class="btn-secondary hidden" id="rQRBtn" onclick="showRecordQR()" title="Generate QR Code">🔲 QR</button><button class="btn-secondary hidden" id="rDriverBtn" onclick="showDriverLinkQR()" title="Driver Link (no login)">🚚 Driver</button><button class="btn-secondary" onclick="closeModal()" data-i18n="cancel">ยกเลิก</button><button class="btn-add" onclick="saveRecord()" data-i18n="save">บันทึก</button></div>
   </div>
 </div>
 
@@ -664,7 +685,7 @@
       </div>
       <div class="form-row"><label data-i18n="lblNotes">Notes</label><textarea id="custNotes" rows="2"></textarea></div>
     </div>
-    <div class="modal-footer"><button class="btn-danger hidden" id="custDeleteBtn" onclick="deleteCustomerFromModal()">🗑️ ลบ</button><button class="btn-secondary" onclick="closeCustomerModal()" data-i18n="cancel">ยกเลิก</button><button class="btn-add" onclick="saveCustomer()" data-i18n="save">บันทึก</button></div>
+    <div class="modal-footer"><button class="btn-danger hidden" id="custDeleteBtn" onclick="deleteCustomerFromModal()">🗑️ ลบ</button><button class="btn-secondary hidden" id="custPortalBtn" onclick="showCustomerPortalQR()" title="Customer Portal Link">🔗 Portal</button><button class="btn-secondary" onclick="closeCustomerModal()" data-i18n="cancel">ยกเลิก</button><button class="btn-add" onclick="saveCustomer()" data-i18n="save">บันทึก</button></div>
   </div>
 </div>
 
@@ -1069,6 +1090,10 @@ function init(){
   if(resetLink) resetLink.classList.toggle('hidden', !!(CONFIG_SUPABASE_URL && CONFIG_SUPABASE_ANON_KEY));
   if(!url||!key){show('setupScreen');return}
   try{ sb=window.supabase.createClient(url,key); }catch(e){show('loginScreen');showAuth(e.message,'error');return;}
+  // ── Driver Mode / Customer Portal: ไม่ต้อง login ──
+  const _qp = new URLSearchParams(window.location.search);
+  if (_qp.get('drv') && _qp.get('tk')) { initDriverMode(_qp.get('drv'), _qp.get('tk')); return; }
+  if (_qp.get('portal')) { initCustomerPortal(_qp.get('portal')); return; }
   show('loginScreen');
   sb.auth.getSession().then(({data,error})=>{
     if(error){showAuth(error.message,'error');return}
@@ -1076,7 +1101,7 @@ function init(){
   });
   sb.auth.onAuthStateChange((evt,session)=>{if(evt==='SIGNED_IN'&&session) onLogin(session.user); if(evt==='SIGNED_OUT') location.reload();});
 }
-function show(id){['setupScreen','loginScreen','app'].forEach(x=>document.getElementById(x).classList.toggle('hidden',x!==id))}
+function show(id){['setupScreen','loginScreen','app','driverScreen','portalScreen'].forEach(x=>document.getElementById(x).classList.toggle('hidden',x!==id))}
 function saveSetup(){const u=document.getElementById('setupUrl').value.trim(),k=document.getElementById('setupKey').value.trim();if(!u||!k)return;localStorage.setItem('SUPABASE_URL',u);localStorage.setItem('SUPABASE_ANON_KEY',k);location.reload();}
 function resetSetup(){if(confirm(t('confirmReset'))){localStorage.removeItem('SUPABASE_URL');localStorage.removeItem('SUPABASE_ANON_KEY');location.reload();}}
 function toggleLoginMode(){isSignupMode=!isSignupMode;document.getElementById('loginTitle').textContent=isSignupMode?t('signUp'):t('signIn');document.getElementById('loginSubmitBtn').textContent=isSignupMode?t('signUp'):t('signIn');document.getElementById('loginSwitchText').textContent=isSignupMode?t('haveAccount'):t('noAccount');document.getElementById('loginSwitchLink').textContent=isSignupMode?t('signIn'):t('signUp');}
@@ -1089,6 +1114,92 @@ async function loginEmail(){
 }
 function showAuth(m,type){const el=document.getElementById('loginAlert');el.className='alert alert-'+type;el.textContent=m;el.classList.remove('hidden')}
 async function logout(){if(realtimeChannel) sb.removeChannel(realtimeChannel); await sb.auth.signOut()}
+
+// ══════════════════════════════════════════════════════════════
+// DRIVER MODE — no-login status update via QR (?drv=id&tk=token)
+// ══════════════════════════════════════════════════════════════
+let _driverCtx = null;
+async function initDriverMode(id, token) {
+  show('driverScreen');
+  _driverCtx = { id, token };
+  const { data, error } = await sb.rpc('get_driver_record', { p_id: id, p_token: token });
+  const alertEl = document.getElementById('driverAlert');
+  if (error || !data) {
+    document.getElementById('driverInfo').innerHTML = '';
+    alertEl.className = 'alert alert-error'; alertEl.textContent = '❌ ลิงก์ไม่ถูกต้องหรือหมดอายุ'; alertEl.classList.remove('hidden');
+    document.getElementById('driverDepartBtn').disabled = true;
+    document.getElementById('driverArriveBtn').disabled = true;
+    return;
+  }
+  renderDriverInfo(data);
+}
+function renderDriverInfo(d) {
+  document.getElementById('driverInfo').innerHTML = `
+    <div><strong>👤 ลูกค้า:</strong> ${esc(d.customer_name||'-')}</div>
+    <div><strong>🏭 โรงฟัก:</strong> ${esc(d.hatchery||'-')}</div>
+    <div><strong>📅 วันที่:</strong> ${d.record_date||'-'}</div>
+    <div><strong>🚚 ทะเบียนรถ:</strong> ${esc(d.truck_plate||'-')}</div>
+    <div><strong>📍 ปลายทาง:</strong> ${esc(d.location||'-')}</div>`;
+  const badge = document.getElementById('driverStatusBadge');
+  const depBtn = document.getElementById('driverDepartBtn'), arrBtn = document.getElementById('driverArriveBtn');
+  if (d.driver_status === 'arrived') {
+    badge.innerHTML = `<span class="badge badge-admin" style="background:#16a34a">✅ ถึงปลายทางแล้ว — ${new Date(d.driver_status_at).toLocaleString('th-TH')}</span>`;
+    depBtn.disabled = true; arrBtn.disabled = true;
+  } else if (d.driver_status === 'departed') {
+    badge.innerHTML = `<span class="badge badge-user">🚛 ออกเดินทางแล้ว — ${new Date(d.driver_status_at).toLocaleString('th-TH')}</span>`;
+    depBtn.disabled = true; arrBtn.disabled = false;
+  } else {
+    badge.innerHTML = ''; depBtn.disabled = false; arrBtn.disabled = true;
+  }
+}
+function driverSetStatus(status) {
+  const alertEl = document.getElementById('driverAlert'); alertEl.classList.add('hidden');
+  const btn = status === 'departed' ? document.getElementById('driverDepartBtn') : document.getElementById('driverArriveBtn');
+  const origText = btn.textContent; btn.disabled = true; btn.textContent = '⏳ กำลังบันทึก...';
+  const finish = async (lat, lng) => {
+    const { id, token } = _driverCtx;
+    const { error } = await sb.rpc('update_driver_status', { p_id: id, p_token: token, p_status: status, p_lat: lat, p_lng: lng });
+    btn.textContent = origText;
+    if (error) {
+      alertEl.className = 'alert alert-error'; alertEl.textContent = '❌ ' + error.message; alertEl.classList.remove('hidden');
+      btn.disabled = false; return;
+    }
+    alertEl.className = 'alert alert-success'; alertEl.textContent = '✅ บันทึกสำเร็จ ขอบคุณครับ'; alertEl.classList.remove('hidden');
+    const r = await sb.rpc('get_driver_record', { p_id: id, p_token: token });
+    if (r.data) renderDriverInfo(r.data);
+  };
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(pos => finish(pos.coords.latitude, pos.coords.longitude), () => finish(null, null), { timeout: 8000 });
+  } else { finish(null, null); }
+}
+
+// ══════════════════════════════════════════════════════════════
+// CUSTOMER PORTAL — read-only order history via token (?portal=token)
+// ══════════════════════════════════════════════════════════════
+async function initCustomerPortal(token) {
+  show('portalScreen');
+  const wrap = document.getElementById('portalOrdersWrap');
+  wrap.innerHTML = '<p style="text-align:center;padding:20px;color:var(--muted)">⏳ Loading...</p>';
+  const { data, error } = await sb.rpc('get_portal_orders', { p_token: token });
+  if (error || !data) {
+    document.getElementById('portalCustName').textContent = '❌ ลิงก์ไม่ถูกต้องหรือหมดอายุ';
+    document.getElementById('portalCustCode').textContent = '';
+    wrap.innerHTML = '';
+    return;
+  }
+  document.getElementById('portalCustName').textContent = '📦 ' + (data.customer_name || '');
+  document.getElementById('portalCustCode').textContent = data.customer_code ? 'รหัสลูกค้า: ' + data.customer_code : '';
+  const orders = data.orders || [];
+  if (!orders.length) { wrap.innerHTML = '<p style="text-align:center;padding:30px;color:var(--muted)">ยังไม่มีประวัติการสั่งซื้อ</p>'; return; }
+  wrap.innerHTML = `<table style="width:100%;font-size:13px"><thead><tr>
+    <th>วันที่</th><th>โรงฟัก</th><th>สายพันธุ์</th><th class="num">สั่ง</th><th class="num">จริง</th><th>ทะเบียนรถ</th><th>เวลาออก</th><th>สถานะ</th>
+  </tr></thead><tbody>${orders.map(o => `<tr>
+    <td>${o.record_date||'-'}</td><td>${esc(o.hatchery||'-')}</td><td>${esc(o.breed||'-')}</td>
+    <td class="num">${(o.total_ordered||0).toLocaleString()}</td><td class="num">${(o.total_actual||0).toLocaleString()}</td>
+    <td>${esc(o.truck_plate||'-')}</td><td>${o.departure_time||'-'}</td>
+    <td>${o.driver_status==='arrived'?'✅ ถึงแล้ว':o.driver_status==='departed'?'🚛 กำลังส่ง':'-'}</td>
+  </tr>`).join('')}</tbody></table>`;
+}
 
 async function onLogin(user){
   currentUser=user;
@@ -1300,7 +1411,7 @@ function renderEntry(){
 }
 
 function openAddModal(){
-  document.getElementById('modalTitle').textContent=t('addRecordTitle'); document.getElementById('rDeleteBtn').classList.add('hidden'); document.getElementById('rQRBtn').classList.add('hidden');
+  document.getElementById('modalTitle').textContent=t('addRecordTitle'); document.getElementById('rDeleteBtn').classList.add('hidden'); document.getElementById('rQRBtn').classList.add('hidden'); document.getElementById('rDriverBtn').classList.add('hidden');
   ['rId','rCustomer','rCustomerCode','rExternalSource','rMOrd','rFOrd','rUOrd','rMAct','rFAct','rUAct','rPrice','rTotalAmount','rNotes','rDONumber','rTruckPlate','rDepartureTime','rLocation','rWeightM','rWeightF','rWeightMixed','rEggAge'].forEach(id=>{const el=document.getElementById(id); if(el) el.value='';});
   document.querySelectorAll('input[name="vacSC"]').forEach(cb=>cb.checked=false); document.querySelectorAll('input[name="vacSpray"]').forEach(cb=>cb.checked=false);
   document.getElementById('rDate').valueAsDate=new Date(); updateDayName(); ['rHatchery','rCType','rBreed'].forEach(id=>document.getElementById(id).value=''); document.getElementById('rExternalSourceRow').classList.add('hidden');
@@ -1314,7 +1425,7 @@ function applyHatcheryRestrictionToForm(){
 }
 function openEditModal(id){
   const r=allRecords.find(x=>x.id===id);if(!r) return;
-  document.getElementById('modalTitle').textContent=t('editRecordTitle'); applyHatcheryRestrictionToForm(); document.getElementById('rDeleteBtn').classList.toggle('hidden',!(currentProfile?.role==='admin'||r.user_id===currentUser.id)); document.getElementById('rQRBtn').classList.remove('hidden');
+  document.getElementById('modalTitle').textContent=t('editRecordTitle'); applyHatcheryRestrictionToForm(); document.getElementById('rDeleteBtn').classList.toggle('hidden',!(currentProfile?.role==='admin'||r.user_id===currentUser.id)); document.getElementById('rQRBtn').classList.remove('hidden'); document.getElementById('rDriverBtn').classList.remove('hidden');
   document.getElementById('rId').value=r.id; document.getElementById('rWeek').value=r.week_no; document.getElementById('rDate').value=r.record_date; document.getElementById('rDay').value=r.day_name||'';
   document.getElementById('rHatchery').value=r.hatchery; document.getElementById('rCType').value=r.customer_type; document.getElementById('rCustomer').value=r.customer_name; document.getElementById('rCustomerCode').value=r.customer_code||''; document.getElementById('rBreed').value=r.breed||'';
   document.getElementById('rExternalSource').value=r.external_source||''; onHatcheryChange();
@@ -1728,7 +1839,8 @@ function openCustomerModal(id){
     document.getElementById('custChickenCapacity').value=c.chicken_capacity??'';
     document.getElementById('custNotes').value=c.notes||'';
     if(delBtn)delBtn.classList.remove('hidden');
-  }else{if(delBtn)delBtn.classList.add('hidden');}
+    const portalBtn=document.getElementById('custPortalBtn'); if(portalBtn)portalBtn.classList.remove('hidden');
+  }else{if(delBtn)delBtn.classList.add('hidden');const portalBtn=document.getElementById('custPortalBtn'); if(portalBtn)portalBtn.classList.add('hidden');}
   document.getElementById('customerModal').classList.remove('hidden');
   updateCustCoordStatus();
 }
@@ -3036,6 +3148,48 @@ async function showRecordQR() {
     colorDark: '#111827', colorLight: '#ffffff',
     correctLevel: QRCode.CorrectLevel.L   // URL สั้น → ใช้ L ได้ QR ชัดขึ้น
   });
+}
+
+async function showDriverLinkQR() {
+  const id = document.getElementById('rId').value;
+  if (!id) { toast(t('qrSaveFirst'), 'info'); return; }
+  const rec = allRecords.find(r => r.id === id);
+  if (!rec || !rec.driver_token) { toast('ไม่พบ driver token — กรุณารัน SQL migration ก่อน', 'error'); return; }
+  closeModal();
+  const modal = document.getElementById('qrShowModal');
+  modal.classList.remove('hidden');
+  const wrap = document.getElementById('qrCodeWrap');
+  const info = document.getElementById('qrShowInfo');
+  const noteArea = document.getElementById('qrDeliveryNote');
+  const appBase = window.location.href.split('?')[0];
+  const url = `${appBase}?drv=${id}&tk=${rec.driver_token}`;
+  if (noteArea) noteArea.value = url;
+  if (info) info.innerHTML = `<strong>🚚 Driver Link</strong><br>${esc(rec.customer_name||'')} · ${esc(rec.hatchery||'')}<br><span style="font-size:10px;color:#10b981">สแกนเพื่อให้คนขับอัปเดตสถานะ (ไม่ต้อง Login)</span>`;
+  const ready = await _loadQRLib();
+  if (!ready) { toast(t('qrNoLib'), 'error'); return; }
+  wrap.innerHTML = '';
+  new QRCode(wrap, { text: url, width: 240, height: 240, colorDark: '#111827', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.L });
+}
+
+async function showCustomerPortalQR() {
+  const id = document.getElementById('custId').value;
+  if (!id) return;
+  const c = allCustomers.find(x => x.id === id);
+  if (!c || !c.portal_token) { toast('ไม่พบ portal token — กรุณารัน SQL migration ก่อน', 'error'); return; }
+  closeCustomerModal();
+  const modal = document.getElementById('qrShowModal');
+  modal.classList.remove('hidden');
+  const wrap = document.getElementById('qrCodeWrap');
+  const info = document.getElementById('qrShowInfo');
+  const noteArea = document.getElementById('qrDeliveryNote');
+  const appBase = window.location.href.split('?')[0];
+  const url = `${appBase}?portal=${c.portal_token}`;
+  if (noteArea) noteArea.value = url;
+  if (info) info.innerHTML = `<strong>🔗 Customer Portal</strong><br>${esc(c.customer_name||'')}<br><span style="font-size:10px;color:#10b981">ส่งลิงก์นี้ให้ลูกค้าดูประวัติการสั่งซื้อ (ไม่ต้อง Login)</span>`;
+  const ready = await _loadQRLib();
+  if (!ready) { toast(t('qrNoLib'), 'error'); return; }
+  wrap.innerHTML = '';
+  new QRCode(wrap, { text: url, width: 240, height: 240, colorDark: '#111827', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.L });
 }
 
 function copyDeliveryNote() {
