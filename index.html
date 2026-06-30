@@ -205,9 +205,10 @@
       <!-- Delivery Note (scrollable, copyable) -->
       <textarea id="qrDeliveryNote" readonly rows="7"
         style="width:100%;font-size:11px;font-family:monospace;padding:8px 10px;border:1px solid var(--border);border-radius:7px;background:#f9fafb;resize:none;text-align:left;line-height:1.5;color:#374151"></textarea>
-      <div style="display:flex;gap:8px;margin-top:8px">
-        <button class="btn-secondary" style="flex:1" onclick="copyDeliveryNote()" data-i18n="qrCopyNote">📋 Copy Note</button>
-        <button class="btn-secondary" style="flex:1" onclick="downloadQRCode()" data-i18n="qrDownloadQR">⬇️ Download QR</button>
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+        <button class="btn-secondary" style="flex:1;min-width:90px" onclick="copyDeliveryNote()" data-i18n="qrCopyNote">📋 Copy Note</button>
+        <button class="btn-secondary" style="flex:1;min-width:90px" onclick="downloadQRCode()" data-i18n="qrDownloadQR">⬇️ Download QR</button>
+        <button class="btn-secondary" style="flex:1;min-width:90px;background:#25d366;color:#fff;border-color:#25d366" id="qrShareBtn" onclick="shareQRLink()">📤 Share</button>
       </div>
     </div>
   </div>
@@ -242,18 +243,20 @@
 </div>
 
 <div id="driverScreen" class="center-screen hidden">
+  <div class="lang-toggle lang-toggle-floating"><button data-lang="th" onclick="setLanguage('th')">ไทย</button><button data-lang="en" onclick="setLanguage('en')">EN</button></div>
   <div class="auth-card" style="max-width:420px">
-    <h1>🚚 Driver Update</h1>
-    <p class="sub">DOC Tracker™ — ไม่ต้อง Login</p>
+    <h1>🚚 <span id="driverTitle">Driver Update</span></h1>
+    <p class="sub" id="driverSubTitle">DOC Tracker™ — No Login Required</p>
     <div id="driverInfo" style="margin:14px 0;padding:14px;background:var(--bg);border-radius:10px;font-size:14px;line-height:1.9"></div>
     <div id="driverStatusBadge" style="margin-bottom:12px;text-align:center"></div>
-    <button class="btn btn-primary" id="driverDepartBtn" onclick="driverSetStatus('departed')" style="margin-bottom:8px;width:100%">🚛 ออกจากโรงฟัก (Departed)</button>
-    <button class="btn btn-primary" id="driverArriveBtn" onclick="driverSetStatus('arrived')" style="width:100%;background:#16a34a;border-color:#16a34a">📍 ถึงปลายทาง (Arrived)</button>
+    <button class="btn btn-primary" id="driverDepartBtn" onclick="driverSetStatus('departed')" style="margin-bottom:8px;width:100%">🚛 <span id="driverDepartLabel">Departed</span></button>
+    <button class="btn btn-primary" id="driverArriveBtn" onclick="driverSetStatus('arrived')" style="width:100%;background:#16a34a;border-color:#16a34a">📍 <span id="driverArriveLabel">Arrived</span></button>
     <div id="driverAlert" class="alert hidden" style="margin-top:14px"></div>
   </div>
 </div>
 
 <div id="portalScreen" class="center-screen hidden" style="align-items:flex-start;padding-top:40px">
+  <div class="lang-toggle lang-toggle-floating"><button data-lang="th" onclick="setLanguage('th')">ไทย</button><button data-lang="en" onclick="setLanguage('en')">EN</button></div>
   <div class="auth-card" style="max-width:720px;width:100%">
     <h1 id="portalCustName">📦 Order History</h1>
     <p class="sub" id="portalCustCode"></p>
@@ -1143,14 +1146,37 @@ async function logout(){if(realtimeChannel) sb.removeChannel(realtimeChannel); a
 // DRIVER MODE — no-login status update via QR (?drv=id&tk=token)
 // ══════════════════════════════════════════════════════════════
 let _driverCtx = null;
+const _DRV_I18N = {
+  th: { title:'Driver Update', sub:'DOC Tracker™ — ไม่ต้อง Login', invalid:'❌ ลิงก์ไม่ถูกต้องหรือหมดอายุ',
+    customer:'ลูกค้า', hatchery:'โรงฟัก', date:'วันที่', truck:'ทะเบียนรถ', dest:'ปลายทาง',
+    depart:'ออกจากโรงฟัก', arrive:'ถึงปลายทาง', arrived:'ถึงปลายทางแล้ว', departed:'ออกเดินทางแล้ว',
+    saving:'กำลังบันทึก...', saved:'บันทึกสำเร็จ ขอบคุณครับ', loading:'⏳ กำลังโหลด...',
+    noOrders:'ยังไม่มีประวัติการสั่งซื้อ', custCode:'รหัสลูกค้า', wDate:'วันที่', wHatchery:'โรงฟัก', wBreed:'สายพันธุ์',
+    wOrdered:'สั่ง', wActual:'จริง', wTruck:'ทะเบียนรถ', wDepTime:'เวลาออก', wStatus:'สถานะ',
+    sArrived:'✅ ถึงแล้ว', sDeparted:'🚛 กำลังส่ง' },
+  en: { title:'Driver Update', sub:'DOC Tracker™ — No Login Required', invalid:'❌ Invalid or expired link',
+    customer:'Customer', hatchery:'Hatchery', date:'Date', truck:'Truck Plate', dest:'Destination',
+    depart:'Departed', arrive:'Arrived', arrived:'Arrived', departed:'Departed',
+    saving:'Saving...', saved:'Saved successfully, thank you!', loading:'⏳ Loading...',
+    noOrders:'No order history yet', custCode:'Customer Code', wDate:'Date', wHatchery:'Hatchery', wBreed:'Breed',
+    wOrdered:'Ordered', wActual:'Actual', wTruck:'Truck Plate', wDepTime:'Dep. Time', wStatus:'Status',
+    sArrived:'✅ Arrived', sDeparted:'🚛 In Transit' },
+};
+function _dt() { return _DRV_I18N[currentLang] || _DRV_I18N.th; }
+
 async function initDriverMode(id, token) {
   show('driverScreen');
   _driverCtx = { id, token };
+  const L = _dt();
+  document.getElementById('driverTitle').textContent = L.title;
+  document.getElementById('driverSubTitle').textContent = L.sub;
+  document.getElementById('driverDepartLabel').textContent = currentLang==='en' ? L.depart : `${L.depart} (Departed)`;
+  document.getElementById('driverArriveLabel').textContent = currentLang==='en' ? L.arrive : `${L.arrive} (Arrived)`;
   const { data, error } = await sb.rpc('get_driver_record', { p_id: id, p_token: token });
   const alertEl = document.getElementById('driverAlert');
   if (error || !data) {
     document.getElementById('driverInfo').innerHTML = '';
-    alertEl.className = 'alert alert-error'; alertEl.textContent = '❌ ลิงก์ไม่ถูกต้องหรือหมดอายุ'; alertEl.classList.remove('hidden');
+    alertEl.className = 'alert alert-error'; alertEl.textContent = L.invalid; alertEl.classList.remove('hidden');
     document.getElementById('driverDepartBtn').disabled = true;
     document.getElementById('driverArriveBtn').disabled = true;
     return;
@@ -1158,37 +1184,39 @@ async function initDriverMode(id, token) {
   renderDriverInfo(data);
 }
 function renderDriverInfo(d) {
+  const L = _dt(), locale = currentLang === 'en' ? 'en-US' : 'th-TH';
   document.getElementById('driverInfo').innerHTML = `
-    <div><strong>👤 ลูกค้า:</strong> ${esc(d.customer_name||'-')}</div>
-    <div><strong>🏭 โรงฟัก:</strong> ${esc(d.hatchery||'-')}</div>
-    <div><strong>📅 วันที่:</strong> ${d.record_date||'-'}</div>
-    <div><strong>🚚 ทะเบียนรถ:</strong> ${esc(d.truck_plate||'-')}</div>
-    <div><strong>📍 ปลายทาง:</strong> ${esc(d.location||'-')}</div>`;
+    <div><strong>👤 ${L.customer}:</strong> ${esc(d.customer_name||'-')}</div>
+    <div><strong>🏭 ${L.hatchery}:</strong> ${esc(d.hatchery||'-')}</div>
+    <div><strong>📅 ${L.date}:</strong> ${d.record_date||'-'}</div>
+    <div><strong>🚚 ${L.truck}:</strong> ${esc(d.truck_plate||'-')}</div>
+    <div><strong>📍 ${L.dest}:</strong> ${esc(d.location||'-')}</div>`;
   const badge = document.getElementById('driverStatusBadge');
   const depBtn = document.getElementById('driverDepartBtn'), arrBtn = document.getElementById('driverArriveBtn');
   if (d.driver_status === 'arrived') {
-    badge.innerHTML = `<span class="badge badge-admin" style="background:#16a34a">✅ ถึงปลายทางแล้ว — ${new Date(d.driver_status_at).toLocaleString('th-TH')}</span>`;
+    badge.innerHTML = `<span class="badge badge-admin" style="background:#16a34a">✅ ${L.arrived} — ${new Date(d.driver_status_at).toLocaleString(locale)}</span>`;
     depBtn.disabled = true; arrBtn.disabled = true;
   } else if (d.driver_status === 'departed') {
-    badge.innerHTML = `<span class="badge badge-user">🚛 ออกเดินทางแล้ว — ${new Date(d.driver_status_at).toLocaleString('th-TH')}</span>`;
+    badge.innerHTML = `<span class="badge badge-user">🚛 ${L.departed} — ${new Date(d.driver_status_at).toLocaleString(locale)}</span>`;
     depBtn.disabled = true; arrBtn.disabled = false;
   } else {
     badge.innerHTML = ''; depBtn.disabled = false; arrBtn.disabled = true;
   }
 }
 function driverSetStatus(status) {
+  const L = _dt();
   const alertEl = document.getElementById('driverAlert'); alertEl.classList.add('hidden');
   const btn = status === 'departed' ? document.getElementById('driverDepartBtn') : document.getElementById('driverArriveBtn');
-  const origText = btn.textContent; btn.disabled = true; btn.textContent = '⏳ กำลังบันทึก...';
+  const origHtml = btn.innerHTML; btn.disabled = true; btn.textContent = '⏳ ' + L.saving;
   const finish = async (lat, lng) => {
     const { id, token } = _driverCtx;
     const { error } = await sb.rpc('update_driver_status', { p_id: id, p_token: token, p_status: status, p_lat: lat, p_lng: lng });
-    btn.textContent = origText;
+    btn.innerHTML = origHtml;
     if (error) {
       alertEl.className = 'alert alert-error'; alertEl.textContent = '❌ ' + error.message; alertEl.classList.remove('hidden');
       btn.disabled = false; return;
     }
-    alertEl.className = 'alert alert-success'; alertEl.textContent = '✅ บันทึกสำเร็จ ขอบคุณครับ'; alertEl.classList.remove('hidden');
+    alertEl.className = 'alert alert-success'; alertEl.textContent = '✅ ' + L.saved; alertEl.classList.remove('hidden');
     const r = await sb.rpc('get_driver_record', { p_id: id, p_token: token });
     if (r.data) renderDriverInfo(r.data);
   };
@@ -1202,26 +1230,27 @@ function driverSetStatus(status) {
 // ══════════════════════════════════════════════════════════════
 async function initCustomerPortal(token) {
   show('portalScreen');
+  const L = _dt();
   const wrap = document.getElementById('portalOrdersWrap');
-  wrap.innerHTML = '<p style="text-align:center;padding:20px;color:var(--muted)">⏳ Loading...</p>';
+  wrap.innerHTML = `<p style="text-align:center;padding:20px;color:var(--muted)">${L.loading}</p>`;
   const { data, error } = await sb.rpc('get_portal_orders', { p_token: token });
   if (error || !data) {
-    document.getElementById('portalCustName').textContent = '❌ ลิงก์ไม่ถูกต้องหรือหมดอายุ';
+    document.getElementById('portalCustName').textContent = L.invalid;
     document.getElementById('portalCustCode').textContent = '';
     wrap.innerHTML = '';
     return;
   }
   document.getElementById('portalCustName').textContent = '📦 ' + (data.customer_name || '');
-  document.getElementById('portalCustCode').textContent = data.customer_code ? 'รหัสลูกค้า: ' + data.customer_code : '';
+  document.getElementById('portalCustCode').textContent = data.customer_code ? L.custCode + ': ' + data.customer_code : '';
   const orders = data.orders || [];
-  if (!orders.length) { wrap.innerHTML = '<p style="text-align:center;padding:30px;color:var(--muted)">ยังไม่มีประวัติการสั่งซื้อ</p>'; return; }
+  if (!orders.length) { wrap.innerHTML = `<p style="text-align:center;padding:30px;color:var(--muted)">${L.noOrders}</p>`; return; }
   wrap.innerHTML = `<table style="width:100%;font-size:13px"><thead><tr>
-    <th>วันที่</th><th>โรงฟัก</th><th>สายพันธุ์</th><th class="num">สั่ง</th><th class="num">จริง</th><th>ทะเบียนรถ</th><th>เวลาออก</th><th>สถานะ</th>
+    <th>${L.wDate}</th><th>${L.wHatchery}</th><th>${L.wBreed}</th><th class="num">${L.wOrdered}</th><th class="num">${L.wActual}</th><th>${L.wTruck}</th><th>${L.wDepTime}</th><th>${L.wStatus}</th>
   </tr></thead><tbody>${orders.map(o => `<tr>
     <td>${o.record_date||'-'}</td><td>${esc(o.hatchery||'-')}</td><td>${esc(o.breed||'-')}</td>
     <td class="num">${(o.total_ordered||0).toLocaleString()}</td><td class="num">${(o.total_actual||0).toLocaleString()}</td>
     <td>${esc(o.truck_plate||'-')}</td><td>${o.departure_time||'-'}</td>
-    <td>${o.driver_status==='arrived'?'✅ ถึงแล้ว':o.driver_status==='departed'?'🚛 กำลังส่ง':'-'}</td>
+    <td>${o.driver_status==='arrived'?L.sArrived:o.driver_status==='departed'?L.sDeparted:'-'}</td>
   </tr>`).join('')}</tbody></table>`;
 }
 
@@ -3163,6 +3192,7 @@ function openRecordFromQR() {
 // PWA — QR Code Generator
 // ===========================================================
 let _currentQRRecordId = null;
+let _currentQRShareData = null;
 
 // โหลด qrcodejs (davidshimjs) แบบ dynamic พร้อม fallback
 function _loadQRLib() {
@@ -3255,6 +3285,7 @@ async function showRecordQR() {
   } else {
     info.textContent = qrUrl;
   }
+  _currentQRShareData = { url: qrUrl, title: 'DOC Tracker™', text: rec ? `${rec.customer_name||''} · ${rec.hatchery||''} · ${rec.record_date||''}` : qrUrl };
 
   const ready = await _loadQRLib();
   if (!ready) { toast(t('qrNoLib'), 'error'); return; }
@@ -3270,7 +3301,7 @@ async function showDriverLinkQR() {
   const id = document.getElementById('rId').value;
   if (!id) { toast(t('qrSaveFirst'), 'info'); return; }
   const rec = allRecords.find(r => r.id === id);
-  if (!rec || !rec.driver_token) { toast('ไม่พบ driver token — กรุณารัน SQL migration ก่อน', 'error'); return; }
+  if (!rec || !rec.driver_token) { toast(currentLang==='en'?'driver_token not found — please run the SQL migration first':'ไม่พบ driver token — กรุณารัน SQL migration ก่อน', 'error'); return; }
   closeModal();
   const modal = document.getElementById('qrShowModal');
   modal.classList.remove('hidden');
@@ -3280,7 +3311,9 @@ async function showDriverLinkQR() {
   const appBase = window.location.href.split('?')[0];
   const url = `${appBase}?drv=${id}&tk=${rec.driver_token}`;
   if (noteArea) noteArea.value = url;
-  if (info) info.innerHTML = `<strong>🚚 Driver Link</strong><br>${esc(rec.customer_name||'')} · ${esc(rec.hatchery||'')}<br><span style="font-size:10px;color:#10b981">สแกนเพื่อให้คนขับอัปเดตสถานะ (ไม่ต้อง Login)</span>`;
+  const hint = currentLang==='en' ? 'Scan to let the driver update status (no login required)' : 'สแกนเพื่อให้คนขับอัปเดตสถานะ (ไม่ต้อง Login)';
+  if (info) info.innerHTML = `<strong>🚚 ${currentLang==='en'?'Driver Link':'ลิงก์คนขับ'}</strong><br>${esc(rec.customer_name||'')} · ${esc(rec.hatchery||'')}<br><span style="font-size:10px;color:#10b981">${hint}</span>`;
+  _currentQRShareData = { url, title: 'DOC Tracker™ — Driver Link', text: `${rec.customer_name||''} · ${rec.hatchery||''}` };
   const ready = await _loadQRLib();
   if (!ready) { toast(t('qrNoLib'), 'error'); return; }
   wrap.innerHTML = '';
@@ -3291,7 +3324,7 @@ async function showCustomerPortalQR() {
   const id = document.getElementById('custId').value;
   if (!id) return;
   const c = allCustomers.find(x => x.id === id);
-  if (!c || !c.portal_token) { toast('ไม่พบ portal token — กรุณารัน SQL migration ก่อน', 'error'); return; }
+  if (!c || !c.portal_token) { toast(currentLang==='en'?'portal_token not found — please run the SQL migration first':'ไม่พบ portal token — กรุณารัน SQL migration ก่อน', 'error'); return; }
   closeCustomerModal();
   const modal = document.getElementById('qrShowModal');
   modal.classList.remove('hidden');
@@ -3301,11 +3334,24 @@ async function showCustomerPortalQR() {
   const appBase = window.location.href.split('?')[0];
   const url = `${appBase}?portal=${c.portal_token}`;
   if (noteArea) noteArea.value = url;
-  if (info) info.innerHTML = `<strong>🔗 Customer Portal</strong><br>${esc(c.customer_name||'')}<br><span style="font-size:10px;color:#10b981">ส่งลิงก์นี้ให้ลูกค้าดูประวัติการสั่งซื้อ (ไม่ต้อง Login)</span>`;
+  const hint = currentLang==='en' ? 'Send this link to the customer to view order history (no login required)' : 'ส่งลิงก์นี้ให้ลูกค้าดูประวัติการสั่งซื้อ (ไม่ต้อง Login)';
+  if (info) info.innerHTML = `<strong>🔗 ${currentLang==='en'?'Customer Portal':'พอร์ทัลลูกค้า'}</strong><br>${esc(c.customer_name||'')}<br><span style="font-size:10px;color:#10b981">${hint}</span>`;
+  _currentQRShareData = { url, title: 'DOC Tracker™ — Customer Portal', text: c.customer_name||'' };
   const ready = await _loadQRLib();
   if (!ready) { toast(t('qrNoLib'), 'error'); return; }
   wrap.innerHTML = '';
   new QRCode(wrap, { text: url, width: 240, height: 240, colorDark: '#111827', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.L });
+}
+
+function shareQRLink() {
+  const d = _currentQRShareData;
+  if (!d || !d.url) { toast(t('qrNoData'), 'info'); return; }
+  if (navigator.share) {
+    navigator.share({ title: d.title, text: d.text, url: d.url }).catch(()=>{});
+  } else {
+    const waUrl = `https://wa.me/?text=${encodeURIComponent((d.text?d.text+'\n':'')+d.url)}`;
+    window.open(waUrl, '_blank');
+  }
 }
 
 function copyDeliveryNote() {
