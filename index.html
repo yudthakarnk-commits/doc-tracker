@@ -1151,14 +1151,14 @@ const _DRV_I18N = {
     customer:'ลูกค้า', hatchery:'โรงฟัก', date:'วันที่', truck:'ทะเบียนรถ', dest:'ปลายทาง',
     depart:'ออกจากโรงฟัก', arrive:'ถึงปลายทาง', arrived:'ถึงปลายทางแล้ว', departed:'ออกเดินทางแล้ว',
     saving:'กำลังบันทึก...', saved:'บันทึกสำเร็จ ขอบคุณครับ', loading:'⏳ กำลังโหลด...',
-    noOrders:'ยังไม่มีประวัติการสั่งซื้อ', custCode:'รหัสลูกค้า', wDate:'วันที่', wHatchery:'โรงฟัก', wBreed:'สายพันธุ์',
+    noOrders:'วันนี้ไม่มีข้อมูลการจัดส่งหรือออร์เดอร์', custCode:'รหัสลูกค้า', wDate:'วันที่', wHatchery:'โรงฟัก', wBreed:'สายพันธุ์',
     wOrdered:'สั่ง', wActual:'จริง', wTruck:'ทะเบียนรถ', wDepTime:'เวลาออก', wStatus:'สถานะ',
     sArrived:'✅ ถึงแล้ว', sDeparted:'🚛 กำลังส่ง' },
   en: { title:'Driver Update', sub:'DOC Tracker™ — No Login Required', invalid:'❌ Invalid or expired link',
     customer:'Customer', hatchery:'Hatchery', date:'Date', truck:'Truck Plate', dest:'Destination',
     depart:'Departed', arrive:'Arrived', arrived:'Arrived', departed:'Departed',
     saving:'Saving...', saved:'Saved successfully, thank you!', loading:'⏳ Loading...',
-    noOrders:'No order history yet', custCode:'Customer Code', wDate:'Date', wHatchery:'Hatchery', wBreed:'Breed',
+    noOrders:'No delivery or order info for today', custCode:'Customer Code', wDate:'Date', wHatchery:'Hatchery', wBreed:'Breed',
     wOrdered:'Ordered', wActual:'Actual', wTruck:'Truck Plate', wDepTime:'Dep. Time', wStatus:'Status',
     sArrived:'✅ Arrived', sDeparted:'🚛 In Transit' },
 };
@@ -1240,8 +1240,9 @@ async function initCustomerPortal(token) {
     wrap.innerHTML = '';
     return;
   }
+  const todayStr = new Date().toLocaleDateString(currentLang==='en'?'en-US':'th-TH', { year:'numeric', month:'long', day:'numeric' });
   document.getElementById('portalCustName').textContent = '📦 ' + (data.customer_name || '');
-  document.getElementById('portalCustCode').textContent = data.customer_code ? L.custCode + ': ' + data.customer_code : '';
+  document.getElementById('portalCustCode').textContent = (data.customer_code ? L.custCode + ': ' + data.customer_code + ' · ' : '') + (currentLang==='en' ? 'Today: ' : 'วันที่: ') + todayStr;
   const orders = data.orders || [];
   if (!orders.length) { wrap.innerHTML = `<p style="text-align:center;padding:30px;color:var(--muted)">${L.noOrders}</p>`; return; }
   wrap.innerHTML = `<table style="width:100%;font-size:13px"><thead><tr>
@@ -2738,7 +2739,7 @@ function renderTransportTable(rows){
     <th style="text-align:center">${t('th_depTime')}</th><th style="text-align:center">${t('trTh_arrTime')}</th>
     <th style="text-align:center">${t('trTh_duration')}</th><th style="text-align:center">${t('trTh_dist')}</th>
     <th style="text-align:right">${t('trTh_doaCount')}</th><th style="text-align:center">${t('trDOAPctLabel')}</th>
-    <th>${t('trTh_driver')}</th><th></th>
+    <th>${t('trTh_driver')}</th><th style="text-align:center">🚚 ${currentLang==='en'?'Driver App':'อัปเดตจากคนขับ'}</th><th></th>
   </tr></thead><tbody>`;
   rows.forEach(r=>{
     const total=(r.m_actual||0)+(r.f_actual||0)+(r.u_actual||0);
@@ -2787,6 +2788,13 @@ function renderTransportTable(rows){
       <td style="text-align:right;font-size:12px">${doaTxt}</td>
       <td style="text-align:center"><span class="${doaCls}" style="font-size:12px">${doaPctTxt}</span></td>
       <td style="font-size:11px;color:var(--muted);white-space:nowrap">${r.driver_name||'—'}</td>
+      <td style="text-align:center;font-size:11px;white-space:nowrap">${
+        r.driver_status==='arrived'
+          ? `<span style="color:#16a34a;font-weight:600" title="${r.driver_status_at?new Date(r.driver_status_at).toLocaleString(currentLang==='en'?'en-US':'th-TH'):''}">✅ ${currentLang==='en'?'Arrived':'ถึงแล้ว'}</span>`
+          : r.driver_status==='departed'
+          ? `<span style="color:#2563eb;font-weight:600" title="${r.driver_status_at?new Date(r.driver_status_at).toLocaleString(currentLang==='en'?'en-US':'th-TH'):''}">🚛 ${currentLang==='en'?'Departed':'ออกแล้ว'}</span>`
+          : '<span style="color:#d1d5db">—</span>'
+      }</td>
       <td><button class="${hasData?'btn-secondary':'btn-add'}" onclick="openTransportModal('${r.id}')"
         style="font-size:11px;padding:4px 9px;white-space:nowrap">${hasData?t('trBtnEdit'):t('trBtnRecord')}</button></td>
     </tr>`;
