@@ -481,6 +481,29 @@
         <div id="activityLogCount" style="font-size:12px;color:var(--muted);padding:5px 12px;border-top:1px solid var(--border)"></div>
       </div>
 
+      <!-- ── Notification Settings ── -->
+      <div class="card" style="margin-top:14px">
+        <div class="card-header"><span class="card-title">🔔 Notification Settings (Email)</span>
+          <div style="display:flex;gap:8px;align-items:center">
+            <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer"><input type="checkbox" id="notifEnabled"/> Enabled</label>
+            <button class="btn-secondary" onclick="sendTestNotification()" style="font-size:12px;padding:5px 12px">✉️ Send Test</button>
+            <button class="btn-add" onclick="saveNotificationSettings()" style="font-size:12px;padding:5px 12px" data-i18n="save">บันทึก</button>
+          </div>
+        </div>
+        <div class="modal-body" style="padding:16px">
+          <p style="font-size:12px;color:var(--muted);margin-bottom:12px">แจ้งเตือนอัตโนมัติเมื่อ DOA % เกินค่าที่กำหนด (ตอนบันทึกข้อมูลขนส่ง) หรือยอดส่งจริงต่ำกว่าเป้า Booking ในสัปดาห์ปัจจุบัน (เช็คตอน login) — ใช้บริการ <a href="https://www.emailjs.com" target="_blank" rel="noopener">EmailJS</a> ฟรี 200 อีเมล/เดือน ไม่ต้องมี backend</p>
+          <div class="form-grid-2">
+            <div class="form-row"><label>📧 Recipient Email(s) <small style="color:var(--muted)">(คั่นด้วย ,)</small></label><input id="notifRecipients" type="text" placeholder="a@x.com, b@x.com"/></div>
+            <div class="form-row"><label>💀 DOA Alert Threshold (%)</label><input id="notifDoaThreshold" type="number" min="0" step="0.1" value="0.5"/></div>
+            <div class="form-row"><label>🎯 Target Shortfall Alert (% of target)</label><input id="notifShortfallPct" type="number" min="0" max="100" step="1" value="90"/></div>
+            <div class="form-row"></div>
+            <div class="form-row"><label>EmailJS Public Key</label><input id="notifEmailjsPublicKey" type="text" placeholder="user_xxxxxxxx"/></div>
+            <div class="form-row"><label>EmailJS Service ID</label><input id="notifEmailjsServiceId" type="text" placeholder="service_xxxxxxx"/></div>
+            <div class="form-row"><label>EmailJS Template ID</label><input id="notifEmailjsTemplateId" type="text" placeholder="template_xxxxxxx"/></div>
+          </div>
+        </div>
+      </div>
+
       <!-- ── Manage Users ── -->
       <div class="card" style="margin-top:14px">
         <div class="card-header"><span class="card-title" data-i18n="manageUsers">จัดการผู้ใช้</span></div>
@@ -779,6 +802,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" async></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 
 <script>
 // ===========================================================
@@ -1213,6 +1237,7 @@ async function onLogin(user){
   applyPermissionsToUI(); populateWeekFilters(); renderEntry(); renderSummary();
   if(hasPermission('view_admin_tab')){renderAdminTable();renderTargetsTable();renderEstimatesTable();renderCustomersTable();}
   subscribeRealtime();
+  loadNotificationSettings().then(()=>checkTargetShortfall());
   // ── เปิด Record จาก QR URL (?record=uuid) ─────────────────
   const _qrParam = new URLSearchParams(window.location.search).get('record');
   if(_qrParam){
@@ -1338,6 +1363,87 @@ async function exportActivityLog() {
   toast('📊 Exported Activity Log','success');
 }
 
+// ══════════════════════════════════════════════════════════════
+// EMAIL NOTIFICATIONS (EmailJS — client-side, no backend needed)
+// ══════════════════════════════════════════════════════════════
+let _notifSettings = null;
+async function loadNotificationSettings() {
+  const { data } = await sb.from('notification_settings').select('*').eq('id', 1).single();
+  _notifSettings = data || null;
+  if (!_notifSettings) return;
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v ?? ''; };
+  set('notifRecipients', _notifSettings.recipient_emails);
+  set('notifDoaThreshold', _notifSettings.doa_threshold_pct);
+  set('notifShortfallPct', _notifSettings.target_shortfall_pct);
+  set('notifEmailjsPublicKey', _notifSettings.emailjs_public_key);
+  set('notifEmailjsServiceId', _notifSettings.emailjs_service_id);
+  set('notifEmailjsTemplateId', _notifSettings.emailjs_template_id);
+  const enEl = document.getElementById('notifEnabled'); if (enEl) enEl.checked = !!_notifSettings.enabled;
+}
+async function saveNotificationSettings() {
+  const d = {
+    id: 1,
+    recipient_emails: document.getElementById('notifRecipients').value.trim(),
+    doa_threshold_pct: parseFloat(document.getElementById('notifDoaThreshold').value) || 0.5,
+    target_shortfall_pct: parseFloat(document.getElementById('notifShortfallPct').value) || 90,
+    emailjs_public_key: document.getElementById('notifEmailjsPublicKey').value.trim(),
+    emailjs_service_id: document.getElementById('notifEmailjsServiceId').value.trim(),
+    emailjs_template_id: document.getElementById('notifEmailjsTemplateId').value.trim(),
+    enabled: document.getElementById('notifEnabled').checked,
+  };
+  const { error } = await sb.from('notification_settings').upsert(d);
+  if (error) return toast(error.message, 'error');
+  _notifSettings = d;
+  toast('Saved', 'success');
+}
+async function sendNotificationEmail(subject, message) {
+  const s = _notifSettings;
+  if (!s || !s.enabled || !s.recipient_emails || !s.emailjs_public_key || !s.emailjs_service_id || !s.emailjs_template_id) return;
+  try {
+    if (!window.emailjs) return;
+    await emailjs.send(s.emailjs_service_id, s.emailjs_template_id, {
+      to_email: s.recipient_emails, subject, message
+    }, s.emailjs_public_key);
+  } catch (e) { console.warn('Email notify failed:', e); }
+}
+async function sendTestNotification() {
+  await saveNotificationSettings();
+  if (!_notifSettings?.enabled) { toast('กรุณาติ๊ก Enabled และกรอกข้อมูล EmailJS ให้ครบก่อน', 'info'); return; }
+  await sendNotificationEmail('🔔 DOC Tracker™ — Test Notification', 'นี่คืออีเมลทดสอบจากระบบ DOC Tracker™ หากคุณได้รับอีเมลนี้ แสดงว่าตั้งค่าแจ้งเตือนถูกต้องแล้ว');
+  toast('✉️ ส่งอีเมลทดสอบแล้ว ตรวจสอบกล่องจดหมาย', 'success');
+}
+// เช็คยอดส่งจริงเทียบเป้า Booking สัปดาห์ปัจจุบัน — แจ้งเตือนสูงสุดวันละ 1 ครั้งต่อสัปดาห์
+async function checkTargetShortfall() {
+  if (!_notifSettings?.enabled) return;
+  const today = new Date(); const wk = String(getISOWeek(today));
+  const dedupeKey = `notif_shortfall_${wk}_${today.toISOString().slice(0,10)}`;
+  if (localStorage.getItem(dedupeKey)) return;
+  const weekRows = allRecords.filter(r => String(r.week_no) === wk);
+  const weekTargets = allTargets.filter(t => t.period_type === 'week' && String(t.target_week) === wk);
+  if (!weekTargets.length) return;
+  const shortfalls = [];
+  CTYPES.forEach(c => {
+    const target = weekTargets.filter(t => t.customer_type === c).reduce((s, t) => s + (t.booking || 0), 0);
+    if (!target) return;
+    const actual = weekRows.filter(r => r.customer_type === c).reduce((s, r) => s + (r.total_actual || 0), 0);
+    const pct = actual / target * 100;
+    if (pct < (_notifSettings.target_shortfall_pct || 90)) shortfalls.push(`${c}: ${actual.toLocaleString()} / ${target.toLocaleString()} (${pct.toFixed(1)}%)`);
+  });
+  if (shortfalls.length) {
+    await sendNotificationEmail(
+      `⚠️ DOC Tracker™ — Booking Shortfall Week ${wk}`,
+      `ยอดส่งจริงต่ำกว่าเป้า Booking ในสัปดาห์ ${wk}:\n\n${shortfalls.join('\n')}`
+    );
+  }
+  localStorage.setItem(dedupeKey, '1');
+}
+function getISOWeek(d) {
+  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+}
+
 function subscribeRealtime(){
   if(realtimeChannel) return;
   realtimeChannel=sb.channel('doc-changes')
@@ -1357,7 +1463,7 @@ function switchTab(name){
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
   ['entry','summary','transport','admin'].forEach(t=>document.getElementById('tab-'+t).classList.toggle('hidden',t!==name));
   if(name==='transport') loadTransportReport();
-  if(name==='admin' && hasPermission('view_admin_tab')) loadActivityLog();
+  if(name==='admin' && hasPermission('view_admin_tab')) { loadActivityLog(); loadNotificationSettings(); }
 }
 function populateWeekFilters(){
   const weeks=[...new Set(allRecords.map(r=>r.week_no))].sort((a,b)=>b-a);
@@ -2758,6 +2864,16 @@ async function saveTransportData(){
   logActivity('save_transport','transport',id,
     _tr?`${_tr.customer_name} | ${_tr.record_date} | DOA:${d.doa_count||0} Dist:${d.distance_km||0}km`:'',
     {distance_km:d.distance_km, doa_count:d.doa_count, driver:d.driver_name});
+  if(_tr&&d.doa_count!=null){
+    const _total=(_tr.m_actual||0)+(_tr.f_actual||0)+(_tr.u_actual||0);
+    const _doaPct=_total>0?(d.doa_count/_total*100):0;
+    if(_notifSettings?.enabled&&_doaPct>(_notifSettings.doa_threshold_pct||0.5)){
+      sendNotificationEmail(
+        `💀 DOC Tracker™ — DOA Alert: ${_tr.customer_name}`,
+        `พบ DOA สูงเกินเกณฑ์ที่ตั้งไว้ (${_notifSettings.doa_threshold_pct}%)\n\nลูกค้า: ${_tr.customer_name}\nโรงฟัก: ${_tr.hatchery}\nวันที่: ${_tr.record_date}\nDOA: ${d.doa_count} ตัว จากทั้งหมด ${_total} ตัว (${_doaPct.toFixed(2)}%)\nคนขับ: ${d.driver_name||'-'}`
+      );
+    }
+  }
   toast(currentLang==='en'?'Transport data saved':'บันทึกข้อมูลขนส่งสำเร็จ');
   closeTransportModal();
   loadTransportReport();
