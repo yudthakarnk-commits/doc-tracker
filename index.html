@@ -2788,13 +2788,18 @@ function renderTransportTable(rows){
       <td style="text-align:right;font-size:12px">${doaTxt}</td>
       <td style="text-align:center"><span class="${doaCls}" style="font-size:12px">${doaPctTxt}</span></td>
       <td style="font-size:11px;color:var(--muted);white-space:nowrap">${r.driver_name||'—'}</td>
-      <td style="text-align:center;font-size:11px;white-space:nowrap">${
-        r.driver_status==='arrived'
-          ? `<span style="color:#16a34a;font-weight:600" title="${r.driver_status_at?new Date(r.driver_status_at).toLocaleString(currentLang==='en'?'en-US':'th-TH'):''}">✅ ${currentLang==='en'?'Arrived':'ถึงแล้ว'}</span>`
-          : r.driver_status==='departed'
-          ? `<span style="color:#2563eb;font-weight:600" title="${r.driver_status_at?new Date(r.driver_status_at).toLocaleString(currentLang==='en'?'en-US':'th-TH'):''}">🚛 ${currentLang==='en'?'Departed':'ออกแล้ว'}</span>`
-          : '<span style="color:#d1d5db">—</span>'
-      }</td>
+      <td style="text-align:center;font-size:11px;white-space:nowrap">${(()=>{
+        if(!r.driver_status) return '<span style="color:#d1d5db">—</span>';
+        const _ts=r.driver_status_at?new Date(r.driver_status_at).toLocaleString(currentLang==='en'?'en-US':'th-TH'):'';
+        const _hasGPS=r.driver_lat!=null&&r.driver_lng!=null;
+        const _label=r.driver_status==='arrived'?(currentLang==='en'?'Arrived':'ถึงแล้ว'):(currentLang==='en'?'Departed':'ออกแล้ว');
+        const _icon=r.driver_status==='arrived'?'✅':'🚛';
+        const _color=r.driver_status==='arrived'?'#16a34a':'#2563eb';
+        const _title=_ts+(_hasGPS?` · ${parseFloat(r.driver_lat).toFixed(5)}, ${parseFloat(r.driver_lng).toFixed(5)}`:(currentLang==='en'?' · No GPS captured':' · ไม่มีพิกัด GPS'));
+        return _hasGPS
+          ? `<a href="https://www.google.com/maps?q=${r.driver_lat},${r.driver_lng}" target="_blank" rel="noopener" style="color:${_color};font-weight:600;text-decoration:none" title="${_title}">${_icon} ${_label} 📍</a>`
+          : `<span style="color:${_color};font-weight:600" title="${_title}">${_icon} ${_label}</span>`;
+      })()}</td>
       <td><button class="${hasData?'btn-secondary':'btn-add'}" onclick="openTransportModal('${r.id}')"
         style="font-size:11px;padding:4px 9px;white-space:nowrap">${hasData?t('trBtnEdit'):t('trBtnRecord')}</button></td>
     </tr>`;
