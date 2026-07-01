@@ -392,6 +392,20 @@
     <!-- ══════════════════ DASHBOARD TAB ══════════════════ -->
     <div id="tab-dashboard">
 
+      <!-- Dashboard Filter Bar -->
+      <div class="toolbar" style="margin-bottom:12px">
+        <select id="dashYear" onchange="renderDashboard()"><option value="">📅 All Years</option></select>
+        <select id="dashMonth" onchange="renderDashboard()">
+          <option value="">All Months</option>
+          <option value="01">January</option><option value="02">February</option><option value="03">March</option>
+          <option value="04">April</option><option value="05">May</option><option value="06">June</option>
+          <option value="07">July</option><option value="08">August</option><option value="09">September</option>
+          <option value="10">October</option><option value="11">November</option><option value="12">December</option>
+        </select>
+        <button class="btn-secondary" onclick="document.getElementById('dashYear').value='';document.getElementById('dashMonth').value='';renderDashboard()" style="font-size:12px;padding:6px 12px">✕ All Time</button>
+        <span id="dashFilterLabel" style="font-size:12px;color:var(--muted);margin-left:4px"></span>
+      </div>
+
       <!-- Live KPI Strip -->
       <div class="dash-kpi-strip" id="dashKPIStrip">
         <div class="dash-kpi-card">
@@ -537,8 +551,10 @@
 
     <div id="tab-summary" class="hidden">
       <div class="toolbar">
-        <select id="sumMode" onchange="renderSummary()"><option value="week" data-i18n="byWeek">📅 By Week</option><option value="day" data-i18n="byDay">📆 By Day</option></select>
-        <select id="sumWeek" onchange="renderSummary()"></select><input type="date" id="sumDate" onchange="renderSummary()" class="hidden"/>
+        <select id="sumMode" onchange="renderSummary()"><option value="week" data-i18n="byWeek">📅 By Week</option><option value="day" data-i18n="byDay">📆 By Day</option><option value="month">📆 By Month</option></select>
+        <select id="sumWeek" onchange="renderSummary()"></select>
+        <input type="date" id="sumDate" onchange="renderSummary()" class="hidden"/>
+        <select id="sumMonth" onchange="renderSummary()" class="hidden"></select>
         <button class="btn-secondary" onclick="openCustomizeModal()" data-i18n="customizeBtn">⚙️ Customize</button>
         <button class="btn-secondary" onclick="window.print()" data-i18n="printBtn">🖨️ พิมพ์</button>
         <button class="btn-secondary" onclick="openSaleReportModal()" data-i18n="exportSaleReportBtn">📊 Export Sale Report</button>
@@ -1492,7 +1508,7 @@ async function onLogin(user){
   await Promise.all([loadProfiles(),loadRecords(),loadTargets(),loadEstimates(),loadCustomers()]);
   applyPermissionsToUI(); populateWeekFilters(); renderEntry(); renderSummary();
   if(hasPermission('view_admin_tab')){renderAdminTable();renderTargetsTable();renderEstimatesTable();renderCustomersTable();}
-  switchTab('dashboard');
+  switchTab(localStorage.getItem('DOC_LAST_TAB') || 'dashboard');
   subscribeRealtime();
   loadNotificationSettings().then(()=>checkTargetShortfall());
   // ── เปิด Record จาก QR URL (?record=uuid) ─────────────────
@@ -1719,6 +1735,7 @@ function subscribeRealtime(){
 }
 
 function switchTab(name){
+  localStorage.setItem('DOC_LAST_TAB', name);
   document.querySelectorAll('.nav-item,.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
   ['dashboard','entry','summary','transport','admin'].forEach(t=>document.getElementById('tab-'+t)?.classList.toggle('hidden',t!==name));
   if(name==='transport') loadTransportReport();
@@ -1734,6 +1751,11 @@ function populateWeekFilters(){
   sW.innerHTML=weeks.map(w=>`<option value="${w}">Week ${w}</option>`).join('');
   if(weeks.includes(parseInt(prevFW))) fW.value=prevFW;
   if(weeks.includes(parseInt(prevSW))) sW.value=prevSW;
+  // Populate month selector with year-months present in data
+  const MNAMES=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const months=[...new Set(allRecords.map(r=>r.record_date?.slice(0,7)).filter(Boolean))].sort().reverse();
+  const sM=document.getElementById('sumMonth');
+  if(sM){const prev=sM.value; sM.innerHTML=months.map(ym=>{const[y,m]=ym.split('-');return`<option value="${ym}">${MNAMES[+m-1]} ${y}</option>`}).join(''); if(months.includes(prev))sM.value=prev;}
 }
 
 function renderEntry(){
@@ -1877,9 +1899,14 @@ function renderSummary(){
   const mode=document.getElementById('sumMode').value;
   document.getElementById('sumWeek').classList.toggle('hidden', mode!=='week');
   document.getElementById('sumDate').classList.toggle('hidden', mode!=='day');
+  document.getElementById('sumMonth').classList.toggle('hidden', mode!=='month');
   const week=document.getElementById('sumWeek').value, date=document.getElementById('sumDate').value;
+  const month=document.getElementById('sumMonth').value;
+  const MNAMES=['January','February','March','April','May','June','July','August','September','October','November','December'];
   let rows=allRecords, scopeLabel='';
-  if(mode==='week'&&week){rows=rows.filter(r=>String(r.week_no)===week);scopeLabel=`Week ${week}`} else if(mode==='day'&&date){rows=rows.filter(r=>r.record_date===date);scopeLabel=date}
+  if(mode==='week'&&week){rows=rows.filter(r=>String(r.week_no)===week);scopeLabel=`Week ${week}`}
+  else if(mode==='day'&&date){rows=rows.filter(r=>r.record_date===date);scopeLabel=date}
+  else if(mode==='month'&&month){rows=rows.filter(r=>r.record_date?.slice(0,7)===month);const[y,m]=month.split('-');scopeLabel=`${MNAMES[+m-1]} ${y}`}
   document.getElementById('sumScopeLabel1').textContent='— '+scopeLabel; document.getElementById('sumScopeLabel2').textContent='— '+scopeLabel;
 
   renderDeliveryReport(rows);
@@ -1904,18 +1931,38 @@ function renderSummary(){
 function renderDashboard() {
   if (!allRecords || !allRecords.length) return;
 
+  // ── Populate year dropdown ──
+  const yearEl = document.getElementById('dashYear');
+  const selYear = yearEl?.value || '';
+  const selMonth = document.getElementById('dashMonth')?.value || '';
+  const years = [...new Set(allRecords.map(r=>r.record_date?.slice(0,4)).filter(Boolean))].sort().reverse();
+  if (yearEl) {
+    const prev = yearEl.value;
+    yearEl.innerHTML = '<option value="">📅 All Years</option>' + years.map(y=>`<option value="${y}">${y}</option>`).join('');
+    if (years.includes(prev)) yearEl.value = prev;
+  }
+
+  // ── Filter records ──
+  let rows = allRecords;
+  if (selYear)  rows = rows.filter(r => r.record_date?.startsWith(selYear));
+  if (selMonth) rows = rows.filter(r => r.record_date?.slice(5,7) === selMonth);
+  const MONTHS = ['','January','February','March','April','May','June','July','August','September','October','November','December'];
+  const scopeLabel = selYear ? (selMonth ? `${MONTHS[+selMonth]} ${selYear}` : selYear) : 'All Time';
+  const lbl = document.getElementById('dashFilterLabel');
+  if (lbl) lbl.textContent = selYear ? `Showing: ${scopeLabel}` : '';
+
   // ── KPI Strip ──
-  const totalAct = allRecords.reduce((s,r)=>s+(r.total_actual||0),0);
-  const totalOrd = allRecords.reduce((s,r)=>s+(r.total_ordered||0),0);
-  const totalDOA = allRecords.reduce((s,r)=>s+(r.doa_count||0),0);
-  const uniqueCusts = new Set(allRecords.map(r=>r.customer_name).filter(Boolean)).size;
+  const totalAct = rows.reduce((s,r)=>s+(r.total_actual||0),0);
+  const totalOrd = rows.reduce((s,r)=>s+(r.total_ordered||0),0);
+  const totalDOA = rows.reduce((s,r)=>s+(r.doa_count||0),0);
+  const uniqueCusts = new Set(rows.map(r=>r.customer_name).filter(Boolean)).size;
   const fulfillPct = totalOrd ? (totalAct/totalOrd*100) : 0;
   const doaPct = totalAct ? (totalDOA/totalAct*100) : 0;
   const fmtN = n => n>=1000000?(n/1000000).toFixed(1)+'M':n>=1000?(n/1000).toFixed(1)+'K':n.toLocaleString();
 
   const set = (id,v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
   set('dashTotalAct', fmtN(totalAct));
-  set('dashTotalActSub', totalAct.toLocaleString()+' chicks (all time)');
+  set('dashTotalActSub', totalAct.toLocaleString()+` chicks (${scopeLabel})`);
   set('dashTotalOrd', fmtN(totalOrd));
   set('dashTotalOrdSub', totalOrd.toLocaleString()+' chicks ordered');
   set('dashFulfill', fulfillPct.toFixed(1)+'%');
@@ -1924,10 +1971,10 @@ function renderDashboard() {
   set('dashDOA', totalDOA>0 ? doaPct.toFixed(2)+'%' : '—');
 
   // ── Charts + Advanced KPIs ──
-  renderTrendCharts(allRecords);
+  renderTrendCharts(rows);
   renderAdvancedKPIs();
-  renderHeatmap(allRecords);
-  renderParetoChart(allRecords);
+  renderHeatmap(rows);
+  renderParetoChart(rows);
 }
 
 function renderDeliveryReport(scopedRows) {
