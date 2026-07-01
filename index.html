@@ -1526,7 +1526,7 @@ async function onLogin(user){
   logActivity('login','auth','',currentUser.email);  // ← log login
 }
 async function loadProfiles(){const {data}=await sb.from('profiles').select('*').order('created_at');allProfiles=data||[];}
-async function loadRecords(){const {data}=await sb.from('doc_records').select('*').order('record_date',{ascending:false}).order('created_at',{ascending:false});allRecords=data||[];_trFiltersPopulated=false;}
+async function loadRecords(){const {data}=await sb.from('doc_records').select('*').order('record_date',{ascending:false}).order('created_at',{ascending:false}).limit(5000);allRecords=data||[];_trFiltersPopulated=false;}
 async function loadTargets(){const {data}=await sb.from('doc_targets').select('*').order('created_at',{ascending:false});allTargets=data||[];}
 async function loadEstimates(){const {data}=await sb.from('hatchery_estimates').select('*').order('created_at',{ascending:false});allEstimates=data||[];}
 
