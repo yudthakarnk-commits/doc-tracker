@@ -40,7 +40,7 @@
   .card{background:#fff;border-radius:10px;box-shadow:var(--shadow);overflow:hidden;margin-bottom:14px} .card-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center} .card-title{font-weight:600;font-size:15px}
   table{width:100%;border-collapse:collapse;font-size:13px} th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--border);white-space:nowrap} th{background:#374151;color:#fff;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.3px;position:sticky;top:0;z-index:1} tbody tr:hover{background:#f9fafb} .num{text-align:right;font-variant-numeric:tabular-nums}
   .ctype-direct{background:var(--direct);color:var(--direct-text);padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;display:inline-block} .ctype-contract{background:var(--contract);color:var(--contract-text);padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;display:inline-block} .ctype-company{background:var(--company);color:var(--company-text);padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;display:inline-block} .unsexed-cell{background:var(--unsexed)} .breed-chip{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:10px;font-size:11px;font-weight:600;color:#fff} .breed-chip.cobb{background:#3b82f6} .breed-chip.ross{background:#dc2626} .breed-stripe-cobb{border-left:3px solid #3b82f6} .breed-stripe-ross{border-left:3px solid #dc2626}
-  .diff-pos{color:var(--success);font-weight:600} .diff-neg{color:var(--danger);font-weight:600} .diff-zero{color:var(--muted)} .table-wrap{overflow-x:auto;max-height:600px;overflow-y:auto} .table-action{background:none;border:none;padding:3px 6px;color:var(--muted);border-radius:4px;font-size:14px;cursor:pointer} .table-action:hover{background:var(--bg);color:var(--text)} .empty-state{text-align:center;padding:50px 20px;color:var(--muted)}
+  .diff-pos{color:var(--success);font-weight:600} .diff-neg{color:var(--danger);font-weight:600} .diff-zero{color:var(--muted)} .table-wrap{overflow-x:auto;max-height:600px;overflow-y:auto;-webkit-overflow-scrolling:touch;scroll-behavior:smooth} .table-action{background:none;border:none;padding:3px 6px;color:var(--muted);border-radius:4px;font-size:14px;cursor:pointer} .table-action:hover{background:var(--bg);color:var(--text)} .empty-state{text-align:center;padding:50px 20px;color:var(--muted)}
   #tab-admin .table-wrap{max-height:420px}
   .sort-th{cursor:pointer;user-select:none;white-space:nowrap} .sort-th:hover{background:#4b5563!important;color:#fff!important}
   .trend-range-btn{background:#f3f4f6;border:1px solid var(--border);padding:3px 9px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;color:#6b7280;transition:all .15s} .trend-range-btn:hover{background:#e5e7eb;color:#374151} .trend-range-active{background:#374151!important;color:#fff!important;border-color:#374151!important}
@@ -158,6 +158,12 @@
     .perm-hatchery-grid{grid-template-columns:repeat(2,1fr)}
     .card-header{flex-direction:column;align-items:flex-start;gap:6px}
     .topbar .btn-secondary{font-size:12px;padding:5px 10px}
+    /* Mobile: summary matrices scroll horizontally */
+    .summary-section{overflow-x:auto;-webkit-overflow-scrolling:touch}
+    .summary-grid > div{overflow-x:auto;-webkit-overflow-scrolling:touch}
+    .matrix{min-width:480px}
+    /* Scroll hint label for tables */
+    .table-scroll-hint{display:flex !important}
   }
 
   /* ── Sidebar Layout ── */
@@ -522,7 +528,7 @@
         <select id="fHatchery" onchange="renderEntry()"><option value="" data-i18n="allHatcheries">โรงฟักทั้งหมด</option><option>Chengkau</option><option>Kluang</option><option>K.Kangsar</option><option>Sg. Sayong</option><option>Kota</option><option>External</option></select>
         <select id="fCType" onchange="renderEntry()"><option value="" data-i18n="allCustomerTypes">ประเภทลูกค้าทั้งหมด</option><option>Customer</option><option>Contract Farm</option><option>Company Farm</option></select>
         <select id="fBreed" onchange="renderEntry()"><option value="" data-i18n="allBreeds">สายพันธุ์ทั้งหมด</option><option>COBB</option><option>ROSS</option></select>
-        <input type="search" id="fSearch" data-i18n-placeholder="searchCustomer" placeholder="🔍 ค้นหาชื่อลูกค้า/ฟาร์ม..." oninput="renderEntry()"/>
+        <input type="search" id="fSearch" placeholder="🔍 ค้นหา ชื่อลูกค้า วันที่ โรงฟัก หมายเหตุ..." oninput="renderEntry()"/>
         
         <button class="btn-secondary" onclick="exportEntryExcel()" data-i18n="exportExcelBtn">📊 Export Excel</button>
         <button class="btn-secondary" onclick="document.getElementById('csvInput').click()" data-i18n="btnImportCSV">📥 Import CSV</button>
@@ -1770,7 +1776,7 @@ function renderEntry(){
   const fw=document.getElementById('fWeek').value, fh=document.getElementById('fHatchery').value, fc=document.getElementById('fCType').value, fb=document.getElementById('fBreed').value, q=document.getElementById('fSearch').value.toLowerCase();
   const rows=allRecords.filter(r=>{
     if(fw && String(r.week_no)!==fw) return false; if(fh && r.hatchery!==fh) return false; if(fc && r.customer_type!==fc) return false; if(fb && r.breed!==fb) return false;
-    if(q && !(r.customer_name||'').toLowerCase().includes(q) && !(r.truck_plate||'').toLowerCase().includes(q)) return false; return true;
+    if(q && ![r.customer_name,r.truck_plate,r.hatchery,r.notes,r.record_date,r.do_number,r.external_source].some(f=>(f||'').toLowerCase().includes(q))) return false; return true;
   });
   const totOrd=rows.reduce((s,r)=>s+(r.total_ordered||0),0), totAct=rows.reduce((s,r)=>s+(r.total_actual||0),0);
   document.getElementById('kTotal').textContent=rows.length.toLocaleString(); document.getElementById('kOrdered').textContent=totOrd.toLocaleString(); document.getElementById('kActual').textContent=totAct.toLocaleString();
