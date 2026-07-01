@@ -1526,7 +1526,7 @@ async function onLogin(user){
   logActivity('login','auth','',currentUser.email);  // ← log login
 }
 async function loadProfiles(){const {data}=await sb.from('profiles').select('*').order('created_at');allProfiles=data||[];}
-async function loadRecords(){const {data}=await sb.from('doc_records').select('*').order('record_date',{ascending:false}).order('created_at',{ascending:false}).limit(5000);allRecords=data||[];_trFiltersPopulated=false;}
+async function loadRecords(){const {data}=await sb.from('doc_records').select('*').order('record_date',{ascending:false}).order('created_at',{ascending:false}).limit(50000);allRecords=data||[];_trFiltersPopulated=false;}
 async function loadTargets(){const {data}=await sb.from('doc_targets').select('*').order('created_at',{ascending:false});allTargets=data||[];}
 async function loadEstimates(){const {data}=await sb.from('hatchery_estimates').select('*').order('created_at',{ascending:false});allEstimates=data||[];}
 
@@ -1621,7 +1621,7 @@ function renderActivityLog(logs) {
 }
 
 async function exportActivityLog() {
-  const {data} = await sb.from('activity_logs').select('*').order('created_at',{ascending:false}).limit(5000);
+  const {data} = await sb.from('activity_logs').select('*').order('created_at',{ascending:false}).limit(50000);
   if (!data?.length) { toast(currentLang==='en'?'No data':'ไม่มีข้อมูล','error'); return; }
   const headers = ['Date/Time','User Email','User Name','Action','Target Type','Target ID','Description'];
   const rows = data.map(l=>[
