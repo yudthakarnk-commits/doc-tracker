@@ -159,6 +159,77 @@
     .card-header{flex-direction:column;align-items:flex-start;gap:6px}
     .topbar .btn-secondary{font-size:12px;padding:5px 10px}
   }
+
+  /* ── Sidebar Layout ── */
+  html,body{height:100%}
+  #app{display:flex;flex-direction:column;height:100vh}
+  .app-body{display:flex;flex:1;overflow:hidden;min-height:0}
+  .sidebar{width:220px;background:#1e293b;display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto;transition:transform .25s}
+  .main-content{flex:1;overflow-y:auto;min-width:0;background:var(--bg)}
+  .topbar{flex-shrink:0}
+  /* Topbar right cluster */
+  .topbar-right{display:flex;align-items:center;gap:8px}
+  .topbar-spacer{flex:1}
+  .sidebar-toggle-btn{background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;color:var(--muted);border-radius:6px;line-height:1;font-family:inherit}
+  .sidebar-toggle-btn:hover{background:var(--bg)}
+  .topbar-icon-btn{position:relative;background:none;border:none;padding:6px 8px;border-radius:8px;cursor:pointer;color:#6b7280;line-height:1;transition:all .15s;display:flex;align-items:center;justify-content:center}
+  .topbar-icon-btn:hover{background:var(--bg);color:var(--text)}
+  /* Sidebar Nav */
+  .nav-item{display:flex;align-items:center;gap:10px;width:100%;background:none;border:none;padding:12px 16px;color:#94a3b8;font-size:13px;font-weight:500;cursor:pointer;text-align:left;transition:all .15s;white-space:nowrap;font-family:inherit;border-radius:0}
+  .nav-item:hover{background:rgba(255,255,255,.06);color:#e2e8f0}
+  .nav-item.active{background:var(--primary);color:#fff}
+  .nav-item.active:hover{background:var(--primary-dark)}
+  .nav-icon{font-size:16px;flex-shrink:0;width:22px;text-align:center}
+  .nav-label{flex:1}
+  .sidebar-section-label{font-size:10px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.8px;padding:16px 16px 4px;margin-top:4px}
+  /* Notification Bell */
+  .notif-wrap{position:relative}
+  .notif-count-badge{position:absolute;top:2px;right:2px;background:#ef4444;color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 4px;min-width:15px;text-align:center;line-height:1.4;pointer-events:none}
+  .notif-panel{position:fixed;top:58px;right:12px;width:340px;max-height:500px;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,.18);z-index:9998;display:flex;flex-direction:column}
+  .notif-panel-hdr{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--border);flex-shrink:0}
+  .notif-panel-hdr strong{font-size:14px;color:var(--text)}
+  .notif-mark-all{background:none;border:none;font-size:12px;color:var(--primary);cursor:pointer;font-weight:600;padding:0}
+  .notif-mark-all:hover{text-decoration:underline}
+  .notif-list{overflow-y:auto;flex:1}
+  .notif-item{padding:12px 14px;border-bottom:1px solid #f3f4f6;transition:background .1s}
+  .notif-item:last-child{border-bottom:none}
+  .notif-item:not(.notif-read){background:#eff6ff}
+  .notif-item-hdr{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:3px}
+  .notif-item-title{font-weight:600;font-size:13px;color:var(--text);line-height:1.3}
+  .notif-date-label{font-size:10px;color:var(--muted);flex-shrink:0;white-space:nowrap;margin-top:2px}
+  .notif-body-text{font-size:12px;color:#4b5563;margin:0 0 6px;line-height:1.55}
+  .notif-got-it{background:none;border:1px solid #d1d5db;color:var(--muted);font-size:11px;padding:2px 9px;border-radius:5px;cursor:pointer;font-weight:600;font-family:inherit}
+  .notif-got-it:hover{background:var(--bg);color:var(--text);border-color:#9ca3af}
+  .notif-empty{text-align:center;padding:32px 16px;color:var(--muted);font-size:13px}
+  /* Avatar + Profile Menu */
+  .avatar-wrap{position:relative}
+  .avatar-btn{width:34px;height:34px;border-radius:50%;border:2px solid var(--border);cursor:pointer;overflow:hidden;background:var(--primary);color:#fff;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0;transition:all .15s;font-family:inherit}
+  .avatar-btn:hover{border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.18)}
+  .avatar-btn img{width:100%;height:100%;object-fit:cover;display:block}
+  .profile-menu{position:fixed;top:58px;right:12px;width:230px;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,.18);z-index:9998;overflow:hidden}
+  .pm-user{padding:14px;display:flex;gap:10px;align-items:center;border-bottom:1px solid var(--border)}
+  .pm-avatar{width:40px;height:40px;border-radius:50%;background:var(--primary);color:#fff;font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden}
+  .pm-avatar img{width:100%;height:100%;object-fit:cover}
+  .pm-info{min-width:0}
+  .pm-info-name{font-weight:600;font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pm-info-email{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+  .pm-menu-btn{display:flex;align-items:center;gap:9px;width:100%;background:none;border:none;padding:10px 14px;font-size:13px;color:var(--text);cursor:pointer;text-align:left;font-family:inherit;transition:background .1s}
+  .pm-menu-btn:hover{background:var(--bg)}
+  .pm-menu-btn.pm-danger{color:var(--danger)}
+  .pm-menu-btn.pm-danger:hover{background:#fef2f2}
+  .pm-divider{height:1px;background:var(--border);margin:3px 0}
+  /* Account Modal */
+  .acct-avatar-wrap{text-align:center;margin-bottom:18px}
+  .acct-avatar-preview{width:88px;height:88px;border-radius:50%;background:var(--primary);color:#fff;font-weight:700;font-size:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;margin:0 auto;overflow:hidden;border:3px solid var(--border);transition:all .15s}
+  .acct-avatar-preview:hover{border-color:var(--primary);box-shadow:0 0 0 4px rgba(37,99,235,.15)}
+  /* Sidebar Overlay (mobile) */
+  .sidebar-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:99;display:none;top:56px}
+  .sidebar-overlay.show{display:block}
+  @media(max-width:768px){
+    .sidebar{position:fixed;left:0;top:56px;bottom:0;z-index:100;transform:translateX(-100%)}
+    .sidebar.mobile-open{transform:translateX(0)}
+    .notif-panel,.profile-menu{width:calc(100vw - 24px);right:12px}
+  }
 </style>
 </head>
 <body>
@@ -267,25 +338,47 @@
 
 <div id="app" class="hidden">
   <div class="topbar">
-    <div class="logo">🐣 DOC Tracker™ — Planning vs Actual</div>
-    <div class="user-info">
+    <button class="sidebar-toggle-btn" onclick="toggleSidebar()" title="Toggle Menu">☰</button>
+    <div class="logo">🐣 DOC Tracker™</div>
+    <div class="topbar-spacer"></div>
+    <div class="topbar-right">
       <div class="lang-toggle"><button data-lang="th" onclick="setLanguage('th')">ไทย</button><button data-lang="en" onclick="setLanguage('en')">EN</button></div>
       <span class="live-status"><span class="live-dot"></span><span data-i18n="realtime">Real-time</span></span>
       <div class="btn-pwa-wrap"><button class="btn-secondary" onclick="openQRScanner()" title="QR Scanner" style="padding:6px 10px">📷</button><span class="sync-badge" id="pendingBadge" style="display:none">0</span></div>
-      <button class="btn-install" id="btnInstall" onclick="installPWA()">📲 Install App</button>
-      <span id="userEmail"></span><span id="userBadge" class="badge"></span>
-      <button class="btn-secondary" onclick="logout()" data-i18n="logout">Logout</button>
+      <button class="btn-install" id="btnInstall" onclick="installPWA()">📲 Install</button>
+      <!-- hidden spans kept for JS compatibility -->
+      <span id="userEmail" style="display:none"></span><span id="userBadge" class="badge" style="display:none"></span>
+      <!-- Notification Bell -->
+      <div class="notif-wrap" id="notifWrap">
+        <button class="topbar-icon-btn" onclick="toggleNotifPanel(event)" title="What's New" aria-label="Notifications">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span class="notif-count-badge hidden" id="notifBadge">0</span>
+        </button>
+      </div>
+      <!-- Profile Avatar -->
+      <div class="avatar-wrap" id="avatarWrap">
+        <button class="avatar-btn" onclick="toggleProfileMenu(event)" id="avatarBtn" title="My Account">
+          <img id="avatarImg" class="hidden" alt=""/>
+          <span id="avatarInitials">?</span>
+        </button>
+      </div>
     </div>
   </div>
 
-  <div class="nav-tabs">
-    <button class="tab active" data-tab="entry" onclick="switchTab('entry')" data-i18n="tabEntry">📋 Order Entry</button>
-    <button class="tab" data-tab="summary" onclick="switchTab('summary')" data-i18n="tabSummary">📊 Summarize</button>
-    <button class="tab" data-tab="transport" onclick="switchTab('transport')" data-i18n="tabTransport">🚚 Transport</button>
-    <button class="tab hidden" data-tab="admin" id="adminTab" onclick="switchTab('admin')" data-i18n="tabAdmin">⚙️ Admin</button>
-  </div>
+  <!-- Sidebar overlay (mobile) -->
+  <div id="sidebarOverlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
 
-  <div class="container">
+  <div class="app-body">
+    <nav class="sidebar" id="appSidebar">
+      <div class="sidebar-section-label">Navigation</div>
+      <button class="nav-item active" data-tab="entry" onclick="switchTab('entry')"><span class="nav-icon">📋</span><span class="nav-label" data-i18n="tabEntry">Order Entry</span></button>
+      <button class="nav-item" data-tab="summary" onclick="switchTab('summary')"><span class="nav-icon">📊</span><span class="nav-label" data-i18n="tabSummary">Summarize</span></button>
+      <button class="nav-item" data-tab="transport" onclick="switchTab('transport')"><span class="nav-icon">🚚</span><span class="nav-label" data-i18n="tabTransport">Transport</span></button>
+      <button class="nav-item hidden" data-tab="admin" id="adminTab" onclick="switchTab('admin')"><span class="nav-icon">⚙️</span><span class="nav-label" data-i18n="tabAdmin">Admin</span></button>
+    </nav>
+
+    <div class="main-content" id="mainContent">
+      <div class="container">
     <div id="tab-entry">
       <div class="kpi-grid">
         <div class="kpi"><div class="kpi-label" data-i18n="kpiTotal">รายการทั้งหมด</div><div class="kpi-value kpi-blue" id="kTotal">0</div></div>
@@ -551,6 +644,59 @@
         </div>
         <div class="table-wrap" id="customersTableWrap" style="max-height:260px;overflow-y:auto"></div>
       </div>
+    </div>
+  </div>
+    </div><!-- /.main-content -->
+  </div><!-- /.app-body -->
+</div><!-- /#app -->
+
+<!-- ── Notification Panel ── -->
+<div class="notif-panel hidden" id="notifPanel">
+  <div class="notif-panel-hdr">
+    <strong>🔔 What's New</strong>
+    <button class="notif-mark-all" onclick="markAllNotifRead()">Mark all read</button>
+  </div>
+  <div class="notif-list" id="notifList"></div>
+</div>
+
+<!-- ── Profile Menu ── -->
+<div class="profile-menu hidden" id="profileMenu">
+  <div class="pm-user">
+    <div class="pm-avatar" id="pmAvatar"></div>
+    <div class="pm-info">
+      <div class="pm-info-name" id="pmInfoName">Loading…</div>
+      <div class="pm-info-email" id="pmInfoEmail"></div>
+    </div>
+  </div>
+  <div class="pm-divider"></div>
+  <button class="pm-menu-btn" onclick="openAccountModal();closeProfileMenu()">👤 My Account</button>
+  <div class="pm-divider"></div>
+  <button class="pm-menu-btn pm-danger" onclick="logout();closeProfileMenu()">🚪 Log Out</button>
+</div>
+
+<!-- ── Account / Profile Modal ── -->
+<div id="accountModal" class="modal-overlay hidden">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-header">
+      <h2>👤 My Account</h2>
+      <button class="modal-close" onclick="closeAccountModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="acct-avatar-wrap">
+        <div class="acct-avatar-preview" id="acctAvatarPreview" onclick="document.getElementById('acctAvatarInput').click()" title="Click to upload photo"></div>
+        <input type="file" id="acctAvatarInput" accept="image/*" class="hidden" onchange="previewAccountAvatar(event)"/>
+        <p style="font-size:11px;color:var(--muted);margin-top:8px">Click photo to upload · 500 KB max recommended</p>
+      </div>
+      <div class="form-grid-2">
+        <div class="form-row"><label>Display Name</label><input id="acctName" type="text" placeholder="Your name"/></div>
+        <div class="form-row"><label>Phone</label><input id="acctPhone" type="tel" placeholder="+60 12 345 6789"/></div>
+      </div>
+      <div class="form-row"><label>Organization / Department</label><input id="acctOrg" type="text" placeholder="e.g. PS Hatchery — Logistics"/></div>
+      <div class="form-row"><label>Email <small style="color:var(--muted)">(read-only)</small></label><input id="acctEmail" type="email" readonly style="background:#f9fafb;color:var(--muted)"/></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeAccountModal()">Cancel</button>
+      <button class="btn-add" onclick="saveAccountProfile()">💾 Save Profile</button>
     </div>
   </div>
 </div>
@@ -1276,6 +1422,8 @@ async function onLogin(user){
   document.getElementById('userEmail').textContent=profile?.email||user.email;
   const badge=document.getElementById('userBadge');
   if(profile?.role==='admin'){badge.className='badge badge-admin';badge.textContent='ADMIN'}else{badge.className='badge badge-user';badge.textContent='USER'}
+  updateAvatarDisplay();
+  updateNotifBadge();
   await Promise.all([loadProfiles(),loadRecords(),loadTargets(),loadEstimates(),loadCustomers()]);
   applyPermissionsToUI(); populateWeekFilters(); renderEntry(); renderSummary();
   if(hasPermission('view_admin_tab')){renderAdminTable();renderTargetsTable();renderEstimatesTable();renderCustomersTable();}
@@ -1505,10 +1653,11 @@ function subscribeRealtime(){
 }
 
 function switchTab(name){
-  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
+  document.querySelectorAll('.nav-item,.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
   ['entry','summary','transport','admin'].forEach(t=>document.getElementById('tab-'+t).classList.toggle('hidden',t!==name));
   if(name==='transport') loadTransportReport();
   if(name==='admin' && hasPermission('view_admin_tab')) { loadActivityLog(); loadNotificationSettings(); }
+  if(window.innerWidth<=768) closeSidebar();
 }
 function populateWeekFilters(){
   const weeks=[...new Set(allRecords.map(r=>r.week_no))].sort((a,b)=>b-a);
@@ -3423,6 +3572,206 @@ function downloadQRCode() {
   link.href = canvas ? canvas.toDataURL('image/png') : img.src;
   link.click();
 }
+
+// ══════════════════════════════════════════════════════════════
+// SIDEBAR TOGGLE
+// ══════════════════════════════════════════════════════════════
+let _sidebarMobileOpen = false;
+function toggleSidebar() {
+  const sidebar = document.getElementById('appSidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  if (window.innerWidth <= 768) {
+    _sidebarMobileOpen = !_sidebarMobileOpen;
+    sidebar.classList.toggle('mobile-open', _sidebarMobileOpen);
+    overlay.classList.toggle('show', _sidebarMobileOpen);
+  } else {
+    sidebar.classList.toggle('sidebar-collapsed');
+  }
+}
+function closeSidebar() {
+  document.getElementById('appSidebar')?.classList.remove('mobile-open');
+  document.getElementById('sidebarOverlay')?.classList.remove('show');
+  _sidebarMobileOpen = false;
+}
+
+// ══════════════════════════════════════════════════════════════
+// NOTIFICATION / WHAT'S NEW SYSTEM
+// ══════════════════════════════════════════════════════════════
+const APP_CHANGELOG = [
+  { id: 'feat_eta_jul25', date: 'Jul 2025', title: '🚛 ETA Banner — Customer Portal', body: 'When a driver taps "Departed," customers see a live ETA banner with estimated arrival time, distance, and truck plate. Configure truck speed in Admin → Notification Settings.' },
+  { id: 'feat_gps_jul25', date: 'Jul 2025', title: '📍 Driver GPS Location Tracking', body: 'GPS coordinates are captured when the driver updates status. Tap the 📍 link in Transport tab to open Google Maps at the driver\'s last position.' },
+  { id: 'feat_portal_jul25', date: 'Jul 2025', title: '🔗 Customer Portal — Today\'s Orders Only', body: 'Each customer has a unique QR portal link showing today\'s deliveries in real time. Generate it via the Portal button in the Transport tab.' },
+  { id: 'feat_driver_jun25', date: 'Jun 2025', title: '📱 Driver Mode — No-Login Status Update', body: 'Drivers scan a QR code and tap Departed / Arrived — no login needed. Generate the Driver QR per record in Transport tab.' },
+  { id: 'feat_email_jun25', date: 'Jun 2025', title: '📧 Email Notifications — DOA & Target Alerts', body: 'Automatic email alerts for high DOA rates and booking target shortfalls. Configure via Admin → Notification Settings using EmailJS.' },
+];
+
+function _getReadNotifs() {
+  try { return new Set(JSON.parse(localStorage.getItem('NOTIF_READ') || '[]')); } catch { return new Set(); }
+}
+function updateNotifBadge() {
+  const unread = APP_CHANGELOG.filter(n => !_getReadNotifs().has(n.id)).length;
+  const el = document.getElementById('notifBadge');
+  if (el) { el.textContent = unread; el.classList.toggle('hidden', unread === 0); }
+}
+function renderNotifPanel() {
+  const list = document.getElementById('notifList');
+  if (!list) return;
+  const read = _getReadNotifs();
+  const allRead = APP_CHANGELOG.every(n => read.has(n.id));
+  if (allRead) { list.innerHTML = `<p class="notif-empty">✅ You're all caught up!</p>`; return; }
+  list.innerHTML = APP_CHANGELOG.map(n => `
+    <div class="notif-item${read.has(n.id)?' notif-read':''}" id="ni_${n.id}">
+      <div class="notif-item-hdr">
+        <span class="notif-item-title">${n.title}</span>
+        <span class="notif-date-label">${n.date}</span>
+      </div>
+      <p class="notif-body-text">${n.body}</p>
+      ${!read.has(n.id)?`<button class="notif-got-it" onclick="dismissNotif('${n.id}')">✓ Got it</button>`:''}
+    </div>`).join('');
+}
+function markAllNotifRead() {
+  localStorage.setItem('NOTIF_READ', JSON.stringify(APP_CHANGELOG.map(n => n.id)));
+  renderNotifPanel(); updateNotifBadge();
+}
+function dismissNotif(id) {
+  const read = _getReadNotifs(); read.add(id);
+  localStorage.setItem('NOTIF_READ', JSON.stringify([...read]));
+  renderNotifPanel(); updateNotifBadge();
+}
+function toggleNotifPanel(e) {
+  if (e) e.stopPropagation();
+  const panel = document.getElementById('notifPanel');
+  const isOpen = !panel.classList.contains('hidden');
+  _closeAllDropdowns();
+  if (!isOpen) { renderNotifPanel(); panel.classList.remove('hidden'); }
+}
+
+// ══════════════════════════════════════════════════════════════
+// PROFILE AVATAR + ACCOUNT MODAL
+// ══════════════════════════════════════════════════════════════
+function _getLocalProfile() {
+  try { return JSON.parse(localStorage.getItem('USER_PROFILE_EXTRA') || '{}'); } catch { return {}; }
+}
+function _getInitials(nameStr, emailStr) {
+  const src = (nameStr || emailStr || '?').trim();
+  const parts = src.split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  return (src[0] || '?').toUpperCase();
+}
+function updateAvatarDisplay() {
+  const extra = _getLocalProfile();
+  const name = extra.name || currentProfile?.name || currentUser?.email || '';
+  const email = currentUser?.email || '';
+  const initials = _getInitials(name, email);
+  const roleTxt = currentProfile?.role === 'admin' ? 'ADMIN' : 'USER';
+
+  // Topbar avatar button
+  const avatarImg = document.getElementById('avatarImg');
+  const avatarIni = document.getElementById('avatarInitials');
+  if (avatarImg && avatarIni) {
+    if (extra.avatar) {
+      avatarIni.style.display = 'none';
+      avatarImg.src = extra.avatar;
+      avatarImg.classList.remove('hidden');
+    } else {
+      avatarImg.classList.add('hidden');
+      avatarIni.textContent = initials;
+      avatarIni.style.display = '';
+    }
+  }
+
+  // Profile menu
+  const pmAvatar = document.getElementById('pmAvatar');
+  if (pmAvatar) pmAvatar.innerHTML = extra.avatar
+    ? `<img src="${extra.avatar}" alt=""/>`
+    : initials;
+
+  const pmName = document.getElementById('pmInfoName');
+  const pmEmail = document.getElementById('pmInfoEmail');
+  if (pmName) pmName.textContent = (extra.name || currentProfile?.name || email) + (roleTxt ? ` · ${roleTxt}` : '');
+  if (pmEmail) pmEmail.textContent = email;
+}
+
+function toggleProfileMenu(e) {
+  if (e) e.stopPropagation();
+  const menu = document.getElementById('profileMenu');
+  const isOpen = !menu.classList.contains('hidden');
+  _closeAllDropdowns();
+  if (!isOpen) menu.classList.remove('hidden');
+}
+function closeProfileMenu() { document.getElementById('profileMenu')?.classList.add('hidden'); }
+
+function openAccountModal() {
+  const extra = _getLocalProfile();
+  document.getElementById('acctName').value = extra.name || currentProfile?.name || '';
+  document.getElementById('acctPhone').value = extra.phone || '';
+  document.getElementById('acctOrg').value = extra.org || '';
+  document.getElementById('acctEmail').value = currentUser?.email || '';
+  _refreshAccountAvatarPreview(extra);
+  document.getElementById('accountModal').classList.remove('hidden');
+}
+function closeAccountModal() { document.getElementById('accountModal').classList.add('hidden'); }
+
+function _refreshAccountAvatarPreview(extra) {
+  const preview = document.getElementById('acctAvatarPreview');
+  if (!preview) return;
+  const name = document.getElementById('acctName')?.value || extra?.name || currentProfile?.name || currentUser?.email || '';
+  const initials = _getInitials(name, currentUser?.email);
+  if (extra && extra.avatar) {
+    preview.innerHTML = `<img src="${extra.avatar}" style="width:100%;height:100%;object-fit:cover" alt=""/>`;
+    preview.style.background = 'transparent';
+  } else {
+    preview.innerHTML = initials;
+    preview.style.background = 'var(--primary)';
+    preview.style.color = '#fff';
+  }
+}
+
+function previewAccountAvatar(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (file.size > 1024 * 1024) { toast('Image too large — please use < 1 MB', 'error'); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    const preview = document.getElementById('acctAvatarPreview');
+    preview.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover" alt=""/>`;
+    preview.style.background = 'transparent';
+    preview._pendingAvatar = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+async function saveAccountProfile() {
+  const name = document.getElementById('acctName').value.trim();
+  const phone = document.getElementById('acctPhone').value.trim();
+  const org = document.getElementById('acctOrg').value.trim();
+  const preview = document.getElementById('acctAvatarPreview');
+  const extra = _getLocalProfile();
+  const avatar = preview._pendingAvatar || extra.avatar || '';
+  localStorage.setItem('USER_PROFILE_EXTRA', JSON.stringify({ name, phone, org, avatar }));
+  // try updating name in profiles table
+  if (currentUser && sb) {
+    try { await sb.from('profiles').update({ name }).eq('id', currentUser.id); } catch (e) {}
+  }
+  updateAvatarDisplay();
+  closeAccountModal();
+  toast('Profile saved ✅', 'success');
+}
+
+function _closeAllDropdowns() {
+  document.getElementById('notifPanel')?.classList.add('hidden');
+  document.getElementById('profileMenu')?.classList.add('hidden');
+}
+
+// Close dropdowns when clicking outside
+document.addEventListener('click', e => {
+  if (!e.target.closest('#notifWrap') && !e.target.closest('#notifPanel')) {
+    document.getElementById('notifPanel')?.classList.add('hidden');
+  }
+  if (!e.target.closest('#avatarWrap') && !e.target.closest('#profileMenu') && !e.target.closest('#accountModal')) {
+    document.getElementById('profileMenu')?.classList.add('hidden');
+  }
+});
 
 init();
 </script>
