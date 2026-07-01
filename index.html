@@ -1759,13 +1759,19 @@ function switchTab(name){
   if(window.innerWidth<=768) closeSidebar();
 }
 function populateWeekFilters(){
-  const weeks=[...new Set(allRecords.map(r=>r.week_no))].sort((a,b)=>b-a);
+  // Sort by most-recent actual date per week — handles year boundary (week 27/2026 > week 52/2025)
+  const weekLatestDate={};
+  allRecords.forEach(r=>{if(r.record_date&&r.week_no!=null){if(!weekLatestDate[r.week_no]||r.record_date>weekLatestDate[r.week_no])weekLatestDate[r.week_no]=r.record_date;}});
+  const weeks=[...new Set(allRecords.map(r=>r.week_no).filter(w=>w!=null))]
+    .sort((a,b)=>(weekLatestDate[b]||'')>(weekLatestDate[a]||'')?1:-1);
   const fW=document.getElementById('fWeek'), sW=document.getElementById('sumWeek');
   const prevFW=fW.value, prevSW=sW.value;
   fW.innerHTML=`<option value="">${t('allWeeks')}</option>`+weeks.map(w=>`<option value="${w}">Week ${w}</option>`).join('');
   sW.innerHTML=weeks.map(w=>`<option value="${w}">Week ${w}</option>`).join('');
   if(weeks.includes(parseInt(prevFW))) fW.value=prevFW;
-  if(weeks.includes(parseInt(prevSW))) sW.value=prevSW;
+  // Default sumWeek to current ISO week; fallback to most recent in data
+  if(weeks.includes(parseInt(prevSW))){sW.value=prevSW;}
+  else{const curWk=getISOWeek(new Date());sW.value=weeks.includes(curWk)?String(curWk):(weeks.length?String(weeks[0]):'');}
   // Populate month selector with year-months present in data
   const MNAMES=['January','February','March','April','May','June','July','August','September','October','November','December'];
   const months=[...new Set(allRecords.map(r=>r.record_date?.slice(0,7)).filter(Boolean))].sort().reverse();
@@ -1985,11 +1991,9 @@ function renderDashboard() {
   set('dashCustsSub', uniqueCusts+' unique farms / customers');
   set('dashDOA', totalDOA>0 ? doaPct.toFixed(2)+'%' : '—');
 
-  // ── Charts + Advanced KPIs ──
-  renderTrendCharts(rows);
-  renderAdvancedKPIs();
-  renderHeatmap(rows);
-  renderParetoChart(rows);
+  // ── Charts + Advanced KPIs (deferred so KPI strip paints first) ──
+  setTimeout(()=>{ renderTrendCharts(rows); renderAdvancedKPIs(); }, 0);
+  setTimeout(()=>{ renderHeatmap(rows); renderParetoChart(rows); }, 60);
 }
 
 function renderDeliveryReport(scopedRows) {
@@ -2755,7 +2759,7 @@ function renderAdvancedKPIs() {
     wTot[r.week_no].a += (r.total_actual || 0);
     if (r.record_date > wTot[r.week_no].date) wTot[r.week_no].date = r.record_date;
   });
-  const weeks = Object.keys(wTot).map(Number).sort((a, b) => b - a);
+  const weeks = Object.keys(wTot).map(Number).sort((a,b)=>(wTot[b].date||'')>(wTot[a].date||'')?1:-1);
 
   // WoW
   if (weeks.length >= 1) {
