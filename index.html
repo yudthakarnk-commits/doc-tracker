@@ -1349,6 +1349,7 @@ function init(){
   const resetLink = document.getElementById('resetSetupLink');
   if(resetLink) resetLink.classList.toggle('hidden', !!(CONFIG_SUPABASE_URL && CONFIG_SUPABASE_ANON_KEY));
   if(!url||!key){show('setupScreen');return}
+  if(!window.supabase){show('loginScreen');showAuth('ไม่สามารถโหลด Library ได้ กรุณาตรวจสอบอินเทอร์เน็ตแล้วกด Ctrl+Shift+R (หรือ ⌘+Shift+R บน Mac) เพื่อรีเฟรช','error');return;}
   try{ sb=window.supabase.createClient(url,key); }catch(e){show('loginScreen');showAuth(e.message,'error');return;}
   // ── Driver Mode / Customer Portal: ไม่ต้อง login ──
   const _qp = new URLSearchParams(window.location.search);

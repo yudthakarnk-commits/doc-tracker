@@ -1,6 +1,6 @@
-/* DOC Tracker — Service Worker v1.3 */
-const CACHE = 'doc-tracker-v2';
-const CDN_CACHE = 'doc-tracker-cdn-v1';
+/* DOC Tracker — Service Worker v1.4 */
+const CACHE = 'doc-tracker-v3';
+const CDN_CACHE = 'doc-tracker-cdn-v2';
 
 const APP_SHELL = ['./index.html', './manifest.json'];
 
