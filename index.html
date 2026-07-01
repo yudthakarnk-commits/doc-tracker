@@ -222,6 +222,15 @@
   .acct-avatar-wrap{text-align:center;margin-bottom:18px}
   .acct-avatar-preview{width:88px;height:88px;border-radius:50%;background:var(--primary);color:#fff;font-weight:700;font-size:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;margin:0 auto;overflow:hidden;border:3px solid var(--border);transition:all .15s}
   .acct-avatar-preview:hover{border-color:var(--primary);box-shadow:0 0 0 4px rgba(37,99,235,.15)}
+  /* ── Dashboard KPI Strip ── */
+  .dash-kpi-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:16px}
+  .dash-kpi-card{background:#fff;border-radius:12px;box-shadow:var(--shadow);padding:16px 18px;display:flex;align-items:center;gap:14px;border:1px solid var(--border);transition:box-shadow .15s}
+  .dash-kpi-card:hover{box-shadow:0 4px 12px rgba(0,0,0,.10)}
+  .dash-kpi-icon{width:46px;height:46px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+  .dash-kpi-body{min-width:0;flex:1}
+  .dash-kpi-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px}
+  .dash-kpi-value{font-size:24px;font-weight:800;color:var(--text);line-height:1.1;font-variant-numeric:tabular-nums}
+  .dash-kpi-sub{font-size:11px;color:var(--muted);margin-top:2px}
   /* Sidebar Overlay (mobile) */
   .sidebar-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:99;display:none;top:56px}
   .sidebar-overlay.show{display:block}
@@ -371,7 +380,8 @@
   <div class="app-body">
     <nav class="sidebar" id="appSidebar">
       <div class="sidebar-section-label">Navigation</div>
-      <button class="nav-item active" data-tab="entry" onclick="switchTab('entry')" data-i18n="tabEntry">📋 Order Entry</button>
+      <button class="nav-item active" data-tab="dashboard" onclick="switchTab('dashboard')">🏠 Dashboard</button>
+      <button class="nav-item" data-tab="entry" onclick="switchTab('entry')" data-i18n="tabEntry">📋 Order Entry</button>
       <button class="nav-item" data-tab="summary" onclick="switchTab('summary')" data-i18n="tabSummary">📊 Summarize</button>
       <button class="nav-item" data-tab="transport" onclick="switchTab('transport')" data-i18n="tabTransport">🚚 Transport</button>
       <button class="nav-item hidden" data-tab="admin" id="adminTab" onclick="switchTab('admin')" data-i18n="tabAdmin">⚙️ Admin</button>
@@ -379,7 +389,113 @@
 
     <div class="main-content" id="mainContent">
       <div class="container">
-    <div id="tab-entry">
+    <!-- ══════════════════ DASHBOARD TAB ══════════════════ -->
+    <div id="tab-dashboard">
+
+      <!-- Live KPI Strip -->
+      <div class="dash-kpi-strip" id="dashKPIStrip">
+        <div class="dash-kpi-card">
+          <div class="dash-kpi-icon" style="background:#dbeafe;color:#1d4ed8">📦</div>
+          <div class="dash-kpi-body">
+            <div class="dash-kpi-label">Total DOC Delivered</div>
+            <div class="dash-kpi-value" id="dashTotalAct">—</div>
+            <div class="dash-kpi-sub" id="dashTotalActSub">chicks (all time)</div>
+          </div>
+        </div>
+        <div class="dash-kpi-card">
+          <div class="dash-kpi-icon" style="background:#dcfce7;color:#166534">📋</div>
+          <div class="dash-kpi-body">
+            <div class="dash-kpi-label">Total Orders Placed</div>
+            <div class="dash-kpi-value" id="dashTotalOrd">—</div>
+            <div class="dash-kpi-sub" id="dashTotalOrdSub">chicks ordered</div>
+          </div>
+        </div>
+        <div class="dash-kpi-card">
+          <div class="dash-kpi-icon" style="background:#fef9c3;color:#854d0e">🎯</div>
+          <div class="dash-kpi-body">
+            <div class="dash-kpi-label">Fulfillment Rate</div>
+            <div class="dash-kpi-value" id="dashFulfill">—</div>
+            <div class="dash-kpi-sub">actual ÷ ordered</div>
+          </div>
+        </div>
+        <div class="dash-kpi-card">
+          <div class="dash-kpi-icon" style="background:#f3e8ff;color:#6b21a8">👥</div>
+          <div class="dash-kpi-body">
+            <div class="dash-kpi-label">Active Customers</div>
+            <div class="dash-kpi-value" id="dashCusts">—</div>
+            <div class="dash-kpi-sub" id="dashCustsSub">unique farms</div>
+          </div>
+        </div>
+        <div class="dash-kpi-card">
+          <div class="dash-kpi-icon" style="background:#fee2e2;color:#991b1b">💀</div>
+          <div class="dash-kpi-body">
+            <div class="dash-kpi-label">Overall DOA Rate</div>
+            <div class="dash-kpi-value" id="dashDOA">—</div>
+            <div class="dash-kpi-sub">of total delivered</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Advanced KPI Cards (WoW / MoM / YoY / Forecast) -->
+      <div class="adv-kpi-grid" id="advKPISection">
+        <div class="adv-kpi-card wow">
+          <div class="adv-kpi-label">Week over Week</div>
+          <div class="adv-kpi-period" id="kpiWoWPeriod">—</div>
+          <div class="adv-kpi-value" id="kpiWoWValue">—</div>
+          <div class="adv-kpi-change flat" id="kpiWoWChange">—</div>
+        </div>
+        <div class="adv-kpi-card mom">
+          <div class="adv-kpi-label">Month over Month</div>
+          <div class="adv-kpi-period" id="kpiMoMPeriod">—</div>
+          <div class="adv-kpi-value" id="kpiMoMValue">—</div>
+          <div class="adv-kpi-change flat" id="kpiMoMChange">—</div>
+        </div>
+        <div class="adv-kpi-card yoy">
+          <div class="adv-kpi-label">Year over Year</div>
+          <div class="adv-kpi-period" id="kpiYoYPeriod">—</div>
+          <div class="adv-kpi-value" id="kpiYoYValue">—</div>
+          <div class="adv-kpi-change flat" id="kpiYoYChange">—</div>
+        </div>
+        <div class="adv-kpi-card forecast">
+          <div class="adv-kpi-label">📈 Forecast (MA4)</div>
+          <div class="adv-kpi-period" id="kpiForecastPeriod">—</div>
+          <div class="adv-kpi-value" id="kpiForecastValue">—</div>
+          <div class="adv-kpi-change flat" id="kpiForecastChange">—</div>
+        </div>
+      </div>
+
+      <!-- Charts Row 1: Trend + Breed -->
+      <div class="trend-grid" data-section="charts1">
+        <div class="chart-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <h4 data-i18n="chartTrend" style="margin:0">📈 Weekly Trend + Forecast</h4>
+            <div style="display:flex;gap:4px">
+              <button onclick="setTrendWindow(4)"  id="trendBtn4"  class="trend-range-btn">1M</button>
+              <button onclick="setTrendWindow(13)" id="trendBtn13" class="trend-range-btn trend-range-active">3M</button>
+              <button onclick="setTrendWindow(26)" id="trendBtn26" class="trend-range-btn">6M</button>
+              <button onclick="setTrendWindow(52)" id="trendBtn52" class="trend-range-btn">1Y</button>
+            </div>
+          </div>
+          <canvas id="trendLine" style="max-height:260px"></canvas>
+        </div>
+        <div class="chart-card"><h4 data-i18n="chartBreed">🐔 By Breed (%)</h4><canvas id="trendBreed" style="max-height:260px"></canvas></div>
+      </div>
+
+      <!-- Charts Row 2: Hatchery + Customer Type -->
+      <div class="trend-grid" data-section="charts2">
+        <div class="chart-card"><h4 data-i18n="chartHatchery">🏭 Actual by Hatchery</h4><canvas id="trendHatchery" style="max-height:260px"></canvas></div>
+        <div class="chart-card"><h4 data-i18n="chartCType">👥 Actual by Customer Type</h4><canvas id="trendCType" style="max-height:260px"></canvas></div>
+      </div>
+
+      <!-- Charts Row 3: Pareto + Heatmap -->
+      <div class="trend-grid" data-section="charts3">
+        <div class="chart-card"><h4>📊 Top Customers — Pareto (80/20)</h4><canvas id="paretoChart" style="max-height:260px"></canvas></div>
+        <div class="chart-card"><h4>🔥 Delivery Gap Heatmap</h4><div id="heatmapWrap" style="overflow-x:auto;margin-top:4px"></div></div>
+      </div>
+
+    </div><!-- /#tab-dashboard -->
+
+    <div id="tab-entry" class="hidden">
       <div class="kpi-grid">
         <div class="kpi"><div class="kpi-label" data-i18n="kpiTotal">รายการทั้งหมด</div><div class="kpi-value kpi-blue" id="kTotal">0</div></div>
         <div class="kpi"><div class="kpi-label" data-i18n="kpiOrdered">ยอดสั่ง (ตัว)</div><div class="kpi-value kpi-blue" id="kOrdered">0</div></div>
@@ -428,58 +544,7 @@
         <button class="btn-secondary" onclick="openSaleReportModal()" data-i18n="exportSaleReportBtn">📊 Export Sale Report</button>
         <button class="btn-add" onclick="exportPDF()" data-i18n="exportPdfBtn">📥 Export PDF</button>
       </div>
-      <!-- ── Advanced KPI Row ── -->
-      <div class="adv-kpi-grid" id="advKPISection">
-        <div class="adv-kpi-card wow">
-          <div class="adv-kpi-label">Week over Week</div>
-          <div class="adv-kpi-period" id="kpiWoWPeriod">—</div>
-          <div class="adv-kpi-value" id="kpiWoWValue">—</div>
-          <div class="adv-kpi-change flat" id="kpiWoWChange">—</div>
-        </div>
-        <div class="adv-kpi-card mom">
-          <div class="adv-kpi-label">Month over Month</div>
-          <div class="adv-kpi-period" id="kpiMoMPeriod">—</div>
-          <div class="adv-kpi-value" id="kpiMoMValue">—</div>
-          <div class="adv-kpi-change flat" id="kpiMoMChange">—</div>
-        </div>
-        <div class="adv-kpi-card yoy">
-          <div class="adv-kpi-label">Year over Year</div>
-          <div class="adv-kpi-period" id="kpiYoYPeriod">—</div>
-          <div class="adv-kpi-value" id="kpiYoYValue">—</div>
-          <div class="adv-kpi-change flat" id="kpiYoYChange">—</div>
-        </div>
-        <div class="adv-kpi-card forecast">
-          <div class="adv-kpi-label">📈 Forecast (MA4)</div>
-          <div class="adv-kpi-period" id="kpiForecastPeriod">—</div>
-          <div class="adv-kpi-value" id="kpiForecastValue">—</div>
-          <div class="adv-kpi-change flat" id="kpiForecastChange">—</div>
-        </div>
-      </div>
-      <div class="trend-grid" data-section="charts1">
-        <div class="chart-card">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-            <h4 data-i18n="chartTrend" style="margin:0">📈 แนวโน้มรายสัปดาห์ + Forecast</h4>
-            <div style="display:flex;gap:4px">
-              <button onclick="setTrendWindow(4)"  id="trendBtn4"  class="trend-range-btn">1M</button>
-              <button onclick="setTrendWindow(13)" id="trendBtn13" class="trend-range-btn trend-range-active">3M</button>
-              <button onclick="setTrendWindow(26)" id="trendBtn26" class="trend-range-btn">6M</button>
-              <button onclick="setTrendWindow(52)" id="trendBtn52" class="trend-range-btn">1Y</button>
-            </div>
-          </div>
-          <canvas id="trendLine"></canvas>
-        </div>
-        <div class="chart-card"><h4 data-i18n="chartBreed">🐔 แยกตามสายพันธุ์ (%)</h4><canvas id="trendBreed"></canvas></div>
-      </div>
-      <div class="trend-grid" data-section="charts2">
-        <div class="chart-card"><h4 data-i18n="chartHatchery">🏭 ยอด Actual ต่อโรงฟัก</h4><canvas id="trendHatchery"></canvas></div>
-        <div class="chart-card"><h4 data-i18n="chartCType">👥 ยอดต่อประเภทลูกค้า</h4><canvas id="trendCType"></canvas></div>
-      </div>
-      <!-- ── Pareto + Heatmap ── -->
-      <div class="trend-grid" data-section="charts3">
-        <div class="chart-card"><h4>📊 Pareto: Top Customers (80/20 Rule)</h4><canvas id="paretoChart"></canvas></div>
-        <div class="chart-card"><h4>🔥 Heatmap: Delivery Gap (Hatchery × Day)</h4><div id="heatmapWrap" style="overflow-x:auto;margin-top:4px"></div></div>
-      </div>
-      <!-- ── ORDER PLANNING + ACTUAL (ต่อจาก Pareto) ── -->
+      <!-- ── ORDER PLANNING + ACTUAL ── -->
       <div class="summary-grid" data-section="matrices"><div><div class="summary-title"><span data-i18n="orderPlanning">ORDER PLANNING FROM SALES</span> <span id="sumScopeLabel1"></span></div><table class="matrix" id="planMatrix"></table></div><div><div class="summary-title"><span data-i18n="actualDist">ACTUAL DOC DISTRIBUTED</span> <span id="sumScopeLabel2"></span></div><table class="matrix" id="actualMatrix"></table></div></div>
       <div class="summary-section" data-section="deliveryReport"><div class="summary-title" data-i18n="deliveryReportSection">CUSTOMER DELIVERY REPORT</div><div class="table-wrap" style="max-height:400px;overflow-y:auto;border-radius:8px;"><table class="matrix" id="deliveryReportTable" style="text-align:left;overflow:visible;border-radius:0;"><thead><tr><th style="text-align:left;">Date</th><th style="text-align:left;">Hatchery</th><th style="text-align:left;">Customer</th><th style="text-align:left;">Breed</th><th style="text-align:left;" data-i18n="lblTruckPlate">Truck Plate</th><th style="text-align:left;" data-i18n="th_depTime">Dep. Time</th><th style="text-align:left;" data-i18n="th_location">Location</th><th style="text-align:left;">Avg Wgt (M/F/U)</th><th style="text-align:right;">Actual Delivered</th></tr></thead><tbody id="deliveryReportTbody"></tbody></table></div></div>
       <div class="summary-section" data-section="targetVsActual"><div class="summary-title" data-i18n="targetVsActualSection">TARGET vs ACTUAL</div><table class="matrix" id="bookingTargetMatrix"></table></div>
@@ -1427,6 +1492,7 @@ async function onLogin(user){
   await Promise.all([loadProfiles(),loadRecords(),loadTargets(),loadEstimates(),loadCustomers()]);
   applyPermissionsToUI(); populateWeekFilters(); renderEntry(); renderSummary();
   if(hasPermission('view_admin_tab')){renderAdminTable();renderTargetsTable();renderEstimatesTable();renderCustomersTable();}
+  switchTab('dashboard');
   subscribeRealtime();
   loadNotificationSettings().then(()=>checkTargetShortfall());
   // ── เปิด Record จาก QR URL (?record=uuid) ─────────────────
@@ -1654,9 +1720,10 @@ function subscribeRealtime(){
 
 function switchTab(name){
   document.querySelectorAll('.nav-item,.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
-  ['entry','summary','transport','admin'].forEach(t=>document.getElementById('tab-'+t).classList.toggle('hidden',t!==name));
+  ['dashboard','entry','summary','transport','admin'].forEach(t=>document.getElementById('tab-'+t)?.classList.toggle('hidden',t!==name));
   if(name==='transport') loadTransportReport();
   if(name==='admin' && hasPermission('view_admin_tab')) { loadActivityLog(); loadNotificationSettings(); }
+  if(name==='dashboard') renderDashboard();
   if(window.innerWidth<=768) closeSidebar();
 }
 function populateWeekFilters(){
@@ -1828,10 +1895,39 @@ function renderSummary(){
   document.getElementById('bookingTargetMatrix').innerHTML=buildTargetVsActualMatrix(tgtByType,actByType,scopeLabel); document.getElementById('hatcheryFunnelMatrix').innerHTML=buildHatcheryFunnelMatrix(hEst,hOrd,hAct);
   document.getElementById('sexHatcheryMatrix').innerHTML=buildSexHatcheryMatrix(hM,hF,hU); renderSexCharts(hM,hF,hU);
   document.getElementById('topCustomersMatrix').innerHTML=buildTopCustomersMatrix(rows); document.getElementById('diffMatrix').innerHTML=buildDiffMatrix(planPivot,actPivot);
-  renderTrendCharts(rows);
+  // Charts live in Dashboard tab — call renderDashboard() to refresh them
+}
+
+// ══════════════════════════════════════════════════════════════
+// DASHBOARD — always uses allRecords (all-time view)
+// ══════════════════════════════════════════════════════════════
+function renderDashboard() {
+  if (!allRecords || !allRecords.length) return;
+
+  // ── KPI Strip ──
+  const totalAct = allRecords.reduce((s,r)=>s+(r.total_actual||0),0);
+  const totalOrd = allRecords.reduce((s,r)=>s+(r.total_ordered||0),0);
+  const totalDOA = allRecords.reduce((s,r)=>s+(r.doa_count||0),0);
+  const uniqueCusts = new Set(allRecords.map(r=>r.customer_name).filter(Boolean)).size;
+  const fulfillPct = totalOrd ? (totalAct/totalOrd*100) : 0;
+  const doaPct = totalAct ? (totalDOA/totalAct*100) : 0;
+  const fmtN = n => n>=1000000?(n/1000000).toFixed(1)+'M':n>=1000?(n/1000).toFixed(1)+'K':n.toLocaleString();
+
+  const set = (id,v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
+  set('dashTotalAct', fmtN(totalAct));
+  set('dashTotalActSub', totalAct.toLocaleString()+' chicks (all time)');
+  set('dashTotalOrd', fmtN(totalOrd));
+  set('dashTotalOrdSub', totalOrd.toLocaleString()+' chicks ordered');
+  set('dashFulfill', fulfillPct.toFixed(1)+'%');
+  set('dashCusts', uniqueCusts.toLocaleString());
+  set('dashCustsSub', uniqueCusts+' unique farms / customers');
+  set('dashDOA', totalDOA>0 ? doaPct.toFixed(2)+'%' : '—');
+
+  // ── Charts + Advanced KPIs ──
+  renderTrendCharts(allRecords);
   renderAdvancedKPIs();
-  renderHeatmap(rows);
-  renderParetoChart(rows);
+  renderHeatmap(allRecords);
+  renderParetoChart(allRecords);
 }
 
 function renderDeliveryReport(scopedRows) {
