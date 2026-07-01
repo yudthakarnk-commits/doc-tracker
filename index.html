@@ -1030,15 +1030,15 @@
 
 <div id="estimateModal" class="modal-overlay hidden"><div class="modal" style="max-width:520px"><div class="modal-header"><h2 data-i18n="setEstimateTitle">ตั้งประมาณการ Hatchery</h2><button class="modal-close" onclick="closeEstimateModal()">&times;</button></div><div class="modal-body"><div class="form-row"><label data-i18n="lblPeriodType">ประเภทระยะเวลา</label><select id="eePeriodType" onchange="toggleEstimatePeriodFields()"><option value="week" data-i18n="byWeek">📅 รายสัปดาห์</option><option value="day" data-i18n="byDay">📆 รายวัน</option></select></div><div class="form-row hidden" id="eeDateRow"><label data-i18n="lblDate">วันที่</label><input id="eeDate" type="date"/></div><div class="form-row" id="eeWeekRow"><label data-i18n="lblWeek">สัปดาห์</label><input id="eeWeek" type="number" min="1" max="53"/></div><div class="form-row"><label data-i18n="lblHatchery">โรงฟัก</label><select id="eeHatchery"><option value="" data-i18n="chooseOption">-- เลือก --</option><option value="Chengkau">Chengkau</option><option value="Kluang">Kluang</option><option value="K.Kangsar">K.Kangsar</option><option value="Sg. Sayong">Sg. Sayong</option><option value="Kota">Kota</option><option value="External">🛒 External (Buy-in)</option></select></div><div class="form-row"><label data-i18n="lblEstimateTotal">Estimate Total</label><input id="eeTotal" type="number" min="0"/></div><div class="form-row"><label data-i18n="lblNotes">หมายเหตุ</label><input id="eeNotes" type="text"/></div></div><div class="modal-footer"><button class="btn-secondary" onclick="closeEstimateModal()" data-i18n="cancel">ยกเลิก</button><button class="btn-add" onclick="saveEstimate()" data-i18n="save">บันทึก</button></div></div></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://unpkg.com/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://unpkg.com/chartjs-plugin-datalabels@2/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" async></script>
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="https://unpkg.com/@emailjs/browser@4/dist/email.min.js"></script>
 
 <script>
 // ===========================================================
@@ -3551,10 +3551,10 @@ function _loadQRLib() {
       s.onerror = () => fallback ? tryLoad(fallback, null) : resolve(false);
       document.head.appendChild(s);
     };
-    // Primary: Cloudflare CDN → Fallback: jsdelivr
+    // Primary: Cloudflare CDN → Fallback: unpkg
     tryLoad(
       'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js',
-      'https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js'
+      'https://unpkg.com/qrcodejs@1.0.0/qrcode.min.js'
     );
   });
 }

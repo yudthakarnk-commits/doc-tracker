@@ -5,14 +5,14 @@ const CDN_CACHE = 'doc-tracker-cdn-v2';
 const APP_SHELL = ['./index.html', './manifest.json'];
 
 const CDN_URLS = [
-  'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
-  'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js',
-  'https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2',
+  'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js',
+  'https://unpkg.com/chart.js@4.4.0/dist/chart.umd.min.js',
+  'https://unpkg.com/chartjs-plugin-datalabels@2/dist/chartjs-plugin-datalabels.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
-  'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js',
-  'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js',
+  'https://unpkg.com/jsqr@1.4.0/dist/jsQR.js',
+  'https://unpkg.com/@emailjs/browser@4/dist/email.min.js',
   'https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap'
 ];
 
@@ -51,7 +51,7 @@ self.addEventListener('fetch', event => {
 
   // CDN assets — cache first, network fallback
   if (
-    url.hostname.includes('cdn.jsdelivr.net') ||
+    url.hostname.includes('unpkg.com') ||
     url.hostname.includes('cdnjs.cloudflare.com') ||
     url.hostname.includes('fonts.googleapis.com') ||
     url.hostname.includes('fonts.gstatic.com')
