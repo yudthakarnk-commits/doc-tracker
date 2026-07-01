@@ -51,6 +51,10 @@
   .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:50;padding:14px} .modal{background:#fff;border-radius:12px;max-width:750px;width:100%;max-height:92vh;overflow-y:auto} .modal-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center} .modal-header h2{margin:0;font-size:17px} .modal-close{background:none;border:none;font-size:22px;color:var(--muted);line-height:1} .modal-body{padding:18px 20px} .modal-footer{padding:12px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
   .form-row{margin-bottom:11px} .form-row label{display:block;font-weight:500;margin-bottom:4px;font-size:13px;color:#374151} .form-row input,.form-row select,.form-row textarea{width:100%;padding:8px 11px;border:1px solid var(--border);border-radius:7px} .form-row input:focus,.form-row select:focus{outline:none;border-color:var(--primary)} .form-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px} .form-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px} .form-grid-4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px} .section-label{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin:14px 0 6px} .btn-secondary{background:#fff;color:var(--text);border:1px solid var(--border);padding:8px 14px;border-radius:7px;font-weight:500} .btn-secondary:hover{background:var(--bg)} .btn-danger{background:var(--danger);color:#fff;border:none;padding:8px 14px;border-radius:7px;font-weight:500}
   .summary-section{margin-bottom:20px} .summary-title{font-size:13px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;background:#f3f4f6;padding:8px 12px;border-radius:6px} .matrix{width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden;box-shadow:var(--shadow)} .matrix th,.matrix td{padding:8px 12px;border:1px solid var(--border);text-align:right;font-variant-numeric:tabular-nums;font-size:13px} .matrix th:first-child,.matrix td:first-child{text-align:left} .matrix thead th{background:#374151;color:#fff;font-weight:600} .matrix .row-direct{background:#eff6ff} .matrix .row-contract{background:#fff7ed} .matrix .row-company{background:#f0fdf4} .matrix .row-total{background:#1f2937;color:#fff;font-weight:700} .matrix .row-total td{border-color:#374151} .matrix .col-total{font-weight:700;background:#f3f4f6} .matrix .row-target{background:#fef3c7;font-weight:600} .matrix .row-diff{font-weight:600} .matrix .row-diff.pos{background:#d1fae5} .matrix .row-diff.neg{background:#fee2e2}
+  /* Plan vs Actual matrix color distinction */
+  #planMatrix thead th{background:#1e40af} #planMatrix .row-total{background:#1e3a8a!important} .plan-title{background:linear-gradient(135deg,#dbeafe,#eff6ff);color:#1e40af}
+  #actualMatrix thead th{background:#15803d} #actualMatrix .row-total{background:#14532d!important} .actual-title{background:linear-gradient(135deg,#dcfce7,#f0fdf4);color:#15803d}
+  .heatmap-title{background:linear-gradient(135deg,#fef3c7,#fff7ed);color:#b45309}
   .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px} @media(max-width:1024px){.summary-grid{grid-template-columns:1fr}} .trend-grid{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:14px} @media(max-width:1024px){.trend-grid{grid-template-columns:1fr}} .chart-card{background:#fff;border-radius:10px;box-shadow:var(--shadow);padding:14px} .chart-card h4{margin:0 0 10px;font-size:13px;color:#374151} .chart-card canvas{max-height:280px}
   .toast{position:fixed;bottom:20px;right:20px;padding:11px 18px;border-radius:7px;color:#fff;font-size:13px;z-index:100;box-shadow:0 10px 25px rgba(0,0,0,.2);animation:slideIn .25s} .toast.success{background:var(--success)} .toast.error{background:var(--danger)} .toast.info{background:var(--primary)} @keyframes slideIn{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
   .sortable{cursor:pointer;user-select:none;position:relative} .sortable:hover{background:#e5e7eb} .sort-ind{display:inline-block;width:12px;font-size:10px;color:var(--muted);margin-left:4px} .sortable.sort-asc .sort-ind::before{content:'▲';color:var(--primary)} .sortable.sort-desc .sort-ind::before{content:'▼';color:var(--primary)}
@@ -507,10 +511,10 @@
         <div class="chart-card"><h4 data-i18n="chartCType">👥 Actual by Customer Type</h4><canvas id="trendCType" style="max-height:260px"></canvas></div>
       </div>
 
-      <!-- Charts Row 3: Pareto + Heatmap -->
+      <!-- Charts Row 3: Pareto + Customer Type Pie -->
       <div class="trend-grid" data-section="charts3">
         <div class="chart-card"><h4>📊 Top Customers — Pareto (80/20)</h4><canvas id="paretoChart" style="max-height:260px"></canvas></div>
-        <div class="chart-card"><h4>🔥 Delivery Gap Heatmap</h4><div id="heatmapWrap" style="overflow-x:auto;margin-top:4px"></div></div>
+        <div class="chart-card"><h4>🏷️ Customer Type Ratio (%)</h4><canvas id="trendCtPie" style="max-height:260px"></canvas></div>
       </div>
 
     </div><!-- /#tab-dashboard -->
@@ -566,8 +570,22 @@
         <button class="btn-secondary" onclick="openSaleReportModal()" data-i18n="exportSaleReportBtn">📊 Export Sale Report</button>
         <button class="btn-add" onclick="exportPDF()" data-i18n="exportPdfBtn">📥 Export PDF</button>
       </div>
-      <!-- ── ORDER PLANNING + ACTUAL ── -->
-      <div class="summary-grid" data-section="matrices"><div><div class="summary-title"><span data-i18n="orderPlanning">ORDER PLANNING FROM SALES</span> <span id="sumScopeLabel1"></span></div><table class="matrix" id="planMatrix"></table></div><div><div class="summary-title"><span data-i18n="actualDist">ACTUAL DOC DISTRIBUTED</span> <span id="sumScopeLabel2"></span></div><table class="matrix" id="actualMatrix"></table></div></div>
+      <!-- ── ORDER PLANNING + HEATMAP ── -->
+      <div class="summary-grid" data-section="matrices">
+        <div>
+          <div class="summary-title plan-title"><span data-i18n="orderPlanning">ORDER PLANNING FROM SALES</span> <span id="sumScopeLabel1"></span></div>
+          <div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="matrix" id="planMatrix"></table></div>
+        </div>
+        <div>
+          <div class="summary-title heatmap-title">🔥 Delivery Gap Heatmap</div>
+          <div id="heatmapWrap" style="overflow-x:auto;margin-top:4px"></div>
+        </div>
+      </div>
+      <!-- ── ACTUAL DISTRIBUTED (full-width below) ── -->
+      <div class="summary-section" data-section="actualDistrib" style="margin-top:12px">
+        <div class="summary-title actual-title"><span data-i18n="actualDist">ACTUAL DOC DISTRIBUTED</span> <span id="sumScopeLabel2"></span></div>
+        <div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="matrix" id="actualMatrix"></table></div>
+      </div>
       <div class="summary-section" data-section="deliveryReport"><div class="summary-title" data-i18n="deliveryReportSection">CUSTOMER DELIVERY REPORT</div><div class="table-wrap" style="max-height:400px;overflow-y:auto;border-radius:8px;"><table class="matrix" id="deliveryReportTable" style="text-align:left;overflow:visible;border-radius:0;"><thead><tr><th style="text-align:left;">Date</th><th style="text-align:left;">Hatchery</th><th style="text-align:left;">Customer</th><th style="text-align:left;">Breed</th><th style="text-align:left;" data-i18n="lblTruckPlate">Truck Plate</th><th style="text-align:left;" data-i18n="th_depTime">Dep. Time</th><th style="text-align:left;" data-i18n="th_location">Location</th><th style="text-align:left;">Avg Wgt (M/F/U)</th><th style="text-align:right;">Actual Delivered</th></tr></thead><tbody id="deliveryReportTbody"></tbody></table></div></div>
       <div class="summary-section" data-section="targetVsActual"><div class="summary-title" data-i18n="targetVsActualSection">TARGET vs ACTUAL</div><table class="matrix" id="bookingTargetMatrix"></table></div>
       <div class="summary-section" data-section="hatcheryFunnel"><div class="summary-title" data-i18n="hatcheryFunnelSection">3-STAGE TRACKING</div><table class="matrix" id="hatcheryFunnelMatrix"></table></div>
@@ -1202,6 +1220,7 @@ function t(key){ return (I18N[currentLang]&&I18N[currentLang][key]) || (I18N.th[
 function setLanguage(lang){
   currentLang=lang; localStorage.setItem('LANG',lang); document.documentElement.lang=lang;
   applyLanguage();
+  if(allRecords.length) populateWeekFilters();
   // Re-render current tab without page reload (preserves tab state)
   const cur=localStorage.getItem('DOC_LAST_TAB')||'dashboard';
   if(cur==='dashboard') renderDashboard();
@@ -1952,7 +1971,7 @@ function renderSummary(){
   document.getElementById('bookingTargetMatrix').innerHTML=buildTargetVsActualMatrix(tgtByType,actByType,scopeLabel); document.getElementById('hatcheryFunnelMatrix').innerHTML=buildHatcheryFunnelMatrix(hEst,hOrd,hAct);
   document.getElementById('sexHatcheryMatrix').innerHTML=buildSexHatcheryMatrix(hM,hF,hU); renderSexCharts(hM,hF,hU);
   document.getElementById('topCustomersMatrix').innerHTML=buildTopCustomersMatrix(rows); document.getElementById('diffMatrix').innerHTML=buildDiffMatrix(planPivot,actPivot);
-  // Charts live in Dashboard tab — call renderDashboard() to refresh them
+  renderHeatmap(rows);
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -2004,7 +2023,7 @@ function renderDashboard() {
   if(window._dashT1) clearTimeout(window._dashT1);
   if(window._dashT2) clearTimeout(window._dashT2);
   window._dashT1=setTimeout(()=>{ if(typeof Chart!=='undefined'){renderTrendCharts(rows);renderAdvancedKPIs();} }, 0);
-  window._dashT2=setTimeout(()=>{ if(typeof Chart!=='undefined'){renderHeatmap(rows);renderParetoChart(rows);} }, 60);
+  window._dashT2=setTimeout(()=>{ if(typeof Chart!=='undefined'){renderParetoChart(rows);} }, 60);
 }
 
 function renderDeliveryReport(scopedRows) {
@@ -2014,7 +2033,7 @@ function renderDeliveryReport(scopedRows) {
   drTbody.innerHTML = sorted.map(r => `<tr><td style="border-bottom:1px solid var(--border);">${r.record_date||'-'}</td><td style="border-bottom:1px solid var(--border);">${esc(r.hatchery)}</td><td style="border-bottom:1px solid var(--border);">${esc(r.customer_name)}</td><td style="border-bottom:1px solid var(--border);">${esc(r.breed||'-')}</td><td style="border-bottom:1px solid var(--border);color:var(--primary);font-weight:600;">${esc(r.truck_plate||'-')}</td><td style="border-bottom:1px solid var(--border);">${r.departure_time||'-'}</td><td style="border-bottom:1px solid var(--border);"><div style="max-width:150px;overflow:hidden;text-overflow:ellipsis" title="${esc(r.location)}">${esc(r.location||'-')}</div></td><td style="border-bottom:1px solid var(--border);font-size:11px;color:var(--muted);">M:${r.avg_weight_m?r.avg_weight_m+'g':'-'} / F:${r.avg_weight_f?r.avg_weight_f+'g':'-'} / U:${r.avg_weight_mixed?r.avg_weight_mixed+'g':'-'}</td><td style="border-bottom:1px solid var(--border);text-align:right;font-weight:600;color:var(--success);">${(r.total_actual||0).toLocaleString()}</td></tr>`).join('');
 }
 
-let chartTrend=null,chartBreed=null,chartHat=null,chartCt=null,chartSexHat=null,chartMF=null,chartPareto=null;
+let chartTrend=null,chartBreed=null,chartHat=null,chartCt=null,chartCtPie=null,chartSexHat=null,chartMF=null,chartPareto=null;
 let trendWindowWeeks=13, _lastScopedRows=[];
 function setTrendWindow(n){
   trendWindowWeeks=n;
@@ -2050,6 +2069,8 @@ function renderTrendCharts(scopedRows){
   
   const ctTot=Object.fromEntries(CTYPES.map(c=>[c,0])), ctPlan=Object.fromEntries(CTYPES.map(c=>[c,0])); scopedRows.forEach(r=>{if(ctTot[r.customer_type]!==undefined){ctTot[r.customer_type]+=(r.total_actual||0);ctPlan[r.customer_type]+=(r.total_ordered||0);}});
   if(chartCt) chartCt.destroy(); chartCt=new Chart(document.getElementById('trendCType'),{type:'bar',data:{labels:CTYPES,datasets:[{label:'Actual',data:CTYPES.map(c=>ctTot[c]),backgroundColor:['#3b82f6','#f59e0b','#10b981']}]},options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:24}},plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(17,24,39,.95)',padding:10,titleFont:{size:13,weight:'bold'},bodyFont:{size:12},callbacks:{title:ctx=>ctx[0].label,label:ctx=>{const c=ctx.label,a=ctTot[c]||0,p=ctPlan[c]||0,d=a-p,pct=p?(d/p*100):0;return[`Actual:  ${a.toLocaleString()}`,`Order:   ${p.toLocaleString()}`,`Diff:    ${d>0?'+':''}${d.toLocaleString()}`,`Diff %:  ${pct>0?'+':''}${pct.toFixed(1)}%`];}}},datalabels:{display:true,anchor:'end',align:'top',color:'#1f2937',font:{weight:'bold',size:12},formatter:v=>v.toLocaleString()}},scales:{y:{ticks:{callback:v=>v.toLocaleString()}}}}});
+
+  const ctPieEl=document.getElementById('trendCtPie'); if(ctPieEl){if(chartCtPie)chartCtPie.destroy();const ctTotal=CTYPES.reduce((s,c)=>s+ctTot[c],0);chartCtPie=new Chart(ctPieEl,{type:'doughnut',data:{labels:CTYPES,datasets:[{data:CTYPES.map(c=>ctTot[c]),backgroundColor:['#3b82f6','#f59e0b','#10b981'],borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:12},padding:12}},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed.toLocaleString()} (${ctTotal?(ctx.parsed/ctTotal*100).toFixed(1):'0'}%)`}},datalabels:{display:true,color:'#fff',font:{weight:'bold',size:12},formatter:(v)=>ctTotal&&v?(v/ctTotal*100).toFixed(1)+'%':''}}}})}
 }
 function renderSexCharts(hM,hF,hU){
   if(chartSexHat) chartSexHat.destroy(); chartSexHat = new Chart(document.getElementById('trendSexHatchery'),{type:'bar',data:{labels:HATCHERIES,datasets:[{label:'Male',data:HATCHERIES.map(h=>hM[h]||0),backgroundColor:'#3b82f6'},{label:'Female',data:HATCHERIES.map(h=>hF[h]||0),backgroundColor:'#ec4899'},{label:'Unsexed',data:HATCHERIES.map(h=>hU[h]||0),backgroundColor:'#a855f7'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'},datalabels:{display:true,color:'#fff',font:{weight:'bold',size:10},formatter:(v,ctx)=>{if(!v)return'';const h=HATCHERIES[ctx.dataIndex],m=hM[h]||0,f=hF[h]||0,u=hU[h]||0,s=m+f,t=s+u;if(ctx.datasetIndex===0||ctx.datasetIndex===1)return s?(v/s*100).toFixed(1)+'%':'';return t?(v/t*100).toFixed(1)+'%':'';}},tooltip:{callbacks:{footer:items=>'Total: '+items.reduce((s,i)=>s+i.parsed.y,0).toLocaleString()}}},scales:{x:{stacked:true},y:{stacked:true,ticks:{callback:v=>v.toLocaleString()}}}}});
