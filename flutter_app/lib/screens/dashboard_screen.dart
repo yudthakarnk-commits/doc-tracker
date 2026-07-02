@@ -14,8 +14,19 @@ String _short(num n) {
   return _numFmt.format(n);
 }
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  String _mode = 'year'; // 'year' | 'month' | 'week'
+  String? _year; // null -> latest year available
+  String? _month; // 'yyyy-MM'
+  int? _week;
+  String? _hatchery; // null = all
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +40,48 @@ class DashboardScreen extends StatelessWidget {
         if (svc.error != null && svc.records.isEmpty) {
           return _ErrorView(message: svc.error!);
         }
-        final rows = svc.records;
+
+        // Available filter values from data
+        final years = svc.records
+            .map((r) => r.recordDate.length >= 4
+                ? r.recordDate.substring(0, 4)
+                : '')
+            .where((y) => y.isNotEmpty)
+            .toSet()
+            .toList()
+          ..sort((a, b) => b.compareTo(a));
+        final months = svc.records
+            .map((r) => r.recordDate.length >= 7
+                ? r.recordDate.substring(0, 7)
+                : '')
+            .where((m) => m.isNotEmpty)
+            .toSet()
+            .toList()
+          ..sort((a, b) => b.compareTo(a));
+        final weeks = svc.weeksByRecency();
+
+        final selYear =
+            (_year != null && years.contains(_year)) ? _year! : (years.isNotEmpty ? years.first : '');
+        final selMonth =
+            (_month != null && months.contains(_month)) ? _month! : (months.isNotEmpty ? months.first : '');
+        final selWeek =
+            (_week != null && weeks.contains(_week)) ? _week! : (weeks.isNotEmpty ? weeks.first : 0);
+
+        // Hatchery filter applies to everything (including trend)
+        var base = svc.records;
+        if (_hatchery != null) {
+          base = base.where((r) => r.hatchery == _hatchery).toList();
+        }
+        // Period filter for KPIs / donut / bars
+        var rows = base;
+        if (_mode == 'year' && selYear.isNotEmpty) {
+          rows = rows.where((r) => r.recordDate.startsWith(selYear)).toList();
+        } else if (_mode == 'month' && selMonth.isNotEmpty) {
+          rows = rows.where((r) => r.recordDate.startsWith(selMonth)).toList();
+        } else if (_mode == 'week') {
+          rows = rows.where((r) => r.weekNo == selWeek).toList();
+        }
+
         final totalAct =
             rows.fold<int>(0, (s, r) => s + r.totalActual);
         final totalOrd =
@@ -43,6 +95,95 @@ class DashboardScreen extends StatelessWidget {
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
+              // ── Filter bar ──
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      SegmentedButton<String>(
+                        segments: [
+                          ButtonSegment(
+                              value: 'year', label: Text(tr('filterYear'))),
+                          ButtonSegment(
+                              value: 'month', label: Text(tr('filterMonth'))),
+                          ButtonSegment(
+                              value: 'week', label: Text(tr('filterWeek'))),
+                        ],
+                        selected: {_mode},
+                        onSelectionChanged: (s) =>
+                            setState(() => _mode = s.first),
+                        style: ButtonStyle(
+                          visualDensity: VisualDensity.compact,
+                          textStyle: WidgetStatePropertyAll(const TextStyle(
+                              fontFamily: 'Sarabun',
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600)),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Row(children: [
+                        Expanded(
+                          child: _mode == 'year'
+                              ? _dd<String>(
+                                  value: selYear.isEmpty ? null : selYear,
+                                  items: [
+                                    for (final y in years)
+                                      DropdownMenuItem(
+                                          value: y, child: Text(y)),
+                                  ],
+                                  onChanged: (v) =>
+                                      setState(() => _year = v),
+                                )
+                              : _mode == 'month'
+                                  ? _dd<String>(
+                                      value: selMonth.isEmpty
+                                          ? null
+                                          : selMonth,
+                                      items: [
+                                        for (final m in months)
+                                          DropdownMenuItem(
+                                              value: m,
+                                              child: Text(monthLabel(m))),
+                                      ],
+                                      onChanged: (v) =>
+                                          setState(() => _month = v),
+                                    )
+                                  : _dd<int>(
+                                      value: selWeek == 0 ? null : selWeek,
+                                      items: [
+                                        for (final w in weeks)
+                                          DropdownMenuItem(
+                                              value: w,
+                                              child: Text('Week $w')),
+                                      ],
+                                      onChanged: (v) =>
+                                          setState(() => _week = v),
+                                    ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: _dd<String?>(
+                            value: _hatchery,
+                            items: [
+                              DropdownMenuItem<String?>(
+                                  value: null,
+                                  child: Text(tr('allHatcheries'))),
+                              for (final h in AppConfig.hatcheries)
+                                DropdownMenuItem<String?>(
+                                    value: h, child: Text(h)),
+                            ],
+                            onChanged: (v) =>
+                                setState(() => _hatchery = v),
+                          ),
+                        ),
+                      ]),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
               _KpiGrid(cards: [
                 _Kpi('📦', tr('kpiDelivered'), _short(totalAct),
                     const Color(0xFF2563EB)),
@@ -56,7 +197,7 @@ class DashboardScreen extends StatelessWidget {
               const SizedBox(height: 16),
               _ChartCard(
                 title: tr('chartTrend'),
-                child: SizedBox(height: 220, child: _TrendChart(rows: rows)),
+                child: SizedBox(height: 220, child: _TrendChart(rows: base)),
               ),
               const SizedBox(height: 16),
               _ChartCard(
@@ -72,6 +213,24 @@ class DashboardScreen extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  /// Compact dropdown used in the filter bar.
+  Widget _dd<T>({
+    required T? value,
+    required List<DropdownMenuItem<T>> items,
+    required ValueChanged<T?> onChanged,
+  }) {
+    return DropdownButtonFormField<T>(
+      value: value,
+      items: items,
+      onChanged: onChanged,
+      isExpanded: true,
+      decoration: const InputDecoration(
+        isDense: true,
+        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      ),
     );
   }
 }

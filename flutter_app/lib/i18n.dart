@@ -50,6 +50,10 @@ const _strings = <String, Map<String, String>>{
   },
   'noData': {'th': 'ไม่มีข้อมูล', 'en': 'No data'},
   'retry': {'th': 'ลองใหม่', 'en': 'Retry'},
+  'filterYear': {'th': 'ปี', 'en': 'Year'},
+  'filterMonth': {'th': 'เดือน', 'en': 'Month'},
+  'filterWeek': {'th': 'สัปดาห์', 'en': 'Week'},
+  'allHatcheries': {'th': 'ทุกโรงฟัก', 'en': 'All hatcheries'},
   // Entry
   'searchHint': {
     'th': 'ค้นหา ลูกค้า / โรงฟัก / DO#',
@@ -101,3 +105,20 @@ const _strings = <String, Map<String, String>>{
 
 /// Translate a key using the current language.
 String tr(String key) => _strings[key]?[lang.value] ?? key;
+
+const _monthsTh = [
+  'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.',
+  'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'
+];
+const _monthsEn = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+];
+
+/// 'yyyy-MM' -> localized label, e.g. 'ก.ค. 2026' / 'Jul 2026'.
+String monthLabel(String ym) {
+  final parts = ym.split('-');
+  final m = int.tryParse(parts.length > 1 ? parts[1] : '') ?? 1;
+  final names = lang.value == 'th' ? _monthsTh : _monthsEn;
+  return '${names[(m - 1).clamp(0, 11)]} ${parts[0]}';
+}
