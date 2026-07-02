@@ -30,12 +30,12 @@ class _HomeShellState extends State<HomeShell> {
       appBar: AppBar(
         title: Text('🐣 ${titles[_index]}'),
         actions: [
-          IconButton(
-            tooltip: 'TH/EN',
-            icon: Text(lang.value == 'th' ? 'EN' : 'ไทย',
+          TextButton.icon(
+            onPressed: () => setLang(lang.value == 'th' ? 'en' : 'th'),
+            icon: const Icon(Icons.translate, size: 17),
+            label: Text(lang.value == 'th' ? 'TH' : 'EN',
                 style: const TextStyle(
                     fontSize: 13, fontWeight: FontWeight.w800)),
-            onPressed: () => setLang(lang.value == 'th' ? 'en' : 'th'),
           ),
           IconButton(
             tooltip: 'Refresh',

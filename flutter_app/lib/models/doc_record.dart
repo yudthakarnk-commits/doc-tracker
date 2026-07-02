@@ -1,7 +1,19 @@
 /// Row in the `doc_records` table (same schema as the web app).
 /// `total_ordered` / `total_actual` are generated columns — read-only.
+///
+/// PostgREST may return numbers as int, double, or String depending on the
+/// column type, so every field is parsed defensively.
+int? _toInt(dynamic v) {
+  if (v == null) return null;
+  if (v is num) return v.toInt();
+  return int.tryParse(v.toString());
+}
+
+String? _toStr(dynamic v) => v?.toString();
+
 class DocRecord {
-  final int? id;
+  /// bigint or uuid depending on schema — kept opaque and passed back as-is.
+  final Object? id;
   final String? userId;
   final int weekNo;
   final String recordDate; // yyyy-MM-dd
@@ -43,28 +55,28 @@ class DocRecord {
   });
 
   factory DocRecord.fromJson(Map<String, dynamic> j) => DocRecord(
-        id: j['id'] as int?,
-        userId: j['user_id'] as String?,
-        weekNo: (j['week_no'] as num?)?.toInt() ?? 0,
-        recordDate: j['record_date'] as String? ?? '',
-        dayName: j['day_name'] as String?,
-        hatchery: j['hatchery'] as String? ?? '',
-        customerType: j['customer_type'] as String? ?? '',
-        customerName: j['customer_name'] as String? ?? '',
-        customerCode: j['customer_code'] as String?,
-        breed: j['breed'] as String?,
-        externalSource: j['external_source'] as String?,
-        mOrdered: (j['m_ordered'] as num?)?.toInt(),
-        fOrdered: (j['f_ordered'] as num?)?.toInt(),
-        uOrdered: (j['u_ordered'] as num?)?.toInt(),
-        mActual: (j['m_actual'] as num?)?.toInt(),
-        fActual: (j['f_actual'] as num?)?.toInt(),
-        uActual: (j['u_actual'] as num?)?.toInt(),
-        totalOrdered: (j['total_ordered'] as num?)?.toInt() ?? 0,
-        totalActual: (j['total_actual'] as num?)?.toInt() ?? 0,
-        doNumber: j['do_number'] as String?,
-        truckPlate: j['truck_plate'] as String?,
-        notes: j['notes'] as String?,
+        id: j['id'],
+        userId: _toStr(j['user_id']),
+        weekNo: _toInt(j['week_no']) ?? 0,
+        recordDate: _toStr(j['record_date']) ?? '',
+        dayName: _toStr(j['day_name']),
+        hatchery: _toStr(j['hatchery']) ?? '',
+        customerType: _toStr(j['customer_type']) ?? '',
+        customerName: _toStr(j['customer_name']) ?? '',
+        customerCode: _toStr(j['customer_code']),
+        breed: _toStr(j['breed']),
+        externalSource: _toStr(j['external_source']),
+        mOrdered: _toInt(j['m_ordered']),
+        fOrdered: _toInt(j['f_ordered']),
+        uOrdered: _toInt(j['u_ordered']),
+        mActual: _toInt(j['m_actual']),
+        fActual: _toInt(j['f_actual']),
+        uActual: _toInt(j['u_actual']),
+        totalOrdered: _toInt(j['total_ordered']) ?? 0,
+        totalActual: _toInt(j['total_actual']) ?? 0,
+        doNumber: _toStr(j['do_number']),
+        truckPlate: _toStr(j['truck_plate']),
+        notes: _toStr(j['notes']),
       );
 
   /// Payload for insert/update — only the fields this app edits, so an

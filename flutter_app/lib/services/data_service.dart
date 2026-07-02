@@ -54,7 +54,7 @@ class DataService extends ChangeNotifier {
     await loadAll(force: true);
   }
 
-  Future<void> delete(int id) async {
+  Future<void> delete(Object id) async {
     await _sb.from('doc_records').delete().eq('id', id);
     records.removeWhere((r) => r.id == id);
     notifyListeners();
