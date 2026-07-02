@@ -55,6 +55,12 @@
   #planMatrix thead th{background:#1e40af} #planMatrix .row-total{background:#1e3a8a!important} .plan-title{background:linear-gradient(135deg,#dbeafe,#eff6ff);color:#1e40af}
   #actualMatrix thead th{background:#15803d} #actualMatrix .row-total{background:#14532d!important} .actual-title{background:linear-gradient(135deg,#dcfce7,#f0fdf4);color:#15803d}
   .heatmap-title{background:linear-gradient(135deg,#fef3c7,#fff7ed);color:#b45309}
+  .combined-title{background:linear-gradient(135deg,#f0f9ff,#e0f2fe);color:#0369a1}
+  .combined-matrix .group-hdr td{font-weight:700;font-size:11px;letter-spacing:.7px;padding:5px 12px;color:#fff}
+  .combined-matrix .sub-order td{background:#eff6ff}.combined-matrix .sub-actual td{background:#f0fdf4}.combined-matrix .sub-diff td{background:#fafafa}.combined-matrix .sub-pct td{background:#fafafa;border-bottom:3px solid #e5e7eb}
+  .combined-matrix .sub-label{padding-left:18px!important;font-size:12px;font-weight:600;white-space:nowrap}
+  .combined-matrix .grand-hdr td{background:#1f2937;color:#fff;font-weight:700;font-size:11px;letter-spacing:.7px;padding:5px 12px}
+  .combined-matrix .grand-row td{background:#111827;color:#f9fafb;font-weight:700}
   .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px} @media(max-width:1024px){.summary-grid{grid-template-columns:1fr}} .trend-grid{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:14px} @media(max-width:1024px){.trend-grid{grid-template-columns:1fr}} .chart-card{background:#fff;border-radius:10px;box-shadow:var(--shadow);padding:14px} .chart-card h4{margin:0 0 10px;font-size:13px;color:#374151} .chart-card canvas{max-height:280px}
   .toast{position:fixed;bottom:20px;right:20px;padding:11px 18px;border-radius:7px;color:#fff;font-size:13px;z-index:100;box-shadow:0 10px 25px rgba(0,0,0,.2);animation:slideIn .25s} .toast.success{background:var(--success)} .toast.error{background:var(--danger)} .toast.info{background:var(--primary)} @keyframes slideIn{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
   .sortable{cursor:pointer;user-select:none;position:relative} .sortable:hover{background:#e5e7eb} .sort-ind{display:inline-block;width:12px;font-size:10px;color:var(--muted);margin-left:4px} .sortable.sort-asc .sort-ind::before{content:'▲';color:var(--primary)} .sortable.sort-desc .sort-ind::before{content:'▼';color:var(--primary)}
@@ -570,22 +576,18 @@
         <button class="btn-secondary" onclick="openSaleReportModal()" data-i18n="exportSaleReportBtn">📊 Export Sale Report</button>
         <button class="btn-add" onclick="exportPDF()" data-i18n="exportPdfBtn">📥 Export PDF</button>
       </div>
-      <!-- ── ORDER PLANNING + HEATMAP ── -->
-      <div class="summary-grid" data-section="matrices">
-        <div>
-          <div class="summary-title plan-title"><span data-i18n="orderPlanning">ORDER PLANNING FROM SALES</span> <span id="sumScopeLabel1"></span></div>
-          <div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="matrix" id="planMatrix"></table></div>
-        </div>
-        <div>
-          <div class="summary-title heatmap-title">🔥 Delivery Gap Heatmap</div>
-          <div id="heatmapWrap" style="overflow-x:auto;margin-top:4px"></div>
-        </div>
+      <!-- ── COMBINED ORDER vs ACTUAL ── -->
+      <div class="summary-section" data-section="matrices" style="margin-top:0">
+        <div class="summary-title combined-title">📊 ORDER vs ACTUAL <span id="sumScopeLabel1" style="font-weight:400;text-transform:none"></span></div>
+        <div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="matrix combined-matrix" id="combinedMatrix"></table></div>
       </div>
-      <!-- ── ACTUAL DISTRIBUTED (full-width below) ── -->
-      <div class="summary-section" data-section="actualDistrib" style="margin-top:12px">
-        <div class="summary-title actual-title"><span data-i18n="actualDist">ACTUAL DOC DISTRIBUTED</span> <span id="sumScopeLabel2"></span></div>
-        <div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="matrix" id="actualMatrix"></table></div>
+      <!-- ── HEATMAP ── -->
+      <div class="summary-section" data-section="heatmapSection">
+        <div class="summary-title heatmap-title">🔥 Delivery Gap Heatmap</div>
+        <div id="heatmapWrap" style="overflow-x:auto;margin-top:4px"></div>
       </div>
+      <!-- hidden anchors kept so JS getElementById doesn't error -->
+      <span id="sumScopeLabel2" style="display:none"></span>
       <div class="summary-section" data-section="deliveryReport"><div class="summary-title" data-i18n="deliveryReportSection">CUSTOMER DELIVERY REPORT</div><div class="table-wrap" style="max-height:400px;overflow-y:auto;border-radius:8px;"><table class="matrix" id="deliveryReportTable" style="text-align:left;overflow:visible;border-radius:0;"><thead><tr><th style="text-align:left;">Date</th><th style="text-align:left;">Hatchery</th><th style="text-align:left;">Customer</th><th style="text-align:left;">Breed</th><th style="text-align:left;" data-i18n="lblTruckPlate">Truck Plate</th><th style="text-align:left;" data-i18n="th_depTime">Dep. Time</th><th style="text-align:left;" data-i18n="th_location">Location</th><th style="text-align:left;">Avg Wgt (M/F/U)</th><th style="text-align:right;">Actual Delivered</th></tr></thead><tbody id="deliveryReportTbody"></tbody></table></div></div>
       <div class="summary-section" data-section="targetVsActual"><div class="summary-title" data-i18n="targetVsActualSection">TARGET vs ACTUAL</div><table class="matrix" id="bookingTargetMatrix"></table></div>
       <div class="summary-section" data-section="hatcheryFunnel"><div class="summary-title" data-i18n="hatcheryFunnelSection">3-STAGE TRACKING</div><table class="matrix" id="hatcheryFunnelMatrix"></table></div>
@@ -1967,7 +1969,7 @@ function renderSummary(){
   const hEst=Object.fromEntries(HATCHERIES.map(h=>[h,0])); allEstimates.forEach(e=>{if((mode==='week'&&e.period_type==='week'&&String(e.target_week)===week)||(mode==='day'&&e.period_type==='day'&&e.target_date===date)) if(hEst[e.hatchery]!==undefined) hEst[e.hatchery]+=(e.estimate_total||0);});
   const hM=Object.fromEntries(HATCHERIES.map(h=>[h,0])), hF=Object.fromEntries(HATCHERIES.map(h=>[h,0])), hU=Object.fromEntries(HATCHERIES.map(h=>[h,0])); rows.forEach(r=>{if(hM[r.hatchery]!==undefined){hM[r.hatchery]+=(r.m_actual||0);hF[r.hatchery]+=(r.f_actual||0);hU[r.hatchery]+=(r.u_actual||0);}});
 
-  document.getElementById('planMatrix').innerHTML=buildMatrix(planPivot,tgtByType,true); document.getElementById('actualMatrix').innerHTML=buildMatrix(actPivot,tgtByType,true,planPivot);
+  document.getElementById('combinedMatrix').innerHTML=buildCombinedMatrix(planPivot,actPivot,tgtByType);
   document.getElementById('bookingTargetMatrix').innerHTML=buildTargetVsActualMatrix(tgtByType,actByType,scopeLabel); document.getElementById('hatcheryFunnelMatrix').innerHTML=buildHatcheryFunnelMatrix(hEst,hOrd,hAct);
   document.getElementById('sexHatcheryMatrix').innerHTML=buildSexHatcheryMatrix(hM,hF,hU); renderSexCharts(hM,hF,hU);
   document.getElementById('topCustomersMatrix').innerHTML=buildTopCustomersMatrix(rows); document.getElementById('diffMatrix').innerHTML=buildDiffMatrix(planPivot,actPivot);
@@ -2095,6 +2097,58 @@ function buildTopCustomersMatrix(rows){
   let html=`<thead><tr><th>#</th><th>Customer</th><th>Type</th><th>Order</th><th>Actual</th><th>Fulfill %</th><th>Status</th></tr></thead><tbody>`;
   list.slice(0,20).forEach((c,i)=>{const f=c.o?(c.a/c.o*100):null; html+=`<tr><td>${i+1}</td><td>${esc(c.n)}</td><td><span class="${CTYPE_CLASS[c.t]||''}">${esc(c.t||'')}</span></td><td>${c.o?c.o.toLocaleString():'-'}</td><td>${c.a?c.a.toLocaleString():'-'}</td><td class="${f===null?'':f>=99&&f<=101?'diff-pos':f<90||f>110?'diff-neg':''}">${f===null?'-':f.toFixed(1)+'%'}</td><td>${f===null?'—':f>=99&&f<=101?'✅':f>=90&&f<=110?'⚠️':'❌'}</td></tr>`;});
   if(list.length>20) html+=`<tr><td colspan="7" style="text-align:center;color:var(--muted);font-size:12px">… ${list.length-20} more</td></tr>`; html+='</tbody>'; return html;
+}
+
+function buildCombinedMatrix(planPiv, actPiv, tgtByType){
+  const GH={'Customer':'#1e40af','Contract Farm':'#b45309','Company Farm':'#15803d'};
+  const nc=HATCHERIES.length+3; // label + hatcheries + total + target
+  let html=`<thead><tr><th>Type</th>${HATCHERIES.map(h=>`<th>${h}</th>`).join('')}<th>Total</th><th>Target</th></tr></thead><tbody>`;
+
+  const totPH=Object.fromEntries(HATCHERIES.map(h=>[h,0])), totAH=Object.fromEntries(HATCHERIES.map(h=>[h,0]));
+  let totPG=0, totAG=0;
+
+  CTYPES.forEach(c=>{
+    const ghBg=GH[c]||'#374151';
+    let pr='',ar='',dr='',pctr='';
+    let pTot=0,aTot=0;
+    HATCHERIES.forEach(h=>{
+      const p=planPiv[c][h]||0, a=actPiv[c][h]||0, d=a-p;
+      const pct=p?(d/p*100):null;
+      totPH[h]+=p; totAH[h]+=a; pTot+=p; aTot+=a;
+      pr+=`<td>${p?p.toLocaleString():'-'}</td>`;
+      ar+=`<td style="font-weight:600;color:#15803d">${a?a.toLocaleString():'-'}</td>`;
+      dr+=`<td class="${d>0?'diff-pos':d<0?'diff-neg':'diff-zero'}">${d!==0?(d>0?'+':'')+d.toLocaleString():'-'}</td>`;
+      pctr+=`<td class="${pct===null?'diff-zero':pct>0?'diff-pos':'diff-neg'}" style="font-size:12px">${pct===null?'-':(pct>0?'+':'')+pct.toFixed(1)+'%'}</td>`;
+    });
+    const dTot=aTot-pTot, pctTot=pTot?(dTot/pTot*100):null;
+    const tgt=tgtByType[c]||0;
+    totPG+=pTot; totAG+=aTot;
+
+    html+=`<tr class="group-hdr"><td colspan="${nc}" style="background:${ghBg}">${c.toUpperCase()}</td></tr>`;
+    html+=`<tr class="sub-order"><td class="sub-label" style="color:#1e40af">📋 Order</td>${pr}<td class="col-total" style="color:#1e40af;font-weight:700">${pTot?pTot.toLocaleString():'-'}</td><td style="color:#6b7280;font-size:12px">${tgt?tgt.toLocaleString():'-'}</td></tr>`;
+    html+=`<tr class="sub-actual"><td class="sub-label" style="color:#15803d">✅ Actual</td>${ar}<td class="col-total" style="color:#15803d;font-weight:700">${aTot?aTot.toLocaleString():'-'}</td><td>-</td></tr>`;
+    html+=`<tr class="sub-diff"><td class="sub-label">↕ Diff</td>${dr}<td class="col-total ${dTot>0?'diff-pos':dTot<0?'diff-neg':''}" style="font-weight:700">${dTot!==0?(dTot>0?'+':'')+dTot.toLocaleString():'-'}</td><td>-</td></tr>`;
+    html+=`<tr class="sub-pct"><td class="sub-label">% Gap</td>${pctr}<td class="col-total ${pctTot===null?'':pctTot>0?'diff-pos':'diff-neg'}" style="font-weight:700;font-size:12px">${pctTot===null?'-':(pctTot>0?'+':'')+pctTot.toFixed(1)+'%'}</td><td>-</td></tr>`;
+  });
+
+  // Grand Total
+  const dG=totAG-totPG, pctG=totPG?(dG/totPG*100):null;
+  const tgtG=Object.values(tgtByType).reduce((s,v)=>s+v,0);
+  let tpr='',tar='',tdr='',tpctr='';
+  HATCHERIES.forEach(h=>{
+    const p=totPH[h],a=totAH[h],d=a-p,pct=p?(d/p*100):null;
+    tpr+=`<td style="font-weight:700">${p?p.toLocaleString():'-'}</td>`;
+    tar+=`<td style="font-weight:700;color:#6ee7b7">${a?a.toLocaleString():'-'}</td>`;
+    tdr+=`<td class="${d>0?'diff-pos':d<0?'diff-neg':''}" style="font-weight:700">${d!==0?(d>0?'+':'')+d.toLocaleString():'-'}</td>`;
+    tpctr+=`<td class="${pct===null?'':pct>0?'diff-pos':'diff-neg'}" style="font-weight:700;font-size:12px">${pct===null?'-':(pct>0?'+':'')+pct.toFixed(1)+'%'}</td>`;
+  });
+  html+=`<tr class="grand-hdr"><td colspan="${nc}">GRAND TOTAL</td></tr>`;
+  html+=`<tr class="grand-row"><td class="sub-label">📋 Order</td>${tpr}<td class="col-total" style="font-weight:700">${totPG?totPG.toLocaleString():'-'}</td><td>${tgtG?tgtG.toLocaleString():'-'}</td></tr>`;
+  html+=`<tr class="grand-row"><td class="sub-label">✅ Actual</td>${tar}<td class="col-total" style="font-weight:700;color:#6ee7b7">${totAG?totAG.toLocaleString():'-'}</td><td>-</td></tr>`;
+  html+=`<tr class="grand-row"><td class="sub-label">↕ Diff</td>${tdr}<td class="col-total ${dG>0?'diff-pos':dG<0?'diff-neg':''}" style="font-weight:700">${dG!==0?(dG>0?'+':'')+dG.toLocaleString():'-'}</td><td>-</td></tr>`;
+  html+=`<tr class="grand-row"><td class="sub-label">% Gap</td>${tpctr}<td class="col-total ${pctG===null?'':pctG>0?'diff-pos':'diff-neg'}" style="font-weight:700;font-size:12px">${pctG===null?'-':(pctG>0?'+':'')+pctG.toFixed(1)+'%'}</td><td>-</td></tr>`;
+  html+='</tbody>';
+  return html;
 }
 
 function buildTargetVsActualMatrix(tg,act,sl){
