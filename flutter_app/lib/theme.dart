@@ -25,7 +25,7 @@ ThemeData _base(Brightness brightness) {
         color: isDark ? Colors.white : const Color(0xFF101828),
       ),
     ),
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
