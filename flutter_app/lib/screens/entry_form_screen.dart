@@ -1,0 +1,300 @@
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import '../config.dart';
+import '../models/doc_record.dart';
+import '../services/data_service.dart';
+
+class EntryFormScreen extends StatefulWidget {
+  final DocRecord? record;
+  const EntryFormScreen({super.key, this.record});
+
+  @override
+  State<EntryFormScreen> createState() => _EntryFormScreenState();
+}
+
+class _EntryFormScreenState extends State<EntryFormScreen> {
+  final _formKey = GlobalKey<FormState>();
+  late DateTime _date;
+  String? _hatchery, _ctype, _breed;
+  final _customer = TextEditingController();
+  final _externalSource = TextEditingController();
+  final _mOrd = TextEditingController();
+  final _fOrd = TextEditingController();
+  final _uOrd = TextEditingController();
+  final _mAct = TextEditingController();
+  final _fAct = TextEditingController();
+  final _uAct = TextEditingController();
+  final _doNumber = TextEditingController();
+  final _truckPlate = TextEditingController();
+  final _notes = TextEditingController();
+  bool _busy = false;
+
+  bool get _isEdit => widget.record != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final r = widget.record;
+    _date = r != null && r.recordDate.isNotEmpty
+        ? DateTime.parse(r.recordDate)
+        : DateTime.now();
+    if (r != null) {
+      _hatchery = r.hatchery.isNotEmpty ? r.hatchery : null;
+      _ctype = r.customerType.isNotEmpty ? r.customerType : null;
+      _breed = r.breed;
+      _customer.text = r.customerName;
+      _externalSource.text = r.externalSource ?? '';
+      _mOrd.text = r.mOrdered?.toString() ?? '';
+      _fOrd.text = r.fOrdered?.toString() ?? '';
+      _uOrd.text = r.uOrdered?.toString() ?? '';
+      _mAct.text = r.mActual?.toString() ?? '';
+      _fAct.text = r.fActual?.toString() ?? '';
+      _uAct.text = r.uActual?.toString() ?? '';
+      _doNumber.text = r.doNumber ?? '';
+      _truckPlate.text = r.truckPlate ?? '';
+      _notes.text = r.notes ?? '';
+    }
+  }
+
+  int? _int(TextEditingController c) =>
+      c.text.trim().isEmpty ? null : int.tryParse(c.text.trim());
+
+  Future<void> _save() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _busy = true);
+    try {
+      const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      final rec = DocRecord(
+        id: widget.record?.id,
+        weekNo: isoWeek(_date),
+        recordDate: DateFormat('yyyy-MM-dd').format(_date),
+        dayName: days[_date.weekday - 1],
+        hatchery: _hatchery!,
+        customerType: _ctype!,
+        customerName: _customer.text.trim(),
+        customerCode: widget.record?.customerCode,
+        breed: _breed,
+        externalSource: _hatchery == 'External'
+            ? (_externalSource.text.trim().isEmpty
+                ? null
+                : _externalSource.text.trim())
+            : null,
+        mOrdered: _int(_mOrd),
+        fOrdered: _int(_fOrd),
+        uOrdered: _int(_uOrd),
+        mActual: _int(_mAct),
+        fActual: _int(_fAct),
+        uActual: _int(_uAct),
+        doNumber:
+            _doNumber.text.trim().isEmpty ? null : _doNumber.text.trim(),
+        truckPlate:
+            _truckPlate.text.trim().isEmpty ? null : _truckPlate.text.trim(),
+        notes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
+      );
+      await DataService.instance.save(rec);
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(_isEdit ? '✅ อัปเดตแล้ว' : '✅ บันทึกแล้ว')));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('❌ $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _delete() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: const Text('ลบรายการนี้?'),
+        content: Text(widget.record!.customerName),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(c, false),
+              child: const Text('ยกเลิก')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(c, true),
+            child: const Text('ลบ'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    setState(() => _busy = true);
+    try {
+      await DataService.instance.delete(widget.record!.id!);
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('🗑️ ลบแล้ว')));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('❌ $e')));
+        setState(() => _busy = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(_isEdit ? '✏️ แก้ไข Record' : '➕ เพิ่ม Record'),
+        actions: [
+          if (_isEdit)
+            IconButton(
+                onPressed: _busy ? null : _delete,
+                icon: const Icon(Icons.delete_outline, color: Colors.red)),
+        ],
+      ),
+      body: Form(
+        key: _formKey,
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            // ── Date ──
+            InkWell(
+              onTap: () async {
+                final d = await showDatePicker(
+                  context: context,
+                  initialDate: _date,
+                  firstDate: DateTime(2020),
+                  lastDate: DateTime(2035),
+                );
+                if (d != null) setState(() => _date = d);
+              },
+              child: InputDecorator(
+                decoration: const InputDecoration(
+                    labelText: 'วันที่ *',
+                    prefixIcon: Icon(Icons.calendar_today, size: 18)),
+                child: Text(
+                    '${DateFormat('yyyy-MM-dd').format(_date)}  (Week ${isoWeek(_date)})'),
+              ),
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              value: _hatchery,
+              decoration: const InputDecoration(labelText: 'โรงฟัก *'),
+              items: AppConfig.hatcheries
+                  .map((h) => DropdownMenuItem(value: h, child: Text(h)))
+                  .toList(),
+              onChanged: (v) => setState(() => _hatchery = v),
+              validator: (v) => v == null ? 'เลือกโรงฟัก' : null,
+            ),
+            if (_hatchery == 'External') ...[
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _externalSource,
+                decoration:
+                    const InputDecoration(labelText: 'แหล่งภายนอก (External)'),
+              ),
+            ],
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              value: _ctype,
+              decoration: const InputDecoration(labelText: 'ประเภทลูกค้า *'),
+              items: AppConfig.customerTypes
+                  .map((t) => DropdownMenuItem(value: t, child: Text(t)))
+                  .toList(),
+              onChanged: (v) => setState(() => _ctype = v),
+              validator: (v) => v == null ? 'เลือกประเภท' : null,
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _customer,
+              decoration: const InputDecoration(labelText: 'ชื่อลูกค้า *'),
+              validator: (v) =>
+                  (v == null || v.trim().isEmpty) ? 'กรอกชื่อลูกค้า' : null,
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              value: _breed,
+              decoration: const InputDecoration(labelText: 'สายพันธุ์'),
+              items: [
+                const DropdownMenuItem<String>(
+                    value: null, child: Text('— ไม่ระบุ —')),
+                ...AppConfig.breeds
+                    .map((b) => DropdownMenuItem(value: b, child: Text(b))),
+              ],
+              onChanged: (v) => setState(() => _breed = v),
+            ),
+            const SizedBox(height: 18),
+            _sectionLabel(context, '📋 ยอดสั่ง (Ordered)'),
+            Row(children: [
+              Expanded(child: _numField(_mOrd, 'Male')),
+              const SizedBox(width: 8),
+              Expanded(child: _numField(_fOrd, 'Female')),
+              const SizedBox(width: 8),
+              Expanded(child: _numField(_uOrd, 'Unsexed')),
+            ]),
+            const SizedBox(height: 16),
+            _sectionLabel(context, '✅ ยอดส่งจริง (Actual)'),
+            Row(children: [
+              Expanded(child: _numField(_mAct, 'Male')),
+              const SizedBox(width: 8),
+              Expanded(child: _numField(_fAct, 'Female')),
+              const SizedBox(width: 8),
+              Expanded(child: _numField(_uAct, 'Unsexed')),
+            ]),
+            const SizedBox(height: 16),
+            _sectionLabel(context, '🚚 ข้อมูลจัดส่ง'),
+            Row(children: [
+              Expanded(
+                  child: TextFormField(
+                      controller: _doNumber,
+                      decoration:
+                          const InputDecoration(labelText: 'DO Number'))),
+              const SizedBox(width: 8),
+              Expanded(
+                  child: TextFormField(
+                      controller: _truckPlate,
+                      decoration:
+                          const InputDecoration(labelText: 'ทะเบียนรถ'))),
+            ]),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _notes,
+              maxLines: 3,
+              decoration: const InputDecoration(labelText: 'หมายเหตุ'),
+            ),
+            const SizedBox(height: 24),
+            FilledButton.icon(
+              onPressed: _busy ? null : _save,
+              icon: _busy
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Icon(Icons.save),
+              label: Text(_isEdit ? 'บันทึกการแก้ไข' : 'บันทึก'),
+            ),
+            const SizedBox(height: 32),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _sectionLabel(BuildContext context, String text) => Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Text(text,
+            style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: Colors.grey.shade600)),
+      );
+
+  Widget _numField(TextEditingController c, String label) => TextFormField(
+        controller: c,
+        keyboardType: TextInputType.number,
+        decoration: InputDecoration(labelText: label, isDense: true),
+      );
+}

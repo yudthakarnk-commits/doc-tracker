@@ -1,0 +1,19 @@
+# Flutter/Dart
+.dart_tool/
+.packages
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+pubspec.lock
+
+# Platform folders are generated in CI by `flutter create`
+android/
+ios/
+web/
+linux/
+macos/
+windows/
+
+# IDE
+.idea/
+*.iml
