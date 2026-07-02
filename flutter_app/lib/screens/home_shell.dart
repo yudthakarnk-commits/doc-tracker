@@ -21,6 +21,19 @@ class _HomeShellState extends State<HomeShell> {
   void initState() {
     super.initState();
     DataService.instance.loadAll();
+    // Rebuild this shell AND its child pages when the language changes —
+    // const child instances would otherwise be skipped by the framework.
+    lang.addListener(_onLangChanged);
+  }
+
+  @override
+  void dispose() {
+    lang.removeListener(_onLangChanged);
+    super.dispose();
+  }
+
+  void _onLangChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
@@ -79,7 +92,10 @@ class _HomeShellState extends State<HomeShell> {
       ),
       body: IndexedStack(
         index: _index,
-        children: const [
+        // NOT const — fresh (non-identical) instances make the framework
+        // re-run each page's build() with the new language strings, while
+        // State (search text, selected week) is preserved.
+        children: [
           DashboardScreen(),
           EntryScreen(),
           SummaryScreen(),
