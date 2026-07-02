@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../config.dart';
+import '../i18n.dart';
 import '../models/doc_record.dart';
 import '../services/data_service.dart';
 
@@ -95,7 +96,7 @@ class _EntryFormScreenState extends State<EntryFormScreen> {
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(_isEdit ? '✅ อัปเดตแล้ว' : '✅ บันทึกแล้ว')));
+            content: Text(_isEdit ? tr('updated') : tr('saved'))));
       }
     } catch (e) {
       if (mounted) {
@@ -111,16 +112,16 @@ class _EntryFormScreenState extends State<EntryFormScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (c) => AlertDialog(
-        title: const Text('ลบรายการนี้?'),
+        title: Text(tr('deleteConfirm')),
         content: Text(widget.record!.customerName),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(c, false),
-              child: const Text('ยกเลิก')),
+              child: Text(tr('cancel'))),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () => Navigator.pop(c, true),
-            child: const Text('ลบ'),
+            child: Text(tr('delete')),
           ),
         ],
       ),
@@ -132,7 +133,7 @@ class _EntryFormScreenState extends State<EntryFormScreen> {
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('🗑️ ลบแล้ว')));
+            .showSnackBar(SnackBar(content: Text(tr('deleted'))));
       }
     } catch (e) {
       if (mounted) {
@@ -147,7 +148,7 @@ class _EntryFormScreenState extends State<EntryFormScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isEdit ? '✏️ แก้ไข Record' : '➕ เพิ่ม Record'),
+        title: Text(_isEdit ? tr('editRecord') : tr('newRecord')),
         actions: [
           if (_isEdit)
             IconButton(
@@ -172,9 +173,9 @@ class _EntryFormScreenState extends State<EntryFormScreen> {
                 if (d != null) setState(() => _date = d);
               },
               child: InputDecorator(
-                decoration: const InputDecoration(
-                    labelText: 'วันที่ *',
-                    prefixIcon: Icon(Icons.calendar_today, size: 18)),
+                decoration: InputDecoration(
+                    labelText: tr('date'),
+                    prefixIcon: const Icon(Icons.calendar_today, size: 18)),
                 child: Text(
                     '${DateFormat('yyyy-MM-dd').format(_date)}  (Week ${isoWeek(_date)})'),
               ),
@@ -182,52 +183,52 @@ class _EntryFormScreenState extends State<EntryFormScreen> {
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
               value: _hatchery,
-              decoration: const InputDecoration(labelText: 'โรงฟัก *'),
+              decoration: InputDecoration(labelText: tr('hatchery')),
               items: AppConfig.hatcheries
                   .map((h) => DropdownMenuItem(value: h, child: Text(h)))
                   .toList(),
               onChanged: (v) => setState(() => _hatchery = v),
-              validator: (v) => v == null ? 'เลือกโรงฟัก' : null,
+              validator: (v) => v == null ? tr('chooseHatchery') : null,
             ),
             if (_hatchery == 'External') ...[
               const SizedBox(height: 12),
               TextFormField(
                 controller: _externalSource,
                 decoration:
-                    const InputDecoration(labelText: 'แหล่งภายนอก (External)'),
+                    InputDecoration(labelText: tr('externalSource')),
               ),
             ],
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
               value: _ctype,
-              decoration: const InputDecoration(labelText: 'ประเภทลูกค้า *'),
+              decoration: InputDecoration(labelText: tr('customerType')),
               items: AppConfig.customerTypes
                   .map((t) => DropdownMenuItem(value: t, child: Text(t)))
                   .toList(),
               onChanged: (v) => setState(() => _ctype = v),
-              validator: (v) => v == null ? 'เลือกประเภท' : null,
+              validator: (v) => v == null ? tr('chooseType') : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _customer,
-              decoration: const InputDecoration(labelText: 'ชื่อลูกค้า *'),
+              decoration: InputDecoration(labelText: tr('customerName')),
               validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'กรอกชื่อลูกค้า' : null,
+                  (v == null || v.trim().isEmpty) ? tr('enterCustomer') : null,
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
               value: _breed,
-              decoration: const InputDecoration(labelText: 'สายพันธุ์'),
+              decoration: InputDecoration(labelText: tr('breed')),
               items: [
-                const DropdownMenuItem<String>(
-                    value: null, child: Text('— ไม่ระบุ —')),
+                DropdownMenuItem<String>(
+                    value: null, child: Text(tr('notSpecified'))),
                 ...AppConfig.breeds
                     .map((b) => DropdownMenuItem(value: b, child: Text(b))),
               ],
               onChanged: (v) => setState(() => _breed = v),
             ),
             const SizedBox(height: 18),
-            _sectionLabel(context, '📋 ยอดสั่ง (Ordered)'),
+            _sectionLabel(context, tr('orderedSection')),
             Row(children: [
               Expanded(child: _numField(_mOrd, 'Male')),
               const SizedBox(width: 8),
@@ -236,7 +237,7 @@ class _EntryFormScreenState extends State<EntryFormScreen> {
               Expanded(child: _numField(_uOrd, 'Unsexed')),
             ]),
             const SizedBox(height: 16),
-            _sectionLabel(context, '✅ ยอดส่งจริง (Actual)'),
+            _sectionLabel(context, tr('actualSection')),
             Row(children: [
               Expanded(child: _numField(_mAct, 'Male')),
               const SizedBox(width: 8),
@@ -245,7 +246,7 @@ class _EntryFormScreenState extends State<EntryFormScreen> {
               Expanded(child: _numField(_uAct, 'Unsexed')),
             ]),
             const SizedBox(height: 16),
-            _sectionLabel(context, '🚚 ข้อมูลจัดส่ง'),
+            _sectionLabel(context, tr('deliverySection')),
             Row(children: [
               Expanded(
                   child: TextFormField(
@@ -257,13 +258,13 @@ class _EntryFormScreenState extends State<EntryFormScreen> {
                   child: TextFormField(
                       controller: _truckPlate,
                       decoration:
-                          const InputDecoration(labelText: 'ทะเบียนรถ'))),
+                          InputDecoration(labelText: tr('truckPlate')))),
             ]),
             const SizedBox(height: 12),
             TextFormField(
               controller: _notes,
               maxLines: 3,
-              decoration: const InputDecoration(labelText: 'หมายเหตุ'),
+              decoration: InputDecoration(labelText: tr('notes')),
             ),
             const SizedBox(height: 24),
             FilledButton.icon(
@@ -274,7 +275,7 @@ class _EntryFormScreenState extends State<EntryFormScreen> {
                       height: 18,
                       child: CircularProgressIndicator(strokeWidth: 2))
                   : const Icon(Icons.save),
-              label: Text(_isEdit ? 'บันทึกการแก้ไข' : 'บันทึก'),
+              label: Text(_isEdit ? tr('saveChanges') : tr('save')),
             ),
             const SizedBox(height: 32),
           ],

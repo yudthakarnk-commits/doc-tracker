@@ -32,6 +32,16 @@ jobs:
         working-directory: flutter_app
         run: flutter create . --platforms android --org com.hatchery --project-name doc_tracker
 
+      # Release builds do NOT get INTERNET permission automatically (debug does)
+      - name: Add INTERNET permission to AndroidManifest
+        working-directory: flutter_app
+        run: |
+          MANIFEST=android/app/src/main/AndroidManifest.xml
+          if ! grep -q 'android.permission.INTERNET' "$MANIFEST"; then
+            sed -i 's|<application|<uses-permission android:name="android.permission.INTERNET"/>\n    <application|' "$MANIFEST"
+          fi
+          grep -n 'INTERNET' "$MANIFEST"
+
       - name: Get dependencies
         working-directory: flutter_app
         run: flutter pub get

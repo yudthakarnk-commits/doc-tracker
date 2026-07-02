@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 const _seed = Color(0xFF2563EB);
+const _font = 'Sarabun';
 
 ThemeData _base(Brightness brightness) {
   final scheme = ColorScheme.fromSeed(seedColor: _seed, brightness: brightness);
@@ -9,17 +9,16 @@ ThemeData _base(Brightness brightness) {
   return ThemeData(
     useMaterial3: true,
     colorScheme: scheme,
+    fontFamily: _font,
     scaffoldBackgroundColor:
         isDark ? const Color(0xFF0F141B) : const Color(0xFFF6F7F9),
-    textTheme: GoogleFonts.sarabunTextTheme(
-      isDark ? ThemeData.dark().textTheme : ThemeData.light().textTheme,
-    ),
     appBarTheme: AppBarTheme(
       centerTitle: false,
       elevation: 0,
       scrolledUnderElevation: 0.5,
       backgroundColor: isDark ? const Color(0xFF151B24) : Colors.white,
-      titleTextStyle: GoogleFonts.sarabun(
+      titleTextStyle: TextStyle(
+        fontFamily: _font,
         fontSize: 18,
         fontWeight: FontWeight.w700,
         color: isDark ? Colors.white : const Color(0xFF101828),
@@ -64,15 +63,16 @@ ThemeData _base(Brightness brightness) {
       style: FilledButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        textStyle:
-            GoogleFonts.sarabun(fontSize: 15, fontWeight: FontWeight.w600),
+        textStyle: const TextStyle(
+            fontFamily: _font, fontSize: 15, fontWeight: FontWeight.w600),
       ),
     ),
     navigationBarTheme: NavigationBarThemeData(
       backgroundColor: isDark ? const Color(0xFF151B24) : Colors.white,
       indicatorColor: _seed.withOpacity(.14),
-      labelTextStyle: WidgetStatePropertyAll(
-        GoogleFonts.sarabun(fontSize: 12, fontWeight: FontWeight.w600),
+      labelTextStyle: const WidgetStatePropertyAll(
+        TextStyle(
+            fontFamily: _font, fontSize: 12, fontWeight: FontWeight.w600),
       ),
     ),
   );

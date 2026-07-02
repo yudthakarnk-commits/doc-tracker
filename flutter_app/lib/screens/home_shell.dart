@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../i18n.dart';
 import '../main.dart';
 import '../services/data_service.dart';
 import 'dashboard_screen.dart';
@@ -16,8 +17,6 @@ class HomeShell extends StatefulWidget {
 class _HomeShellState extends State<HomeShell> {
   int _index = 0;
 
-  static const _titles = ['Dashboard', 'Order Entry', 'Summarize'];
-
   @override
   void initState() {
     super.initState();
@@ -26,10 +25,18 @@ class _HomeShellState extends State<HomeShell> {
 
   @override
   Widget build(BuildContext context) {
+    final titles = [tr('dashboard'), tr('entry'), tr('summary')];
     return Scaffold(
       appBar: AppBar(
-        title: Text('🐣 ${_titles[_index]}'),
+        title: Text('🐣 ${titles[_index]}'),
         actions: [
+          IconButton(
+            tooltip: 'TH/EN',
+            icon: Text(lang.value == 'th' ? 'EN' : 'ไทย',
+                style: const TextStyle(
+                    fontSize: 13, fontWeight: FontWeight.w800)),
+            onPressed: () => setLang(lang.value == 'th' ? 'en' : 'th'),
+          ),
           IconButton(
             tooltip: 'Refresh',
             icon: const Icon(Icons.refresh),
@@ -46,20 +53,20 @@ class _HomeShellState extends State<HomeShell> {
             ),
           ),
           IconButton(
-            tooltip: 'Sign out',
+            tooltip: tr('signOut'),
             icon: const Icon(Icons.logout),
             onPressed: () async {
               final ok = await showDialog<bool>(
                 context: context,
                 builder: (c) => AlertDialog(
-                  title: const Text('ออกจากระบบ?'),
+                  title: Text(tr('signOutConfirm')),
                   actions: [
                     TextButton(
                         onPressed: () => Navigator.pop(c, false),
-                        child: const Text('ยกเลิก')),
+                        child: Text(tr('cancel'))),
                     FilledButton(
                         onPressed: () => Navigator.pop(c, true),
-                        child: const Text('ออกจากระบบ')),
+                        child: Text(tr('signOut'))),
                   ],
                 ),
               );
@@ -81,19 +88,19 @@ class _HomeShellState extends State<HomeShell> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
         onDestinationSelected: (i) => setState(() => _index = i),
-        destinations: const [
+        destinations: [
           NavigationDestination(
-              icon: Icon(Icons.dashboard_outlined),
-              selectedIcon: Icon(Icons.dashboard),
-              label: 'Dashboard'),
+              icon: const Icon(Icons.dashboard_outlined),
+              selectedIcon: const Icon(Icons.dashboard),
+              label: tr('dashboard')),
           NavigationDestination(
-              icon: Icon(Icons.list_alt_outlined),
-              selectedIcon: Icon(Icons.list_alt),
-              label: 'Entry'),
+              icon: const Icon(Icons.list_alt_outlined),
+              selectedIcon: const Icon(Icons.list_alt),
+              label: tr('entry')),
           NavigationDestination(
-              icon: Icon(Icons.bar_chart_outlined),
-              selectedIcon: Icon(Icons.bar_chart),
-              label: 'Summary'),
+              icon: const Icon(Icons.bar_chart_outlined),
+              selectedIcon: const Icon(Icons.bar_chart),
+              label: tr('summary')),
         ],
       ),
     );

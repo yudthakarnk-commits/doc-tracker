@@ -2,6 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../config.dart';
+import '../i18n.dart';
 import '../models/doc_record.dart';
 import '../services/data_service.dart';
 
@@ -43,28 +44,28 @@ class DashboardScreen extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             children: [
               _KpiGrid(cards: [
-                _Kpi('📦', 'DOC Delivered', _short(totalAct),
+                _Kpi('📦', tr('kpiDelivered'), _short(totalAct),
                     const Color(0xFF2563EB)),
-                _Kpi('📋', 'DOC Ordered', _short(totalOrd),
+                _Kpi('📋', tr('kpiOrdered'), _short(totalOrd),
                     const Color(0xFF7C3AED)),
-                _Kpi('🎯', 'Fulfillment',
+                _Kpi('🎯', tr('kpiFulfillment'),
                     '${fulfill.toStringAsFixed(1)}%', const Color(0xFF059669)),
-                _Kpi('👥', 'Customers', _numFmt.format(customers.length),
+                _Kpi('👥', tr('kpiCustomers'), _numFmt.format(customers.length),
                     const Color(0xFFF59E0B)),
               ]),
               const SizedBox(height: 16),
               _ChartCard(
-                title: '📈 Weekly Trend (13 สัปดาห์ล่าสุด)',
+                title: tr('chartTrend'),
                 child: SizedBox(height: 220, child: _TrendChart(rows: rows)),
               ),
               const SizedBox(height: 16),
               _ChartCard(
-                title: '🏷️ Customer Type Ratio',
+                title: tr('chartTypeRatio'),
                 child: SizedBox(height: 220, child: _TypeDonut(rows: rows)),
               ),
               const SizedBox(height: 16),
               _ChartCard(
-                title: '🏭 Actual by Hatchery',
+                title: tr('chartHatchery'),
                 child: _HatcheryBars(rows: rows),
               ),
             ],
@@ -182,7 +183,7 @@ class _TrendChart extends StatelessWidget {
     }
     final keys = byWeek.keys.toList()..sort();
     final recent = keys.length > 13 ? keys.sublist(keys.length - 13) : keys;
-    if (recent.isEmpty) return const Center(child: Text('No data'));
+    if (recent.isEmpty) return Center(child: Text(tr('noData')));
 
     final ordSpots = <FlSpot>[];
     final actSpots = <FlSpot>[];
@@ -278,7 +279,7 @@ class _TypeDonut extends StatelessWidget {
       }
     }
     final grand = totals.values.fold<int>(0, (a, b) => a + b);
-    if (grand == 0) return const Center(child: Text('No data'));
+    if (grand == 0) return Center(child: Text(tr('noData')));
 
     return Row(
       children: [
@@ -399,7 +400,7 @@ class _ErrorView extends StatelessWidget {
             const SizedBox(height: 16),
             FilledButton(
                 onPressed: () => DataService.instance.loadAll(force: true),
-                child: const Text('ลองใหม่')),
+                child: Text(tr('retry'))),
           ],
         ),
       ),

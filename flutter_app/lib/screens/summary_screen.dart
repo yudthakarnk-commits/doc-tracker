@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../config.dart';
+import '../i18n.dart';
 import '../services/data_service.dart';
 
 final _numFmt = NumberFormat('#,##0');
@@ -31,7 +32,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
           return const Center(child: CircularProgressIndicator());
         }
         final weeks = svc.weeksByRecency();
-        if (weeks.isEmpty) return const Center(child: Text('No data'));
+        if (weeks.isEmpty) return Center(child: Text(tr('noData')));
 
         final currentWeek = isoWeek(DateTime.now());
         final selected = _week ??
@@ -58,7 +59,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
           padding: const EdgeInsets.all(16),
           children: [
             Row(children: [
-              Text('📊 Order vs Actual',
+              Text(tr('orderVsActual'),
                   style: Theme.of(context)
                       .textTheme
                       .titleMedium
@@ -137,8 +138,8 @@ class _TypeSection extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.all(12),
             child: Column(children: [
-              _row(context, 'สั่ง', ordTotal, const Color(0xFF2563EB)),
-              _row(context, 'ส่งจริง', actTotal, const Color(0xFF059669)),
+              _row(context, tr('ordered'), ordTotal, const Color(0xFF2563EB)),
+              _row(context, tr('actual'), actTotal, const Color(0xFF059669)),
               _diffRow(context, diff),
               const Divider(height: 18),
               // per-hatchery breakdown (only hatcheries with data)
@@ -188,7 +189,7 @@ class _TypeSection extends StatelessWidget {
               if (data.values.every((v) => v[0] == 0 && v[1] == 0))
                 Padding(
                   padding: const EdgeInsets.all(8),
-                  child: Text('ไม่มีข้อมูลในสัปดาห์นี้',
+                  child: Text(tr('noDataWeek'),
                       style: TextStyle(
                           fontSize: 12, color: Colors.grey.shade500)),
                 ),
@@ -215,7 +216,7 @@ class _TypeSection extends StatelessWidget {
   Widget _diffRow(BuildContext context, int diff) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 2),
         child: Row(children: [
-          Text('ส่วนต่าง',
+          Text(tr('diff'),
               style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
           const Spacer(),
           Text(
@@ -253,8 +254,8 @@ class _GrandTotal extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(children: [
-          const Text('GRAND TOTAL',
-              style: TextStyle(
+          Text(tr('grandTotal'),
+              style: const TextStyle(
                   color: Colors.white70,
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
@@ -263,17 +264,17 @@ class _GrandTotal extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _cell('สั่ง', _numFmt.format(ord), const Color(0xFF93C5FD)),
-              _cell('ส่งจริง', _numFmt.format(act), const Color(0xFF6EE7B7)),
+              _cell(tr('ordered'), _numFmt.format(ord), const Color(0xFF93C5FD)),
+              _cell(tr('actual'), _numFmt.format(act), const Color(0xFF6EE7B7)),
               _cell(
-                  'ต่าง',
+                  tr('diff'),
                   '${diff > 0 ? '+' : ''}${_numFmt.format(diff)}',
                   diff >= 0
                       ? const Color(0xFF6EE7B7)
                       : const Color(0xFFFCA5A5)),
               if (pct != null)
                 _cell(
-                    '% Gap',
+                    tr('gap'),
                     '${pct > 0 ? '+' : ''}${pct.toStringAsFixed(1)}%',
                     pct >= 0
                         ? const Color(0xFF6EE7B7)

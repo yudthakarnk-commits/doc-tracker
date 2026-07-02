@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'config.dart';
+import 'i18n.dart';
 import 'theme.dart';
 import 'screens/home_shell.dart';
 import 'screens/login_screen.dart';
@@ -17,6 +18,7 @@ Future<void> main() async {
   final prefs = await SharedPreferences.getInstance();
   themeMode.value =
       prefs.getBool('darkMode') == true ? ThemeMode.dark : ThemeMode.light;
+  await loadLang();
   runApp(const DocTrackerApp());
 }
 
@@ -34,13 +36,16 @@ class DocTrackerApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: themeMode,
-      builder: (context, mode, _) => MaterialApp(
-        title: 'DOC Tracker',
-        debugShowCheckedModeBanner: false,
-        theme: lightTheme,
-        darkTheme: darkTheme,
-        themeMode: mode,
-        home: const AuthGate(),
+      builder: (context, mode, _) => ValueListenableBuilder<String>(
+        valueListenable: lang,
+        builder: (context, _, __) => MaterialApp(
+          title: 'DOC Tracker',
+          debugShowCheckedModeBanner: false,
+          theme: lightTheme,
+          darkTheme: darkTheme,
+          themeMode: mode,
+          home: const AuthGate(),
+        ),
       ),
     );
   }

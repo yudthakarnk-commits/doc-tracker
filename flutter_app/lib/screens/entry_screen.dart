@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../i18n.dart';
 import '../models/doc_record.dart';
 import '../services/data_service.dart';
 import 'entry_form_screen.dart';
@@ -49,9 +50,9 @@ class _EntryScreenState extends State<EntryScreen> {
                   Expanded(
                     child: TextField(
                       onChanged: (v) => setState(() => _search = v),
-                      decoration: const InputDecoration(
-                        hintText: 'ค้นหา ลูกค้า / โรงฟัก / DO#',
-                        prefixIcon: Icon(Icons.search),
+                      decoration: InputDecoration(
+                        hintText: tr('searchHint'),
+                        prefixIcon: const Icon(Icons.search),
                         isDense: true,
                       ),
                     ),
@@ -62,8 +63,8 @@ class _EntryScreenState extends State<EntryScreen> {
                     hint: const Text('Week'),
                     onChanged: (v) => setState(() => _week = v),
                     items: [
-                      const DropdownMenuItem<int?>(
-                          value: null, child: Text('ทุกสัปดาห์')),
+                      DropdownMenuItem<int?>(
+                          value: null, child: Text(tr('allWeeks'))),
                       ...weeks.map((w) => DropdownMenuItem<int?>(
                           value: w, child: Text('Week $w'))),
                     ],
@@ -74,7 +75,7 @@ class _EntryScreenState extends State<EntryScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 18),
                 child: Align(
                   alignment: Alignment.centerLeft,
-                  child: Text('${_numFmt.format(rows.length)} รายการ',
+                  child: Text('${_numFmt.format(rows.length)} ${tr('items')}',
                       style: TextStyle(
                           fontSize: 12, color: Colors.grey.shade600)),
                 ),
@@ -102,7 +103,7 @@ class _EntryScreenState extends State<EntryScreen> {
               MaterialPageRoute(builder: (_) => const EntryFormScreen()),
             ),
             icon: const Icon(Icons.add),
-            label: const Text('เพิ่ม Record'),
+            label: Text(tr('addRecord')),
           ),
         );
       },
@@ -171,14 +172,14 @@ class _RecordCard extends StatelessWidget {
                       TextStyle(fontSize: 12, color: Colors.grey.shade600)),
               const SizedBox(height: 8),
               Row(children: [
-                _Stat('สั่ง', _numFmt.format(r.totalOrdered),
+                _Stat(tr('ordered'), _numFmt.format(r.totalOrdered),
                     const Color(0xFF2563EB)),
                 const SizedBox(width: 16),
-                _Stat('ส่งจริง', _numFmt.format(r.totalActual),
+                _Stat(tr('actual'), _numFmt.format(r.totalActual),
                     const Color(0xFF059669)),
                 const SizedBox(width: 16),
                 _Stat(
-                    'ต่าง',
+                    tr('diff'),
                     '${diff > 0 ? '+' : ''}${_numFmt.format(diff)}',
                     diff == 0
                         ? Colors.grey
