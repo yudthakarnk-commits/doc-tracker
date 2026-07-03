@@ -1,7 +1,7 @@
 name: doc_tracker
 description: DOC Tracker — Hatchery Management mobile app
 publish_to: 'none'
-version: 1.2.2+7
+version: 1.2.3+8
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
@@ -28,6 +28,8 @@ flutter_launcher_icons:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/icon.png
   fonts:
     - family: Sarabun
       fonts:

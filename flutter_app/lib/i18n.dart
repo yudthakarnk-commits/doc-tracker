@@ -31,6 +31,9 @@ const _strings = <String, Map<String, String>>{
   'signOut': {'th': 'ออกจากระบบ', 'en': 'Sign Out'},
   'signOutConfirm': {'th': 'ออกจากระบบ?', 'en': 'Sign out?'},
   'cancel': {'th': 'ยกเลิก', 'en': 'Cancel'},
+  'profile': {'th': 'โปรไฟล์', 'en': 'Profile'},
+  'nameLbl': {'th': 'ชื่อที่แสดง', 'en': 'Display name'},
+  'profileSaved': {'th': '✅ บันทึกโปรไฟล์แล้ว', 'en': '✅ Profile saved'},
   // Dashboard
   'kpiDelivered': {'th': 'ส่งแล้ว (ตัว)', 'en': 'DOC Delivered'},
   'kpiOrdered': {'th': 'ยอดสั่ง (ตัว)', 'en': 'DOC Ordered'},
