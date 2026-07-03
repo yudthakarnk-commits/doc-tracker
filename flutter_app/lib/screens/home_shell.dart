@@ -6,6 +6,7 @@ import '../services/data_service.dart';
 import 'dashboard_screen.dart';
 import 'entry_screen.dart';
 import 'summary_screen.dart';
+import 'transport_screen.dart';
 
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
@@ -38,7 +39,12 @@ class _HomeShellState extends State<HomeShell> {
 
   @override
   Widget build(BuildContext context) {
-    final titles = [tr('dashboard'), tr('entry'), tr('summary')];
+    final titles = [
+      tr('dashboard'),
+      tr('entry'),
+      tr('summary'),
+      tr('transport')
+    ];
     return Scaffold(
       appBar: AppBar(
         title: Text('🐣 ${titles[_index]}'),
@@ -99,6 +105,7 @@ class _HomeShellState extends State<HomeShell> {
           DashboardScreen(),
           EntryScreen(),
           SummaryScreen(),
+          TransportScreen(),
         ],
       ),
       bottomNavigationBar: NavigationBar(
@@ -117,6 +124,10 @@ class _HomeShellState extends State<HomeShell> {
               icon: const Icon(Icons.bar_chart_outlined),
               selectedIcon: const Icon(Icons.bar_chart),
               label: tr('summary')),
+          NavigationDestination(
+              icon: const Icon(Icons.local_shipping_outlined),
+              selectedIcon: const Icon(Icons.local_shipping),
+              label: tr('transport')),
         ],
       ),
     );

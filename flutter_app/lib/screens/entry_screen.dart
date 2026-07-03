@@ -4,6 +4,7 @@ import '../i18n.dart';
 import '../models/doc_record.dart';
 import '../services/data_service.dart';
 import 'entry_form_screen.dart';
+import 'widgets/driver_qr_dialog.dart';
 
 final _numFmt = NumberFormat('#,##0');
 
@@ -186,6 +187,14 @@ class _RecordCard extends StatelessWidget {
                         : diff > 0
                             ? const Color(0xFF059669)
                             : const Color(0xFFDC2626)),
+                const Spacer(),
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  tooltip: tr('driverQr'),
+                  icon: Icon(Icons.qr_code_2,
+                      size: 22, color: Colors.grey.shade600),
+                  onPressed: () => showDriverQrDialog(context, r),
+                ),
               ]),
             ],
           ),

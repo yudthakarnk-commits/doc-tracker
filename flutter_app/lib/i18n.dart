@@ -93,6 +93,32 @@ const _strings = <String, Map<String, String>>{
   'deleted': {'th': '🗑️ ลบแล้ว', 'en': '🗑️ Deleted'},
   'deleteConfirm': {'th': 'ลบรายการนี้?', 'en': 'Delete this record?'},
   'delete': {'th': 'ลบ', 'en': 'Delete'},
+  // Transport
+  'transport': {'th': 'ขนส่ง', 'en': 'Transport'},
+  'kpiTrips': {'th': 'เที่ยวรถ', 'en': 'Trips'},
+  'kpiDOA': {'th': 'DOA (ตาย)', 'en': 'DOA'},
+  'kpiDoaRate': {'th': '% DOA', 'en': 'DOA rate'},
+  'depTime': {'th': 'เวลาออก', 'en': 'Departure'},
+  'locationLbl': {'th': 'ปลายทาง', 'en': 'Destination'},
+  'distance': {'th': 'ระยะทาง', 'en': 'Distance'},
+  'statusPending': {'th': 'รอออกเดินทาง', 'en': 'Pending'},
+  'statusDeparted': {'th': 'ออกเดินทางแล้ว', 'en': 'Departed'},
+  'statusArrived': {'th': 'ถึงแล้ว', 'en': 'Arrived'},
+  'noTruckData': {
+    'th': 'ไม่มีข้อมูลขนส่งในสัปดาห์นี้',
+    'en': 'No transport data this week'
+  },
+  // Driver QR
+  'driverQr': {'th': 'QR คนขับ', 'en': 'Driver QR'},
+  'driverQrHint': {
+    'th': 'ให้คนขับสแกนเพื่ออัปเดตสถานะ ออกเดินทาง/ถึงแล้ว โดยไม่ต้อง login',
+    'en': 'Driver scans this to update departed/arrived status — no login needed'
+  },
+  'noDriverToken': {
+    'th': 'record นี้ยังไม่มี driver token',
+    'en': 'This record has no driver token yet'
+  },
+  'close': {'th': 'ปิด', 'en': 'Close'},
   // Summary
   'orderVsActual': {'th': '📊 สั่ง vs ส่งจริง', 'en': '📊 Order vs Actual'},
   'noDataWeek': {

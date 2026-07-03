@@ -11,6 +11,12 @@ int? _toInt(dynamic v) {
 
 String? _toStr(dynamic v) => v?.toString();
 
+double? _toDouble(dynamic v) {
+  if (v == null) return null;
+  if (v is num) return v.toDouble();
+  return double.tryParse(v.toString());
+}
+
 class DocRecord {
   /// bigint or uuid depending on schema — kept opaque and passed back as-is.
   final Object? id;
@@ -28,6 +34,10 @@ class DocRecord {
   final int? mActual, fActual, uActual;
   final int totalOrdered, totalActual;
   final String? doNumber, truckPlate, notes;
+  // Transport / driver-mode fields (read-only in the mobile app)
+  final String? departureTime, location, deliveryStatus, driverToken;
+  final double? distanceKm;
+  final int? doaCount;
 
   DocRecord({
     this.id,
@@ -52,6 +62,12 @@ class DocRecord {
     this.doNumber,
     this.truckPlate,
     this.notes,
+    this.departureTime,
+    this.location,
+    this.deliveryStatus,
+    this.driverToken,
+    this.distanceKm,
+    this.doaCount,
   });
 
   factory DocRecord.fromJson(Map<String, dynamic> j) => DocRecord(
@@ -77,6 +93,12 @@ class DocRecord {
         doNumber: _toStr(j['do_number']),
         truckPlate: _toStr(j['truck_plate']),
         notes: _toStr(j['notes']),
+        departureTime: _toStr(j['departure_time']),
+        location: _toStr(j['location']),
+        deliveryStatus: _toStr(j['delivery_status']),
+        driverToken: _toStr(j['driver_token']),
+        distanceKm: _toDouble(j['distance_km']),
+        doaCount: _toInt(j['doa_count']),
       );
 
   /// Payload for insert/update — only the fields this app edits, so an
