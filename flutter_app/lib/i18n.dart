@@ -34,6 +34,8 @@ const _strings = <String, Map<String, String>>{
   'profile': {'th': 'โปรไฟล์', 'en': 'Profile'},
   'nameLbl': {'th': 'ชื่อที่แสดง', 'en': 'Display name'},
   'profileSaved': {'th': '✅ บันทึกโปรไฟล์แล้ว', 'en': '✅ Profile saved'},
+  'announcements': {'th': 'ประกาศ', 'en': 'Announcements'},
+  'noAnnouncements': {'th': 'ยังไม่มีประกาศ', 'en': 'No announcements yet'},
   // Dashboard
   'kpiDelivered': {'th': 'ส่งแล้ว (ตัว)', 'en': 'DOC Delivered'},
   'kpiOrdered': {'th': 'ยอดสั่ง (ตัว)', 'en': 'DOC Ordered'},

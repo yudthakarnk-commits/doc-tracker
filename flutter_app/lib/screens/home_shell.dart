@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config.dart';
 import '../i18n.dart';
@@ -20,12 +21,15 @@ class _HomeShellState extends State<HomeShell> {
   int _index = 0;
   String? _profileName;
   String? _profileRole;
+  List<Map<String, dynamic>> _announcements = [];
+  Set<String> _readAnn = {};
 
   @override
   void initState() {
     super.initState();
     DataService.instance.loadAll();
     _loadProfile();
+    _loadAnnouncements();
     // Rebuild this shell AND its child pages when the language changes —
     // const child instances would otherwise be skipped by the framework.
     lang.addListener(_onLangChanged);
@@ -46,14 +50,115 @@ class _HomeShellState extends State<HomeShell> {
       final sb = Supabase.instance.client;
       final uid = sb.auth.currentUser?.id;
       if (uid == null) return;
+      // Display name lives in auth user metadata (profiles has no name column)
+      final metaName = sb.auth.currentUser?.userMetadata?['name']?.toString();
       final p = await sb.from('profiles').select().eq('id', uid).maybeSingle();
-      if (mounted && p != null) {
+      if (mounted) {
         setState(() {
-          _profileName = p['name']?.toString();
-          _profileRole = p['role']?.toString();
+          _profileName = (metaName != null && metaName.trim().isNotEmpty)
+              ? metaName
+              : null;
+          _profileRole = p?['role']?.toString();
         });
       }
     } catch (_) {}
+  }
+
+  // ── Announcements (Supabase `announcements` table; silent if absent) ──
+  Future<void> _loadAnnouncements() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      _readAnn = (prefs.getStringList('readAnnouncements') ?? []).toSet();
+      final rows = await Supabase.instance.client
+          .from('announcements')
+          .select()
+          .eq('active', true)
+          .order('created_at', ascending: false)
+          .limit(30);
+      if (mounted) {
+        setState(() => _announcements =
+            List<Map<String, dynamic>>.from(rows as List));
+      }
+    } catch (_) {} // table may not exist yet — bell just shows empty state
+  }
+
+  int get _unreadCount => _announcements
+      .where((a) => !_readAnn.contains(a['id'].toString()))
+      .length;
+
+  Future<void> _openAnnouncements() async {
+    // Opening the panel marks everything as read
+    final prefs = await SharedPreferences.getInstance();
+    _readAnn.addAll(_announcements.map((a) => a['id'].toString()));
+    await prefs.setStringList('readAnnouncements', _readAnn.toList());
+    if (mounted) setState(() {});
+    if (!mounted) return;
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (c) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.55,
+        maxChildSize: 0.9,
+        builder: (c, scroll) => Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
+              child: Text('🔔 ${tr('announcements')}',
+                  style: const TextStyle(
+                      fontSize: 17, fontWeight: FontWeight.w800)),
+            ),
+            Expanded(
+              child: _announcements.isEmpty
+                  ? Center(
+                      child: Text(tr('noAnnouncements'),
+                          style: const TextStyle(color: Colors.grey)))
+                  : ListView.separated(
+                      controller: scroll,
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                      itemCount: _announcements.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 8),
+                      itemBuilder: (c, i) {
+                        final a = _announcements[i];
+                        final date =
+                            (a['created_at']?.toString() ?? '').split('T')[0];
+                        return Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(14),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(children: [
+                                  Expanded(
+                                      child: Text(
+                                          a['title']?.toString() ?? '',
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.w700,
+                                              fontSize: 14))),
+                                  Text(date,
+                                      style: const TextStyle(
+                                          fontSize: 11, color: Colors.grey)),
+                                ]),
+                                if ((a['body']?.toString() ?? '')
+                                    .isNotEmpty) ...[
+                                  const SizedBox(height: 6),
+                                  Text(a['body'].toString(),
+                                      style: const TextStyle(
+                                          fontSize: 13, height: 1.5)),
+                                ],
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   String get _email =>
@@ -172,9 +277,9 @@ class _HomeShellState extends State<HomeShell> {
                       setDlg(() => saving = true);
                       try {
                         final sb = Supabase.instance.client;
-                        await sb.from('profiles').update(
-                            {'name': nameCtl.text.trim()}).eq(
-                            'id', sb.auth.currentUser!.id);
+                        // profiles has no name column — store in auth metadata
+                        await sb.auth.updateUser(UserAttributes(
+                            data: {'name': nameCtl.text.trim()}));
                         if (mounted) {
                           setState(() =>
                               _profileName = nameCtl.text.trim());
@@ -237,19 +342,21 @@ class _HomeShellState extends State<HomeShell> {
           IconButton(
             tooltip: 'Refresh',
             icon: const Icon(Icons.refresh),
-            onPressed: () => DataService.instance.loadAll(force: true),
+            onPressed: () {
+              DataService.instance.loadAll(force: true);
+              _loadAnnouncements();
+            },
           ),
-          ValueListenableBuilder<ThemeMode>(
-            valueListenable: themeMode,
-            builder: (context, mode, _) => IconButton(
-              tooltip: mode == ThemeMode.dark ? 'Light mode' : 'Dark mode',
-              icon: Icon(mode == ThemeMode.dark
-                  ? Icons.light_mode_outlined
-                  : Icons.dark_mode_outlined),
-              onPressed: toggleTheme,
+          IconButton(
+            tooltip: tr('announcements'),
+            icon: Badge(
+              isLabelVisible: _unreadCount > 0,
+              label: Text('$_unreadCount'),
+              child: const Icon(Icons.notifications_outlined),
             ),
+            onPressed: _openAnnouncements,
           ),
-          // ── Avatar + submenu (Profile / Sign out) ──
+          // ── Avatar + submenu (Profile / Theme / Sign out) ──
           Padding(
             padding: const EdgeInsets.only(right: 10, left: 2),
             child: PopupMenuButton<String>(
@@ -259,6 +366,7 @@ class _HomeShellState extends State<HomeShell> {
                   borderRadius: BorderRadius.circular(14)),
               onSelected: (v) {
                 if (v == 'profile') _openProfileDialog();
+                if (v == 'theme') toggleTheme();
                 if (v == 'signout') _confirmSignOut();
               },
               itemBuilder: (c) => [
@@ -290,6 +398,20 @@ class _HomeShellState extends State<HomeShell> {
                     const Icon(Icons.person_outline, size: 18),
                     const SizedBox(width: 10),
                     Text(tr('profile')),
+                  ]),
+                ),
+                PopupMenuItem<String>(
+                  value: 'theme',
+                  child: Row(children: [
+                    Icon(
+                        themeMode.value == ThemeMode.dark
+                            ? Icons.light_mode_outlined
+                            : Icons.dark_mode_outlined,
+                        size: 18),
+                    const SizedBox(width: 10),
+                    Text(themeMode.value == ThemeMode.dark
+                        ? 'Light mode'
+                        : 'Dark mode'),
                   ]),
                 ),
                 PopupMenuItem<String>(

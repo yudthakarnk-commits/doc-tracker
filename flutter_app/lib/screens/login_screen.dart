@@ -63,11 +63,16 @@ class _LoginScreenState extends State<LoginScreen> {
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            const Text('🐣',
-                                style: TextStyle(fontSize: 44),
-                                textAlign: TextAlign.center),
-                            const SizedBox(height: 8),
-                            Text('DOC Tracker',
+                            Center(
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(14),
+                                child: Image.asset('assets/icon.png',
+                                    width: 60, height: 60,
+                                    fit: BoxFit.cover),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Text('DOC Tracker™',
                                 textAlign: TextAlign.center,
                                 style: Theme.of(context)
                                     .textTheme
