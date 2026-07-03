@@ -119,6 +119,9 @@ const _strings = <String, Map<String, String>>{
     'en': 'This record has no driver token yet'
   },
   'close': {'th': 'ปิด', 'en': 'Close'},
+  'copyLink': {'th': 'คัดลอกลิงก์', 'en': 'Copy link'},
+  'copied': {'th': '📋 คัดลอกแล้ว', 'en': '📋 Copied'},
+  'share': {'th': 'แชร์', 'en': 'Share'},
   // Summary
   'orderVsActual': {'th': '📊 สั่ง vs ส่งจริง', 'en': '📊 Order vs Actual'},
   'noDataWeek': {
