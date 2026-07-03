@@ -196,6 +196,20 @@
   .nav-icon{font-size:16px;flex-shrink:0;width:22px;text-align:center}
   .nav-label{flex:1}
   .sidebar-section-label{font-size:10px;font-weight:700;color:#98a2b3;text-transform:uppercase;letter-spacing:.8px;padding:16px 18px 4px;margin-top:4px}
+  /* Collapsed sidebar (desktop) — icon-only rail */
+  .sidebar{transition:width .22s ease,transform .25s}
+  .sidebar.sidebar-collapsed{width:64px}
+  .sidebar.sidebar-collapsed .nav-label,.sidebar.sidebar-collapsed .sidebar-section-label{display:none}
+  .sidebar.sidebar-collapsed .nav-item{justify-content:center;padding:12px 8px;gap:0}
+  /* Online presence avatar stack (topbar) */
+  .presence-stack{display:none;align-items:center;background:#fff;border:1px solid var(--border);border-radius:999px;padding:4px 12px 4px 6px;box-shadow:var(--shadow);margin-right:6px}
+  .presence-avatar{width:28px;height:28px;border-radius:50%;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;border:2px solid #fff;margin-left:-9px;flex-shrink:0;cursor:default}
+  .presence-avatar:first-child{margin-left:0}
+  .presence-avatar img{width:100%;height:100%;border-radius:50%;object-fit:cover}
+  .presence-more{margin-left:5px;font-size:11px;color:var(--muted);font-weight:700}
+  @media(max-width:640px){.presence-stack{display:none!important}}
+  /* Topbar logo image */
+  .logo{display:flex;align-items:center;gap:8px} .logo img{width:26px;height:26px;border-radius:7px;display:block}
   /* Notification Bell */
   .notif-wrap{position:relative}
   .notif-count-badge{position:absolute;top:2px;right:2px;background:#ef4444;color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 4px;min-width:15px;text-align:center;line-height:1.4;pointer-events:none}
@@ -362,8 +376,9 @@
 <div id="app" class="hidden">
   <div class="topbar">
     <button class="sidebar-toggle-btn" onclick="toggleSidebar()" title="Toggle Menu">☰</button>
-    <div class="logo">🐣 DOC Tracker™</div>
+    <div class="logo"><img src="icon-192.png" alt="DOC Tracker"> DOC Tracker™</div>
     <div class="topbar-spacer"></div>
+    <div id="presenceWrap" class="presence-stack" title="Online now"></div>
     <div class="topbar-right">
       <div class="lang-toggle"><button data-lang="th" onclick="setLanguage('th')">ไทย</button><button data-lang="en" onclick="setLanguage('en')">EN</button></div>
       <span class="live-status"><span class="live-dot"></span><span data-i18n="realtime">Real-time</span></span>
@@ -394,11 +409,11 @@
   <div class="app-body">
     <nav class="sidebar" id="appSidebar">
       <div class="sidebar-section-label">Navigation</div>
-      <button class="nav-item active" data-tab="dashboard" onclick="switchTab('dashboard')">🏠 Dashboard</button>
-      <button class="nav-item" data-tab="entry" onclick="switchTab('entry')" data-i18n="tabEntry">📋 Order Entry</button>
-      <button class="nav-item" data-tab="summary" onclick="switchTab('summary')" data-i18n="tabSummary">📊 Summarize</button>
-      <button class="nav-item" data-tab="transport" onclick="switchTab('transport')" data-i18n="tabTransport">🚚 Transport</button>
-      <button class="nav-item hidden" data-tab="admin" id="adminTab" onclick="switchTab('admin')" data-i18n="tabAdmin">⚙️ Admin</button>
+      <button class="nav-item active" data-tab="dashboard" onclick="switchTab('dashboard')" title="Dashboard"><span class="nav-icon">🏠</span><span class="nav-label">Dashboard</span></button>
+      <button class="nav-item" data-tab="entry" onclick="switchTab('entry')" title="Order Entry"><span class="nav-icon">📋</span><span class="nav-label">Order Entry</span></button>
+      <button class="nav-item" data-tab="summary" onclick="switchTab('summary')" title="Summarize"><span class="nav-icon">📊</span><span class="nav-label">Summarize</span></button>
+      <button class="nav-item" data-tab="transport" onclick="switchTab('transport')" title="Transport"><span class="nav-icon">🚚</span><span class="nav-label">Transport</span></button>
+      <button class="nav-item hidden" data-tab="admin" id="adminTab" onclick="switchTab('admin')" title="Admin"><span class="nav-icon">⚙️</span><span class="nav-label">Admin</span></button>
     </nav>
 
     <div class="main-content" id="mainContent">
@@ -1544,7 +1559,9 @@ async function onLogin(user){
   applyPermissionsToUI(); populateWeekFilters(); renderEntry(); renderSummary();
   if(hasPermission('view_admin_tab')){renderAdminTable();renderTargetsTable();renderEstimatesTable();renderCustomersTable();}
   switchTab(localStorage.getItem('DOC_LAST_TAB') || 'dashboard');
+  restoreSidebarState();
   subscribeRealtime();
+  initPresence();
   loadNotificationSettings().then(()=>checkTargetShortfall());
   // ── เปิด Record จาก QR URL (?record=uuid) ─────────────────
   const _qrParam = new URLSearchParams(window.location.search).get('record');
@@ -3847,12 +3864,56 @@ function toggleSidebar() {
     overlay.classList.toggle('show', _sidebarMobileOpen);
   } else {
     sidebar.classList.toggle('sidebar-collapsed');
+    localStorage.setItem('SIDEBAR_COLLAPSED', sidebar.classList.contains('sidebar-collapsed') ? '1' : '0');
+  }
+}
+function restoreSidebarState() {
+  if (window.innerWidth > 768 && localStorage.getItem('SIDEBAR_COLLAPSED') === '1') {
+    document.getElementById('appSidebar')?.classList.add('sidebar-collapsed');
   }
 }
 function closeSidebar() {
   document.getElementById('appSidebar')?.classList.remove('mobile-open');
   document.getElementById('sidebarOverlay')?.classList.remove('show');
   _sidebarMobileOpen = false;
+}
+
+// ══════════════════════════════════════════════════════════════
+// ONLINE PRESENCE — avatar stack of everyone viewing the app now
+// (Supabase Realtime Presence; updates live on join/leave)
+// ══════════════════════════════════════════════════════════════
+let _presenceCh = null;
+function initPresence() {
+  if (_presenceCh || !sb || !currentUser) return;
+  const extra = _getLocalProfile();
+  const name = extra.name || currentProfile?.name || currentUser.email || '';
+  // Avatar images are local dataURLs — only share small ones (presence payload limit)
+  const avatar = (extra.avatar && extra.avatar.length < 3000) ? extra.avatar : null;
+  _presenceCh = sb.channel('doc-online-users', { config: { presence: { key: currentUser.id } } });
+  _presenceCh.on('presence', { event: 'sync' }, renderPresence);
+  _presenceCh.subscribe(status => {
+    if (status === 'SUBSCRIBED') _presenceCh.track({ name, email: currentUser.email, avatar });
+  });
+  window.addEventListener('beforeunload', () => { try { _presenceCh.untrack(); } catch (e) {} });
+}
+function renderPresence() {
+  const wrap = document.getElementById('presenceWrap');
+  if (!wrap || !_presenceCh) return;
+  const state = _presenceCh.presenceState();
+  const users = Object.entries(state).map(([id, metas]) => ({ id, ...(metas[0] || {}) }));
+  // Show only when more than one person is online
+  if (users.length < 2) { wrap.style.display = 'none'; wrap.innerHTML = ''; return; }
+  // Current user first, then others by name
+  users.sort((a, b) => (a.id === currentUser.id ? -1 : b.id === currentUser.id ? 1 : (a.name || '').localeCompare(b.name || '')));
+  const COLORS = ['#2563eb', '#7c3aed', '#059669', '#dc2626', '#d97706', '#0891b2', '#be185d'];
+  const colorOf = id => COLORS[[...String(id)].reduce((s, c) => s + c.charCodeAt(0), 0) % COLORS.length];
+  const MAX = 5;
+  wrap.innerHTML = users.slice(0, MAX).map(u => {
+    const label = esc(u.name || u.email || '') + (u.id === currentUser.id ? ' (you)' : '');
+    if (u.avatar) return `<div class="presence-avatar" title="${label}"><img src="${u.avatar}" alt=""></div>`;
+    return `<div class="presence-avatar" title="${label}" style="background:${colorOf(u.id)}">${esc(_getInitials(u.name || '', u.email || ''))}</div>`;
+  }).join('') + (users.length > MAX ? `<div class="presence-more">+${users.length - MAX}</div>` : '');
+  wrap.style.display = 'flex';
 }
 
 // ══════════════════════════════════════════════════════════════
