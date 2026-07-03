@@ -1,7 +1,7 @@
 /// App-wide constants — same Supabase backend as the web app.
 class AppConfig {
   /// Keep in sync with pubspec.yaml `version:` — shown in the avatar menu.
-  static const appVersion = '1.2.5';
+  static const appVersion = '1.2.6';
 
   static const supabaseUrl = 'https://ncnppcmlxdaabuwkcbtm.supabase.co';
   static const supabaseAnonKey =

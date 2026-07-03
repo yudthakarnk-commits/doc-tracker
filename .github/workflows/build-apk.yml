@@ -66,6 +66,24 @@ jobs:
           fi
           grep -n 'INTERNET' "$MANIFEST"
 
+      # Explicit release signing — the ~/.android/debug.keystore trick failed
+      # (AGP generated its own key per build, so signatures never matched and
+      # Android rejected every update as a package conflict).
+      - name: Configure explicit release signing
+        working-directory: flutter_app
+        run: |
+          if [ -f android/app/build.gradle.kts ]; then
+            G=android/app/build.gradle.kts
+            sed -i 's|signingConfig = signingConfigs.getByName("debug")|signingConfig = signingConfigs.getByName("release")|' "$G"
+            sed -i 's|buildTypes {|signingConfigs {\n        create("release") {\n            storeFile = file(System.getenv("SIGNING_KEYSTORE") ?: "keystore-missing")\n            storePassword = "android"\n            keyAlias = "androiddebugkey"\n            keyPassword = "android"\n        }\n    }\n    buildTypes {|' "$G"
+          else
+            G=android/app/build.gradle
+            sed -i 's|signingConfig signingConfigs.debug|signingConfig signingConfigs.release|' "$G"
+            sed -i 's|buildTypes {|signingConfigs {\n        release {\n            storeFile file(System.getenv("SIGNING_KEYSTORE"))\n            storePassword "android"\n            keyAlias "androiddebugkey"\n            keyPassword "android"\n        }\n    }\n    buildTypes {|' "$G"
+          fi
+          echo "--- patched $G ---"
+          grep -n -B1 -A8 'signingConfigs' "$G" | head -30
+
       - name: Get dependencies
         working-directory: flutter_app
         run: flutter pub get
@@ -76,7 +94,18 @@ jobs:
 
       - name: Build release APK
         working-directory: flutter_app
+        env:
+          SIGNING_KEYSTORE: ${{ github.workspace }}/signing/debug.keystore
         run: flutter build apk --release
+
+      # Hard gate: fail the build if the APK is not signed with the pinned key
+      - name: Verify APK signature matches pinned certificate
+        run: |
+          BT=$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)
+          "$ANDROID_HOME/build-tools/$BT/apksigner" verify --print-certs \
+            flutter_app/build/app/outputs/flutter-apk/app-release.apk | tee certs.txt
+          grep -qi "72bb6d435ac286880c42465df9ce7fe250e05bffe75e447dc9cde1cfe20f237d" certs.txt \
+            || { echo "::error::APK signed with WRONG certificate — refusing to release"; exit 1; }
 
       - name: Rename APK
         run: cp flutter_app/build/app/outputs/flutter-apk/app-release.apk doc-tracker.apk
