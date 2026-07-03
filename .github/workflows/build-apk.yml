@@ -27,6 +27,30 @@ jobs:
           channel: stable
           cache: true
 
+      # Fixed signing key so every APK is signed identically — users can
+      # install updates over the old version instead of uninstalling.
+      # (Flutter's release template signs with the debug keystore; we pin it.)
+      - name: Ensure fixed signing keystore
+        run: |
+          mkdir -p ~/.android
+          if [ -f signing/debug.keystore ]; then
+            cp signing/debug.keystore ~/.android/debug.keystore
+            echo "Using committed keystore"
+          else
+            keytool -genkeypair -v -keystore ~/.android/debug.keystore \
+              -storepass android -keypass android -alias androiddebugkey \
+              -keyalg RSA -keysize 2048 -validity 10950 \
+              -dname "CN=DOC Tracker, OU=Hatchery, O=PS, C=MY"
+            mkdir -p signing
+            cp ~/.android/debug.keystore signing/debug.keystore
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add signing/debug.keystore
+            git commit -m "chore: pin APK signing keystore [skip ci]"
+            git push
+            echo "Generated and committed new keystore"
+          fi
+
       # Generate the android/ platform folder around the committed lib/ + pubspec
       - name: Create Android platform scaffolding
         working-directory: flutter_app
