@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../config.dart';
 import '../i18n.dart';
 import '../main.dart';
 import '../services/data_service.dart';
@@ -276,6 +277,9 @@ class _HomeShellState extends State<HomeShell> {
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                               fontSize: 11, color: Colors.grey)),
+                      const Text('v${AppConfig.appVersion}',
+                          style:
+                              TextStyle(fontSize: 10, color: Colors.grey)),
                     ],
                   ),
                 ),
