@@ -262,10 +262,21 @@
   /* Sidebar Overlay (mobile) */
   .sidebar-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:99;display:none;top:56px}
   .sidebar-overlay.show{display:block}
+  /* ── Mobile Bottom Navigation (replaces sidebar on small screens) ── */
+  .bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:60;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);border-top:1px solid var(--border);justify-content:space-around;align-items:stretch;padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+  .bnav-item{background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;font-weight:600;color:var(--muted);padding:5px 10px;border-radius:12px;font-family:inherit;min-width:56px;transition:all .15s;cursor:pointer}
+  .bnav-icon{font-size:20px;line-height:1.2}
+  .bnav-item.active{color:var(--primary);background:var(--primary-tint)}
   @media(max-width:768px){
     .sidebar{position:fixed;left:0;top:56px;bottom:0;z-index:100;transform:translateX(-100%)}
     .sidebar.mobile-open{transform:translateX(0)}
     .notif-panel,.profile-menu{width:calc(100vw - 24px);right:12px}
+    /* Bottom nav takes over: hide the drawer + hamburger entirely */
+    .bottom-nav{display:flex}
+    .sidebar,.sidebar-overlay{display:none!important}
+    .sidebar-toggle-btn{display:none}
+    .main-content{padding-bottom:calc(74px + env(safe-area-inset-bottom))}
+    .toast{bottom:calc(84px + env(safe-area-inset-bottom))}
   }
 </style>
 </head>
@@ -404,6 +415,15 @@
 
   <!-- Sidebar overlay (mobile) -->
   <div id="sidebarOverlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
+
+  <!-- Mobile bottom navigation (shown ≤768px instead of the sidebar) -->
+  <nav class="bottom-nav" id="bottomNav">
+    <button class="bnav-item active" data-tab="dashboard" onclick="switchTab('dashboard')"><span class="bnav-icon">🏠</span><span>Dashboard</span></button>
+    <button class="bnav-item" data-tab="entry" onclick="switchTab('entry')"><span class="bnav-icon">📋</span><span>Entry</span></button>
+    <button class="bnav-item" data-tab="summary" onclick="switchTab('summary')"><span class="bnav-icon">📊</span><span>Summary</span></button>
+    <button class="bnav-item" data-tab="transport" onclick="switchTab('transport')"><span class="bnav-icon">🚚</span><span>Transport</span></button>
+    <button class="bnav-item hidden" data-tab="admin" id="adminTabMobile" onclick="switchTab('admin')"><span class="bnav-icon">⚙️</span><span>Admin</span></button>
+  </nav>
 
   <div class="app-body">
     <nav class="sidebar" id="appSidebar">
@@ -1796,7 +1816,7 @@ function subscribeRealtime(){
 
 function switchTab(name){
   localStorage.setItem('DOC_LAST_TAB', name);
-  document.querySelectorAll('.nav-item,.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
+  document.querySelectorAll('.nav-item,.tab,.bnav-item').forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
   ['dashboard','entry','summary','transport','admin'].forEach(t=>document.getElementById('tab-'+t)?.classList.toggle('hidden',t!==name));
   if(name==='transport') loadTransportReport();
   if(name==='admin' && hasPermission('view_admin_tab')) { loadActivityLog(); loadNotificationSettings(); }
@@ -2223,6 +2243,7 @@ async function savePerm(){
 }
 function applyPermissionsToUI(){
   const ad=document.getElementById('adminTab'); if(ad)ad.classList.toggle('hidden',!hasPermission('view_admin_tab'));
+  const adM=document.getElementById('adminTabMobile'); if(adM)adM.classList.toggle('hidden',!hasPermission('view_admin_tab'));
   document.querySelectorAll('[onclick*="exportPDF"]').forEach(b=>b.style.display=hasPermission('export_pdf')?'':'none');
   document.querySelectorAll('[onclick*="openTargetModal"]').forEach(b=>b.style.display=hasPermission('manage_targets')?'':'none');
   document.querySelectorAll('[onclick*="openEstimateModal"]').forEach(b=>b.style.display=hasPermission('manage_estimates')?'':'none');
