@@ -262,6 +262,11 @@
   /* Sidebar Overlay (mobile) */
   .sidebar-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:99;display:none;top:56px}
   .sidebar-overlay.show{display:block}
+  /* Order Entry: pin KPI cards + search toolbar while the table scrolls.
+     top:-20px + padding-top:20px cancels the .container padding so the
+     block sits flush at the top of the scrollport when stuck. */
+  .entry-sticky{position:sticky;top:-20px;z-index:25;background:var(--bg);padding-top:20px;margin-top:-20px;box-shadow:0 10px 14px -12px rgba(16,24,40,.18)}
+  @media(max-width:768px){.entry-sticky{position:static;padding-top:0;margin-top:0;box-shadow:none}}
   /* ── Mobile Bottom Navigation (replaces sidebar on small screens) ── */
   .bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:60;background:#fff;border-top:1.5px solid #dde3ea;box-shadow:0 -6px 20px rgba(16,24,40,.12);justify-content:space-around;align-items:stretch;padding:7px 4px calc(7px + env(safe-area-inset-bottom))}
   .bnav-item{background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;font-weight:600;color:#8a94a3;padding:5px 10px;border-radius:12px;font-family:inherit;min-width:56px;transition:all .15s;cursor:pointer}
@@ -559,6 +564,7 @@
     </div><!-- /#tab-dashboard -->
 
     <div id="tab-entry" class="hidden">
+      <div class="entry-sticky">
       <div class="kpi-grid">
         <div class="kpi"><div class="kpi-label" data-i18n="kpiTotal">รายการทั้งหมด</div><div class="kpi-value kpi-blue" id="kTotal">0</div></div>
         <div class="kpi"><div class="kpi-label" data-i18n="kpiOrdered">ยอดสั่ง (ตัว)</div><div class="kpi-value kpi-blue" id="kOrdered">0</div></div>
@@ -579,6 +585,7 @@
         <button class="btn-secondary" onclick="downloadCSVTemplate()" data-i18n="btnLoadTemplate">📄 โหลด Template</button>
         <button class="btn-add" onclick="openAddModal()" data-i18n="addRecord">+ เพิ่มรายการ</button>
       </div>
+      </div><!-- /.entry-sticky -->
       <div class="card">
         <div class="card-header"><span class="card-title" data-i18n="orderTable">ตารางข้อมูล Order</span><span class="live-status" id="entryCount"></span></div>
         <div class="table-wrap">
