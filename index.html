@@ -1614,6 +1614,7 @@ async function onLogin(user){
   if(profile?.role==='admin'){badge.className='badge badge-admin';badge.textContent='ADMIN'}else{badge.className='badge badge-user';badge.textContent='USER'}
   updateAvatarDisplay();
   updateNotifBadge();
+  loadAnnouncementsWeb();
   await Promise.all([loadProfiles(),loadRecords(),loadTargets(),loadEstimates(),loadCustomers()]);
   applyPermissionsToUI(); populateWeekFilters(); renderEntry(); renderSummary();
   if(hasPermission('view_admin_tab')){renderAdminTable();renderTargetsTable();renderEstimatesTable();renderCustomersTable();}
@@ -4152,21 +4153,41 @@ const APP_CHANGELOG = [
   { id: 'feat_email_jun25', date: 'Jun 2025', title: '📧 Email Notifications — DOA & Target Alerts', body: 'Automatic email alerts for high DOA rates and booking target shortfalls. Configure via Admin → Notification Settings using EmailJS.' },
 ];
 
+// Announcements from Supabase (same `announcements` table the mobile app reads)
+let _annRows = [];
+async function loadAnnouncementsWeb() {
+  try {
+    const { data, error } = await sb.from('announcements').select('*')
+      .eq('active', true).order('created_at', { ascending: false }).limit(30);
+    _annRows = (!error && data) ? data : [];
+  } catch (e) { _annRows = []; } // table may not exist yet — bell still shows changelog
+  updateNotifBadge();
+}
+function _allNotifItems() {
+  const ann = _annRows.map(a => ({
+    id: 'ann_' + a.id,
+    date: a.created_at ? new Date(a.created_at).toLocaleDateString() : '',
+    title: esc(a.title || '📢'),
+    body: esc(a.body || '').replace(/\n/g, '<br>'),
+  }));
+  return [...ann, ...APP_CHANGELOG];
+}
 function _getReadNotifs() {
   try { return new Set(JSON.parse(localStorage.getItem('NOTIF_READ') || '[]')); } catch { return new Set(); }
 }
 function updateNotifBadge() {
-  const unread = APP_CHANGELOG.filter(n => !_getReadNotifs().has(n.id)).length;
+  const unread = _allNotifItems().filter(n => !_getReadNotifs().has(n.id)).length;
   const el = document.getElementById('notifBadge');
   if (el) { el.textContent = unread; el.classList.toggle('hidden', unread === 0); }
 }
 function renderNotifPanel() {
   const list = document.getElementById('notifList');
   if (!list) return;
+  const items = _allNotifItems();
   const read = _getReadNotifs();
-  const allRead = APP_CHANGELOG.every(n => read.has(n.id));
+  const allRead = items.every(n => read.has(n.id));
   if (allRead) { list.innerHTML = `<p class="notif-empty">✅ You're all caught up!</p>`; return; }
-  list.innerHTML = APP_CHANGELOG.map(n => `
+  list.innerHTML = items.map(n => `
     <div class="notif-item${read.has(n.id)?' notif-read':''}" id="ni_${n.id}">
       <div class="notif-item-hdr">
         <span class="notif-item-title">${n.title}</span>
@@ -4177,7 +4198,7 @@ function renderNotifPanel() {
     </div>`).join('');
 }
 function markAllNotifRead() {
-  localStorage.setItem('NOTIF_READ', JSON.stringify(APP_CHANGELOG.map(n => n.id)));
+  localStorage.setItem('NOTIF_READ', JSON.stringify(_allNotifItems().map(n => n.id)));
   renderNotifPanel(); updateNotifBadge();
 }
 function dismissNotif(id) {
