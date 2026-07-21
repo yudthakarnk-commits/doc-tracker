@@ -583,6 +583,7 @@
         <button class="btn-secondary" onclick="document.getElementById('csvInput').click()" data-i18n="btnImportCSV">📥 Import CSV</button>
         <input type="file" id="csvInput" accept=".csv, .xlsx" class="hidden" onchange="handleImportCSV(event)"/>
         <button class="btn-secondary" onclick="downloadCSVTemplate()" data-i18n="btnLoadTemplate">📄 โหลด Template</button>
+        <button class="btn-secondary" onclick="openCopyWeekModal()" data-i18n="copyWeekBtn">⏮️ คัดลอกสัปดาห์</button>
         <button class="btn-add" onclick="openAddModal()" data-i18n="addRecord">+ เพิ่มรายการ</button>
       </div>
       </div><!-- /.entry-sticky -->
@@ -614,6 +615,7 @@
         <button class="btn-secondary" onclick="openCustomizeModal()" data-i18n="customizeBtn">⚙️ Customize</button>
         <button class="btn-secondary" onclick="window.print()" data-i18n="printBtn">🖨️ พิมพ์</button>
         <button class="btn-secondary" onclick="openSaleReportModal()" data-i18n="exportSaleReportBtn">📊 Export Sale Report</button>
+        <button class="btn-secondary" onclick="exportSummaryExcel()" data-i18n="exportSummaryBtn">📊 Export Summary Excel</button>
         <button class="btn-add" onclick="exportPDF()" data-i18n="exportPdfBtn">📥 Export PDF</button>
       </div>
       <!-- ── COMBINED ORDER vs ACTUAL ── -->
@@ -946,6 +948,29 @@
   </div>
 </div>
 
+<div id="copyWeekModal" class="modal-overlay hidden">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-header"><h2 data-i18n="copyWeekTitle">คัดลอกแผน Order จากสัปดาห์ก่อน</h2><button class="modal-close" onclick="closeCopyWeekModal()">&times;</button></div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:14px">
+      <div class="form-row">
+        <label data-i18n="cwSourceLabel">สัปดาห์ต้นทาง</label>
+        <select id="cwSource" style="width:100%" onchange="previewCopyWeek()"></select>
+      </div>
+      <div class="form-row">
+        <label data-i18n="cwOffsetLabel">คัดลอกไปยัง</label>
+        <select id="cwOffset" style="width:100%" onchange="previewCopyWeek()">
+          <option value="1">+1 Wk (+7d)</option><option value="2">+2 Wk (+14d)</option><option value="3">+3 Wk (+21d)</option><option value="4">+4 Wk (+28d)</option>
+        </select>
+      </div>
+      <div id="cwPreview" style="font-size:13.5px"></div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.5" data-i18n="cwHint">คัดลอกเฉพาะข้อมูล Order (ลูกค้า / สายพันธุ์ / ยอดสั่ง / ราคา) — ไม่รวมยอดส่งจริงและข้อมูลขนส่ง รายการที่มีอยู่แล้วในสัปดาห์ปลายทางจะถูกข้ามอัตโนมัติ</div>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button class="btn-secondary" onclick="closeCopyWeekModal()" data-i18n="cancel">ยกเลิก</button>
+        <button class="btn-add" id="cwRunBtn" onclick="runCopyWeek()" data-i18n="cwRunBtn">⏮️ คัดลอก</button>
+      </div>
+    </div>
+  </div>
+</div>
 <div id="saleReportModal" class="modal-overlay hidden">
   <div class="modal" style="max-width:420px">
     <div class="modal-header"><h2 data-i18n="exportSaleReportTitle">Export Sale Report</h2><button class="modal-close" onclick="closeSaleReportModal()">&times;</button></div>
@@ -1128,6 +1153,9 @@ const ROW_CLASS = {'Customer':'row-direct','Contract Farm':'row-contract','Compa
 
 const I18N = {
   th: {
+    copyWeekBtn:'⏮️ คัดลอกสัปดาห์', copyWeekTitle:'คัดลอกแผน Order จากสัปดาห์ก่อน', cwSourceLabel:'สัปดาห์ต้นทาง', cwOffsetLabel:'คัดลอกไปยัง', cwRunBtn:'⏮️ คัดลอก',
+    cwHint:'คัดลอกเฉพาะข้อมูล Order (ลูกค้า / สายพันธุ์ / ยอดสั่ง / ราคา) — ไม่รวมยอดส่งจริงและข้อมูลขนส่ง รายการที่มีอยู่แล้วในสัปดาห์ปลายทางจะถูกข้ามอัตโนมัติ',
+    exportSummaryBtn:'📊 Export Summary Excel',
     chooseOption:'-- เลือก --', lblEggAge:'อายุไข่ฟัก (สัปดาห์)', lblVaccineHeader:'การทำวัคซีน (Vaccination)', lblVaccineSC:'💉 วัคซีนใต้ผิวหนัง', lblVaccineSpray:'💦 วัคซีนสเปรย์', lblEggAgeAndVac:'อายุไข่ / วัคซีน',
     lblDepartureTime:'เวลาเดินทาง', lblLocation:'📍 สถานที่ฟาร์ม', lblLocationPlaceholder:'🔍 ค้นหาชื่อฟาร์ม, สถานที่, หรือที่อยู่...', th_depTime:'เวลาออก', th_location:'สถานที่',
     rLocationPlaceholder:'ดึงจากข้อมูลลูกค้า (แก้ไขได้)', lblLocationEditHint:'ดึงมาจากข้อมูลลูกค้า — แก้ไขได้ตามต้องการ',
@@ -1192,6 +1220,9 @@ const I18N = {
     signupSuccess:'สมัครสำเร็จ! ตรวจสอบอีเมล', fillEmailPwd:'กรุณากรอกอีเมลและรหัสผ่าน'
   },
   en: {
+    copyWeekBtn:'⏮️ Copy Week', copyWeekTitle:'Copy Order Plan from a Previous Week', cwSourceLabel:'Source week', cwOffsetLabel:'Copy to', cwRunBtn:'⏮️ Copy',
+    cwHint:'Copies order data only (customer / breed / ordered qty / price) — actuals and transport data are not copied. Rows already existing in the target week are skipped automatically.',
+    exportSummaryBtn:'📊 Export Summary Excel',
     chooseOption:'-- Choose --', lblEggAge:'Week of Production (WOP)', lblVaccineHeader:'Vaccination', lblVaccineSC:'💉 Subcutaneous Vaccine (S/C)', lblVaccineSpray:'💦 Coarse Spray Vaccine', lblEggAgeAndVac:'WOP / Vaccine',
     lblDepartureTime:'Departure Time', lblLocation:'📍 Farm Location', lblLocationPlaceholder:'🔍 Search farm name, location, or address...', th_depTime:'Dep. Time', th_location:'Location',
     rLocationPlaceholder:'Auto-filled from customer (editable)', lblLocationEditHint:'Auto-filled from customer — can be edited',
@@ -1628,8 +1659,21 @@ const ACTION_LABELS = {
   create_customer:'➕ New Customer', update_customer:'✏️ Edit Customer', delete_customer:'🗑️ Delete Customer',
   import_customers:'📥 Import Customers',
   export_excel:'📊 Export Entry Excel', export_transport:'📊 Export Transport Excel',
+  export_summary:'📊 Export Summary Excel', copy_week:'⏮️ Copy Week',
   download_qr:'🔲 Download QR', batch_calc_dist:'📐 Calc Distances',
 };
+
+// Human-readable labels for field-level audit diffs
+const FIELD_LABELS = { week_no:'Wk', record_date:'Date', day_name:'Day', hatchery:'Hatchery', external_source:'Ext. Source', customer_type:'Cust. Type', customer_name:'Customer', customer_code:'Cust. Code', breed:'Breed', m_ordered:'M Ord', f_ordered:'F Ord', u_ordered:'U Ord', m_actual:'M Act', f_actual:'F Act', u_actual:'U Act', do_number:'DO No.', truck_plate:'Truck', departure_time:'Dep. Time', location:'Location', avg_weight_m:'Wgt M', avg_weight_f:'Wgt F', avg_weight_mixed:'Wgt U', egg_age:'Egg Age', vaccine_sc:'Vac S/C', vaccine_spray:'Vac Spray', unit_price:'Price', notes:'Notes' };
+function diffRecordFields(oldRec, newData){
+  const ch={};
+  for(const k of Object.keys(newData)){
+    const a=oldRec[k], b=newData[k];
+    if((a===null||a===undefined||a==='')&&(b===null||b===undefined||b===''))continue;
+    if(String(a??'')!==String(b??'')) ch[k]={from:a??null,to:b??null};
+  }
+  return ch;
+}
 
 async function logActivity(action, targetType='', targetId='', targetDesc='', details={}) {
   try {
@@ -1702,10 +1746,23 @@ function renderActivityLog(logs) {
       <td style="font-size:11px;max-width:160px;overflow:hidden;text-overflow:ellipsis" title="${esc(log.user_email||'')}">
         ${esc((log.user_email||'').split('@')[0])}</td>
       <td style="white-space:nowrap;font-size:12px"><span style="padding:2px 7px;border-radius:4px;background:#f3f4f6;font-size:11px">${label}</span></td>
-      <td style="font-size:12px;max-width:260px">${esc(log.target_desc||log.target_type||'-')}</td>
+      <td style="font-size:12px;max-width:300px">${esc(log.target_desc||log.target_type||'-')}${_auditDiffHtml(log)}</td>
     </tr>`;
   });
   wrap.innerHTML = h + '</tbody></table>';
+}
+
+// Render field-level changes (old → new) stored in details.changes
+function _auditDiffHtml(log){
+  const ch=log.details&&log.details.changes; if(!ch||typeof ch!=='object')return '';
+  const keys=Object.keys(ch); if(!keys.length)return '';
+  const fmtV=v=>(v===null||v===undefined||v==='')?'—':String(v);
+  const parts=keys.slice(0,8).map(k=>{
+    const v=ch[k]||{};
+    return `<span style="white-space:nowrap">${esc(FIELD_LABELS[k]||k)}: <s style="color:#b91c1c">${esc(fmtV(v.from))}</s> → <b style="color:#15803d">${esc(fmtV(v.to))}</b></span>`;
+  });
+  const more=keys.length>8?`<span style="color:var(--muted)">+${keys.length-8}</span>`:'';
+  return `<div style="margin-top:3px;font-size:11px;color:var(--muted);display:flex;flex-wrap:wrap;gap:3px 10px">${parts.join('')}${more}</div>`;
 }
 
 async function exportActivityLog() {
@@ -1949,6 +2006,14 @@ async function saveRecord(){
   };
   if(!data.week_no||!data.record_date||!data.hatchery||!data.customer_type||!data.customer_name){toast(t('toastRequiredFields'),'error');return}
   if(!isHatcheryAllowed(data.hatchery)){toast('🔒 Permission denied','error');return}
+  // Anomaly warnings — non-blocking, user confirms before saving
+  const _warns=validateRecordWarnings(id,data);
+  if(_warns.length){
+    const _msg=(currentLang==='en'?'⚠️ Please review before saving:\n\n':'⚠️ พบข้อมูลที่ควรตรวจสอบก่อนบันทึก:\n\n')
+      +_warns.map((w,i)=>`${i+1}. ${w}`).join('\n')
+      +(currentLang==='en'?'\n\nSave anyway?':'\n\nยืนยันบันทึกต่อหรือไม่?');
+    if(!confirm(_msg))return;
+  }
   // Offline support — queue new records when no network
   if(!id && !navigator.onLine){
     data.user_id=currentUser.id;
@@ -1956,6 +2021,7 @@ async function saveRecord(){
     toast('💾 บันทึก Offline — จะ Sync เมื่อมีเน็ต','info'); closeModal(); return;
   }
   let error, savedRow;
+  const _oldRec=id?allRecords.find(r=>String(r.id)===String(id)):null;
   if(id){
     const res=await sb.from('doc_records').update(data).eq('id',id).select();
     error=res.error; savedRow=res.data?.[0];
@@ -1973,9 +2039,11 @@ async function saveRecord(){
     else allRecords.unshift(savedRow);
   }
   // log
+  const _changes=_oldRec?diffRecordFields(_oldRec,data):null;
   logActivity(id?'update_record':'create_record','record', savedRow?.id||id||'',
     `${data.customer_name} | ${data.record_date} | ${data.hatchery}`,
-    {week_no:data.week_no, hatchery:data.hatchery, total_actual:(data.m_actual||0)+(data.f_actual||0)+(data.u_actual||0)});
+    {week_no:data.week_no, hatchery:data.hatchery, total_actual:(data.m_actual||0)+(data.f_actual||0)+(data.u_actual||0),
+     ...(_changes&&Object.keys(_changes).length?{changes:_changes}:{})});
   toast(id?t('toastUpdated'):t('toastSaved'),'success');
   closeModal();
   populateWeekFilters(); renderEntry();
@@ -1985,7 +2053,8 @@ async function deleteRecord(){
   const _r=allRecords.find(r=>r.id===id);
   const {error}=await sb.from('doc_records').delete().eq('id',id);
   if(error) return toast(error.message,'error');
-  logActivity('delete_record','record',id, _r?`${_r.customer_name} | ${_r.record_date} | ${_r.hatchery}`:'');
+  logActivity('delete_record','record',id, _r?`${_r.customer_name} | ${_r.record_date} | ${_r.hatchery}`:'',
+    _r?{week_no:_r.week_no,hatchery:_r.hatchery,customer:_r.customer_name,total_ordered:_r.total_ordered??null,total_actual:_r.total_actual??null}:{});
   toast(t('toastDeleted'),'success');closeModal();
 }
 
@@ -2849,6 +2918,133 @@ function handleImportCSV(e){
       toast(`✅ Imported ${imported} records`, 'success'); e.target.value='';
     }catch(err){toast(err.message,'error');}
   }; r.readAsBinaryString(file);
+}
+
+// ══════════════════════════════════════════════════════════════
+// ANOMALY WARNINGS — เตือนข้อมูลผิดปกติก่อนบันทึก (ไม่บล็อก)
+// ══════════════════════════════════════════════════════════════
+function validateRecordWarnings(id, d){
+  const en=currentLang==='en', w=[];
+  const tOrd=(d.m_ordered||0)+(d.f_ordered||0)+(d.u_ordered||0);
+  const tAct=(d.m_actual||0)+(d.f_actual||0)+(d.u_actual||0);
+  const dup=allRecords.find(r=>String(r.id)!==String(id||'')
+    && r.record_date===d.record_date && r.hatchery===d.hatchery
+    && (r.customer_type||'')===(d.customer_type||'') && (r.breed||'')===(d.breed||'')
+    && (r.customer_name||'').trim().toLowerCase()===(d.customer_name||'').trim().toLowerCase());
+  if(dup) w.push(en?`Possible duplicate — "${d.customer_name}" already has a record on ${d.record_date} at ${d.hatchery}`
+                   :`อาจซ้ำซ้อน — "${d.customer_name}" มีรายการวันที่ ${d.record_date} ที่ ${d.hatchery} อยู่แล้ว`);
+  if(tOrd>0&&tAct>tOrd) w.push(en?`Actual (${tAct.toLocaleString()}) exceeds Order (${tOrd.toLocaleString()}) by ${(tAct/tOrd*100-100).toFixed(1)}%`
+                                 :`ยอดส่งจริง (${tAct.toLocaleString()}) มากกว่ายอดสั่ง (${tOrd.toLocaleString()}) อยู่ ${(tAct/tOrd*100-100).toFixed(1)}%`);
+  if(tOrd>0&&tAct>0&&tAct<tOrd*0.5) w.push(en?`Actual (${tAct.toLocaleString()}) is below 50% of Order (${tOrd.toLocaleString()})`
+                                             :`ยอดส่งจริง (${tAct.toLocaleString()}) ต่ำกว่าครึ่งหนึ่งของยอดสั่ง (${tOrd.toLocaleString()})`);
+  [['avg_weight_m','M'],['avg_weight_f','F'],['avg_weight_mixed','U']].forEach(([k,lb])=>{
+    const v=d[k];
+    if(v!==null&&v!==undefined&&(v<25||v>60)) w.push(en?`Avg weight ${lb} = ${v} g looks unusual (expected 25–60 g)`
+                                                       :`น้ำหนักเฉลี่ย ${lb} = ${v} กรัม ดูผิดปกติ (ช่วงปกติ 25–60 กรัม)`);
+  });
+  if(d.unit_price!==null&&d.unit_price!==undefined&&d.unit_price<=0)
+    w.push(en?'Unit price is 0 or negative':'ราคาต่อหน่วยเป็น 0 หรือติดลบ');
+  return w;
+}
+
+// ══════════════════════════════════════════════════════════════
+// COPY WEEK — คัดลอกแผน Order จากสัปดาห์ก่อนหน้า
+// ══════════════════════════════════════════════════════════════
+function openCopyWeekModal(){
+  const groups=new Map(); // 'year|week' -> {year,week,count,minDate}
+  allRecords.forEach(r=>{
+    if(!r.record_date||!r.week_no)return;
+    if(!isHatcheryAllowed(r.hatchery))return;
+    const y=String(r.record_date).slice(0,4), k=y+'|'+r.week_no;
+    const g=groups.get(k)||{year:y,week:r.week_no,count:0,minDate:r.record_date};
+    g.count++; if(r.record_date<g.minDate)g.minDate=r.record_date;
+    groups.set(k,g);
+  });
+  const list=[...groups.values()].sort((a,b)=>a.minDate<b.minDate?1:-1);
+  const sel=document.getElementById('cwSource'); sel.innerHTML='';
+  list.forEach(g=>{
+    const o=document.createElement('option');
+    o.value=g.year+'|'+g.week;
+    o.textContent=`Wk ${g.week} / ${g.year} — ${g.count} ${currentLang==='en'?'rows':'รายการ'}`;
+    sel.appendChild(o);
+  });
+  previewCopyWeek();
+  document.getElementById('copyWeekModal').classList.remove('hidden');
+}
+function closeCopyWeekModal(){document.getElementById('copyWeekModal').classList.add('hidden');}
+function _cwCompute(){
+  const src=document.getElementById('cwSource').value; if(!src)return null;
+  const [y,wk]=src.split('|');
+  const off=parseInt(document.getElementById('cwOffset').value)||1;
+  const pad=n=>String(n).padStart(2,'0');
+  const srcRecs=allRecords.filter(r=>r.record_date&&String(r.week_no)===String(wk)&&String(r.record_date).slice(0,4)===y&&isHatcheryAllowed(r.hatchery));
+  const rows=[],skipped=[];
+  srcRecs.forEach(r=>{
+    const nd=new Date(r.record_date+'T00:00:00'); nd.setDate(nd.getDate()+7*off);
+    const ds=`${nd.getFullYear()}-${pad(nd.getMonth()+1)}-${pad(nd.getDate())}`;
+    const dup=allRecords.some(x=>x.record_date===ds&&x.hatchery===r.hatchery
+      &&(x.customer_type||'')===(r.customer_type||'')&&(x.breed||'')===(r.breed||'')
+      &&(x.customer_name||'').trim().toLowerCase()===(r.customer_name||'').trim().toLowerCase());
+    if(dup){skipped.push(r);return;}
+    rows.push({user_id:currentUser.id, record_date:ds, week_no:getISOWeek(nd),
+      day_name:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][nd.getDay()],
+      hatchery:r.hatchery, external_source:r.external_source||null,
+      customer_type:r.customer_type, customer_name:r.customer_name, customer_code:r.customer_code||null,
+      breed:r.breed||null, m_ordered:r.m_ordered, f_ordered:r.f_ordered, u_ordered:r.u_ordered,
+      unit_price:r.unit_price, egg_age:r.egg_age||null, location:r.location||null});
+  });
+  return {rows,skipped,off,wk,y};
+}
+function previewCopyWeek(){
+  const el=document.getElementById('cwPreview'); if(!el)return;
+  const c=_cwCompute();
+  if(!c){el.textContent='';return;}
+  el.innerHTML=currentLang==='en'
+    ?`Will create <b style="color:var(--primary,#2563eb)">${c.rows.length}</b> new order rows${c.skipped.length?` · skip <b>${c.skipped.length}</b> already existing`:''}`
+    :`จะสร้าง Order ใหม่ <b style="color:var(--primary,#2563eb)">${c.rows.length}</b> รายการ${c.skipped.length?` · ข้าม <b>${c.skipped.length}</b> รายการที่มีอยู่แล้ว`:''}`;
+}
+async function runCopyWeek(){
+  const c=_cwCompute();
+  if(!c||!c.rows.length)return toast(currentLang==='en'?'Nothing to copy':'ไม่มีรายการให้คัดลอก','error');
+  const btn=document.getElementById('cwRunBtn'); btn.disabled=true;
+  try{
+    const CHUNK=100;
+    for(let i=0;i<c.rows.length;i+=CHUNK){
+      const {error}=await sb.from('doc_records').insert(c.rows.slice(i,i+CHUNK));
+      if(error)throw error;
+    }
+    logActivity('copy_week','record','',`Wk ${c.wk}/${c.y} +${c.off}w → ${c.rows.length} rows (skip ${c.skipped.length})`,
+      {source_week:c.wk,source_year:c.y,offset_weeks:c.off,created:c.rows.length,skipped:c.skipped.length});
+    await loadRecords(); populateWeekFilters(); renderEntry(); renderSummary();
+    toast(`✅ ${currentLang==='en'?'Copied':'คัดลอกแล้ว'} ${c.rows.length} ${currentLang==='en'?'rows':'รายการ'}${c.skipped.length?` (${currentLang==='en'?'skipped':'ข้าม'} ${c.skipped.length})`:''}`,'success');
+    closeCopyWeekModal();
+  }catch(err){toast(err.message,'error');}
+  finally{btn.disabled=false;}
+}
+
+// ══════════════════════════════════════════════════════════════
+// EXPORT SUMMARY EXCEL — export ตารางสรุปทุกตารางที่แสดงอยู่
+// ══════════════════════════════════════════════════════════════
+function exportSummaryExcel(){
+  const tab=document.getElementById('tab-summary');
+  const wb=XLSX.utils.book_new(); let n=0;
+  tab.querySelectorAll('.summary-section').forEach(sec=>{
+    if(sec.offsetParent===null)return; // hidden via Customize
+    const tbl=sec.querySelector('table');
+    if(!tbl||!tbl.rows.length)return;
+    let name=((sec.querySelector('.summary-title')?.textContent)||`Sheet${n+1}`)
+      .replace(/[\\\/\?\*\[\]:]/g,' ').replace(/\s+/g,' ').trim().slice(0,28)||`Sheet${n+1}`;
+    if(wb.SheetNames.includes(name)) name=name.slice(0,25)+'_'+(n+1);
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.table_to_sheet(tbl),name); n++;
+  });
+  if(!n)return toast(currentLang==='en'?'No summary tables to export':'ไม่มีตารางสรุปให้ Export','error');
+  const mode=document.getElementById('sumMode').value;
+  const scope=mode==='week'?('Wk'+(document.getElementById('sumWeek').value||''))
+    :mode==='day'?(document.getElementById('sumDate').value||'day')
+    :(document.getElementById('sumMonth').value||'month');
+  logActivity('export_summary','export','',`${n} sheets · ${scope}`);
+  XLSX.writeFile(wb,`DOC-Summary_${scope}_${new Date().toISOString().slice(0,10)}.xlsx`);
+  toast(currentLang==='en'?'Exported':'Export สำเร็จ','success');
 }
 
 async function exportPDF(){
