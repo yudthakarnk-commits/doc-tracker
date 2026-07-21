@@ -60,8 +60,82 @@ class _EntryFormScreenState extends State<EntryFormScreen> {
   int? _int(TextEditingController c) =>
       c.text.trim().isEmpty ? null : int.tryParse(c.text.trim());
 
+  /// Mirrors validateRecordWarnings() in the web app — non-blocking checks.
+  List<String> _anomalyWarnings() {
+    final th = lang.value == 'th';
+    final w = <String>[];
+    final dateStr = DateFormat('yyyy-MM-dd').format(_date);
+    final tOrd = (_int(_mOrd) ?? 0) + (_int(_fOrd) ?? 0) + (_int(_uOrd) ?? 0);
+    final tAct = (_int(_mAct) ?? 0) + (_int(_fAct) ?? 0) + (_int(_uAct) ?? 0);
+    final name = _customer.text.trim().toLowerCase();
+    final dup = DataService.instance.records.any((r) =>
+        (widget.record?.id == null || '${r.id}' != '${widget.record!.id}') &&
+        r.recordDate == dateStr &&
+        r.hatchery == (_hatchery ?? '') &&
+        r.customerType == (_ctype ?? '') &&
+        (r.breed ?? '') == (_breed ?? '') &&
+        r.customerName.trim().toLowerCase() == name);
+    if (dup) {
+      w.add(th
+          ? 'อาจซ้ำซ้อน — "${_customer.text.trim()}" มีรายการวันที่ $dateStr ที่ $_hatchery อยู่แล้ว'
+          : 'Possible duplicate — "${_customer.text.trim()}" already has a record on $dateStr at $_hatchery');
+    }
+    final fmt = NumberFormat('#,##0');
+    if (tOrd > 0 && tAct > tOrd) {
+      final pct = (tAct / tOrd * 100 - 100).toStringAsFixed(1);
+      w.add(th
+          ? 'ยอดส่งจริง (${fmt.format(tAct)}) มากกว่ายอดสั่ง (${fmt.format(tOrd)}) อยู่ $pct%'
+          : 'Actual (${fmt.format(tAct)}) exceeds Order (${fmt.format(tOrd)}) by $pct%');
+    }
+    if (tOrd > 0 && tAct > 0 && tAct < tOrd * 0.5) {
+      w.add(th
+          ? 'ยอดส่งจริง (${fmt.format(tAct)}) ต่ำกว่าครึ่งหนึ่งของยอดสั่ง (${fmt.format(tOrd)})'
+          : 'Actual (${fmt.format(tAct)}) is below 50% of Order (${fmt.format(tOrd)})');
+    }
+    return w;
+  }
+
+  Future<bool?> _confirmWarnings(List<String> warns) {
+    final th = lang.value == 'th';
+    return showDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: Text(th ? '⚠️ ตรวจสอบข้อมูล' : '⚠️ Please review'),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (var i = 0; i < warns.length; i++)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text('${i + 1}. ${warns[i]}'),
+                ),
+              const SizedBox(height: 4),
+              Text(th ? 'ยืนยันบันทึกต่อหรือไม่?' : 'Save anyway?',
+                  style: const TextStyle(fontWeight: FontWeight.w600)),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(c, false),
+              child: Text(tr('cancel'))),
+          FilledButton(
+              onPressed: () => Navigator.pop(c, true),
+              child: Text(th ? 'บันทึกต่อ' : 'Save anyway')),
+        ],
+      ),
+    );
+  }
+
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    final warns = _anomalyWarnings();
+    if (warns.isNotEmpty) {
+      final ok = await _confirmWarnings(warns);
+      if (ok != true) return;
+    }
     setState(() => _busy = true);
     try {
       const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
