@@ -775,6 +775,7 @@
           <span class="card-title" data-i18n="customersTitle">📋 ข้อมูลอ้างอิงลูกค้า</span>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
             <button class="btn-secondary" onclick="toggleCustomerMap()" id="custMapToggleBtn" style="font-size:12px;padding:6px 12px">🗺 Show Map</button>
+            <button class="btn-secondary" onclick="openSyncTypesModal()" style="font-size:12px;padding:6px 12px" title="อัปเดตประเภทลูกค้าในรายการที่คีย์แล้ว ให้ตรงกับ Customer Reference" data-i18n="syncTypesBtn">🔗 Sync ประเภท</button>
             <button class="btn-secondary" onclick="downloadCustomerTemplate()" style="font-size:12px;padding:6px 12px" title="Download Excel Template">📄 Template</button>
             <label class="btn-secondary" style="font-size:12px;padding:6px 12px;cursor:pointer;margin:0">📥 Import<input type="file" id="custImportFile" accept=".xlsx,.xls,.csv" style="display:none" onchange="importCustomers(this)"/></label>
             <button class="btn-add" onclick="openCustomerModal()" data-i18n="addCustomer">+ เพิ่มลูกค้า</button>
@@ -948,6 +949,19 @@
   </div>
 </div>
 
+<div id="syncTypesModal" class="modal-overlay hidden">
+  <div class="modal" style="max-width:620px">
+    <div class="modal-header"><h2 data-i18n="syncTypesTitle">🔗 Sync ประเภทลูกค้าจาก Customer Reference</h2><button class="modal-close" onclick="closeSyncTypesModal()">&times;</button></div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:12px">
+      <div style="font-size:12.5px;color:var(--muted);line-height:1.55" data-i18n="syncTypesHint">อัปเดตรายการที่คีย์ไปแล้วให้ประเภทลูกค้าตรงกับ Customer Reference — จับคู่ด้วยชื่อฟาร์ม (ไม่สนตัวพิมพ์เล็ก/ใหญ่) ฟาร์มที่ไม่มีใน Reference จะคงข้อมูลเดิมที่คีย์ไว้</div>
+      <div id="syncTypesPreview" style="font-size:13.5px"></div>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button class="btn-secondary" onclick="closeSyncTypesModal()" data-i18n="cancel">ยกเลิก</button>
+        <button class="btn-add" id="syncTypesRunBtn" onclick="runSyncTypes()" data-i18n="syncTypesRunBtn">🔗 อัปเดตทั้งหมด</button>
+      </div>
+    </div>
+  </div>
+</div>
 <div id="copyWeekModal" class="modal-overlay hidden">
   <div class="modal" style="max-width:460px">
     <div class="modal-header"><h2 data-i18n="copyWeekTitle">คัดลอกแผน Order จากสัปดาห์ก่อน</h2><button class="modal-close" onclick="closeCopyWeekModal()">&times;</button></div>
@@ -1153,6 +1167,8 @@ const ROW_CLASS = {'Customer':'row-direct','Contract Farm':'row-contract','Compa
 
 const I18N = {
   th: {
+    syncTypesBtn:'🔗 Sync ประเภท', syncTypesTitle:'🔗 Sync ประเภทลูกค้าจาก Customer Reference', syncTypesRunBtn:'🔗 อัปเดตทั้งหมด',
+    syncTypesHint:'อัปเดตรายการที่คีย์ไปแล้วให้ประเภทลูกค้าตรงกับ Customer Reference — จับคู่ด้วยชื่อฟาร์ม (ไม่สนตัวพิมพ์เล็ก/ใหญ่) ฟาร์มที่ไม่มีใน Reference จะคงข้อมูลเดิมที่คีย์ไว้',
     copyWeekBtn:'⏮️ คัดลอกสัปดาห์', copyWeekTitle:'คัดลอกแผน Order จากสัปดาห์ก่อน', cwSourceLabel:'สัปดาห์ต้นทาง', cwOffsetLabel:'คัดลอกไปยัง', cwRunBtn:'⏮️ คัดลอก',
     cwHint:'คัดลอกเฉพาะข้อมูล Order (ลูกค้า / สายพันธุ์ / ยอดสั่ง / ราคา) — ไม่รวมยอดส่งจริงและข้อมูลขนส่ง รายการที่มีอยู่แล้วในสัปดาห์ปลายทางจะถูกข้ามอัตโนมัติ',
     exportSummaryBtn:'📊 Export Summary Excel',
@@ -1220,6 +1236,8 @@ const I18N = {
     signupSuccess:'สมัครสำเร็จ! ตรวจสอบอีเมล', fillEmailPwd:'กรุณากรอกอีเมลและรหัสผ่าน'
   },
   en: {
+    syncTypesBtn:'🔗 Sync Types', syncTypesTitle:'🔗 Sync Customer Types from Reference', syncTypesRunBtn:'🔗 Update All',
+    syncTypesHint:'Update already-keyed records so the customer type matches the Customer Reference — matched by farm name (case-insensitive). Farms not in the Reference keep the data you keyed in.',
     copyWeekBtn:'⏮️ Copy Week', copyWeekTitle:'Copy Order Plan from a Previous Week', cwSourceLabel:'Source week', cwOffsetLabel:'Copy to', cwRunBtn:'⏮️ Copy',
     cwHint:'Copies order data only (customer / breed / ordered qty / price) — actuals and transport data are not copied. Rows already existing in the target week are skipped automatically.',
     exportSummaryBtn:'📊 Export Summary Excel',
@@ -1660,7 +1678,7 @@ const ACTION_LABELS = {
   create_customer:'➕ New Customer', update_customer:'✏️ Edit Customer', delete_customer:'🗑️ Delete Customer',
   import_customers:'📥 Import Customers',
   export_excel:'📊 Export Entry Excel', export_transport:'📊 Export Transport Excel',
-  export_summary:'📊 Export Summary Excel', copy_week:'⏮️ Copy Week',
+  export_summary:'📊 Export Summary Excel', copy_week:'⏮️ Copy Week', sync_types:'🔗 Sync Types',
   download_qr:'🔲 Download QR', batch_calc_dist:'📐 Calc Distances',
 };
 
@@ -2007,6 +2025,14 @@ async function saveRecord(){
   };
   if(!data.week_no||!data.record_date||!data.hatchery||!data.customer_type||!data.customer_name){toast(t('toastRequiredFields'),'error');return}
   if(!isHatcheryAllowed(data.hatchery)){toast('🔒 Permission denied','error');return}
+  // Auto-link to Customer Reference — a farm's type/code follows the reference when the name matches
+  if(data.hatchery!=='External'){
+    const _ref=(allCustomers||[]).find(c=>_normName(c.customer_name)===_normName(data.customer_name));
+    if(_ref){
+      if(_ref.customer_type)data.customer_type=_ref.customer_type;
+      if(!data.customer_code&&_ref.customer_code)data.customer_code=_ref.customer_code;
+    }
+  }
   // Anomaly warnings — non-blocking, user confirms before saving
   const _warns=validateRecordWarnings(id,data);
   if(_warns.length){
@@ -2805,6 +2831,106 @@ async function deleteCustomerFromModal(){
   logActivity('delete_customer','customer',id,_c?_c.customer_name:'');
   toast(t('toastDeleted'),'success');closeCustomerModal();await loadCustomers();renderCustomersTable();
 }
+// ═══════════════════════════════════════════════════════════
+// SYNC CUSTOMER TYPES — ลิงก์รายการที่คีย์แล้วกับ Customer Reference
+// ═══════════════════════════════════════════════════════════
+function _normName(s){return String(s||'').trim().toLowerCase().replace(/\s+/g,' ');}
+
+// สร้าง map: ชื่อ(normalize) -> ข้อมูลอ้างอิงจากตาราง customers
+function _buildRefMap(){
+  const ref=new Map(), dups=new Set();
+  (allCustomers||[]).forEach(c=>{
+    const k=_normName(c.customer_name);
+    if(!k||!c.customer_type)return;
+    if(ref.has(k))dups.add(k); else ref.set(k,{type:c.customer_type,name:c.customer_name,code:c.customer_code||null});
+  });
+  return {ref,dups};
+}
+
+// วางแผนการเปลี่ยนแปลง — คืน changes ต่อ record + สรุปต่อฟาร์ม
+function _buildTypeSyncPlan(){
+  const {ref,dups}=_buildRefMap();
+  const changes=[]; const byCustomer=new Map(); let matched=0, unmatched=0;
+  (allRecords||[]).forEach(r=>{
+    const rf=ref.get(_normName(r.customer_name));
+    if(!rf){unmatched++;return;}
+    matched++;
+    if((r.customer_type||'')!==rf.type){
+      changes.push({id:r.id,to:rf.type});
+      const g=byCustomer.get(rf.name)||{to:rf.type,count:0,froms:new Set()};
+      g.count++; g.froms.add(r.customer_type||'(ว่าง)'); byCustomer.set(rf.name,g);
+    }
+  });
+  return {changes,byCustomer,matched,unmatched,dups:[...dups]};
+}
+
+function openSyncTypesModal(){
+  const p=_buildTypeSyncPlan();
+  const el=document.getElementById('syncTypesPreview');
+  const en=currentLang==='en';
+  let h=`<div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:10px">
+    <div style="background:var(--bg);border-radius:8px;padding:8px 14px"><div style="font-size:11px;color:var(--muted)">${en?'Records matched to Reference':'รายการที่ตรงกับ Reference'}</div><div style="font-size:18px;font-weight:700">${p.matched.toLocaleString()}</div></div>
+    <div style="background:var(--bg);border-radius:8px;padding:8px 14px"><div style="font-size:11px;color:var(--muted)">${en?'Will be updated':'จะถูกอัปเดต'}</div><div style="font-size:18px;font-weight:700;color:var(--primary,#2563eb)">${p.changes.length.toLocaleString()}</div></div>
+    <div style="background:var(--bg);border-radius:8px;padding:8px 14px"><div style="font-size:11px;color:var(--muted)">${en?'Not in Reference (kept)':'ไม่มีใน Reference (คงเดิม)'}</div><div style="font-size:18px;font-weight:700">${p.unmatched.toLocaleString()}</div></div>
+  </div>`;
+  if(!p.changes.length){
+    h+=`<p style="text-align:center;padding:16px;color:var(--muted)">✅ ${en?'Everything already matches the Reference.':'ข้อมูลทุกรายการตรงกับ Reference อยู่แล้ว'}</p>`;
+    document.getElementById('syncTypesRunBtn').disabled=true;
+  } else {
+    document.getElementById('syncTypesRunBtn').disabled=false;
+    h+=`<div style="max-height:300px;overflow-y:auto;border:1px solid var(--border);border-radius:8px">
+      <table style="width:100%;font-size:12.5px"><thead><tr>
+        <th style="text-align:left">${en?'Farm':'ฟาร์ม'}</th>
+        <th style="text-align:left">${en?'Current':'ปัจจุบัน'}</th>
+        <th></th>
+        <th style="text-align:left">${en?'→ Reference':'→ ตาม Reference'}</th>
+        <th class="num">${en?'Rows':'รายการ'}</th>
+      </tr></thead><tbody>`;
+    [...p.byCustomer.entries()].sort((a,b)=>b[1].count-a[1].count).forEach(([name,g])=>{
+      h+=`<tr>
+        <td>${esc(name)}</td>
+        <td><s style="color:#b91c1c">${esc([...g.froms].join(', '))}</s></td>
+        <td style="color:var(--muted)">→</td>
+        <td><b style="color:#15803d">${esc(g.to)}</b></td>
+        <td class="num">${g.count}</td>
+      </tr>`;
+    });
+    h+=`</tbody></table></div>`;
+  }
+  if(p.dups.length) h+=`<p style="font-size:11.5px;color:#b45309;margin-top:8px">⚠️ ${en?'Duplicate names in Reference (first entry used): ':'ชื่อซ้ำใน Reference (ใช้รายการแรก): '}${p.dups.length}</p>`;
+  el.innerHTML=h;
+  applyLanguage();
+  document.getElementById('syncTypesModal').classList.remove('hidden');
+}
+function closeSyncTypesModal(){document.getElementById('syncTypesModal').classList.add('hidden');}
+
+async function runSyncTypes(){
+  const p=_buildTypeSyncPlan();
+  if(!p.changes.length)return closeSyncTypesModal();
+  const btn=document.getElementById('syncTypesRunBtn'); btn.disabled=true;
+  try{
+    // จัดกลุ่มตาม type ปลายทาง แล้วอัปเดตทีละกลุ่มด้วย .in('id',[...])
+    const byType=new Map();
+    p.changes.forEach(c=>{(byType.get(c.to)||byType.set(c.to,[]).get(c.to)).push(c.id);});
+    let done=0;
+    for(const [type,ids] of byType){
+      const CHUNK=200;
+      for(let i=0;i<ids.length;i+=CHUNK){
+        const slice=ids.slice(i,i+CHUNK);
+        const {error}=await sb.from('doc_records').update({customer_type:type}).in('id',slice);
+        if(error)throw error;
+        done+=slice.length;
+        toast(`${currentLang==='en'?'Updating':'กำลังอัปเดต'}… ${done}/${p.changes.length}`,'info');
+      }
+    }
+    logActivity('sync_types','bulk','',`${p.changes.length} rows · ${p.byCustomer.size} farms`,
+      {updated:p.changes.length,farms:p.byCustomer.size,unmatched:p.unmatched});
+    await loadRecords(); populateWeekFilters(); renderEntry(); renderSummary();
+    toast(`✅ ${currentLang==='en'?'Synced':'อัปเดตแล้ว'} ${p.changes.length} ${currentLang==='en'?'rows':'รายการ'}`,'success');
+    closeSyncTypesModal();
+  }catch(err){toast(err.message,'error'); btn.disabled=false;}
+}
+
 // Customer Autocomplete in Add Record
 function onCustomerInput(inp){
   const q=inp.value.trim().toLowerCase();
