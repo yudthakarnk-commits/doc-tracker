@@ -678,10 +678,15 @@
         <div class="table-wrap">
           <table id="fcTable">
             <thead><tr>
-              <th data-i18n="fcThDate">วันคาดการณ์</th><th>Wk</th>
-              <th data-i18n="fcThFarm">ฟาร์ม</th><th data-i18n="fcThType">ประเภท</th><th>Hatchery</th><th>Breed</th>
-              <th class="num" data-i18n="fcThQty">ลูกไก่ (ตัว)</th>
-              <th data-i18n="fcThBased">อ้างอิงจากการลงวันที่</th><th data-i18n="fcThCycle">รอบที่</th>
+              <th class="fc-sort" onclick="fcSortBy('forecastDate')" style="cursor:pointer" data-i18n="fcThDate">วันคาดการณ์</th>
+              <th class="fc-sort" onclick="fcSortBy('week')" style="cursor:pointer">Wk</th>
+              <th class="fc-sort" onclick="fcSortBy('farm')" style="cursor:pointer" data-i18n="fcThFarm">ฟาร์ม</th>
+              <th class="fc-sort" onclick="fcSortBy('ctype')" style="cursor:pointer" data-i18n="fcThType">ประเภท</th>
+              <th class="fc-sort" onclick="fcSortBy('hatchery')" style="cursor:pointer">Hatchery</th>
+              <th class="fc-sort" onclick="fcSortBy('breeds')" style="cursor:pointer">Breed</th>
+              <th class="fc-sort num" onclick="fcSortBy('qty')" style="cursor:pointer" data-i18n="fcThQty">ลูกไก่ (ตัว)</th>
+              <th class="fc-sort" onclick="fcSortBy('anchorDate')" style="cursor:pointer" data-i18n="fcThBased">อ้างอิงจากการลงวันที่</th>
+              <th class="fc-sort" onclick="fcSortBy('cycle')" style="cursor:pointer" data-i18n="fcThCycle">รอบที่</th>
             </tr></thead>
             <tbody id="fcTbody"><tr><td colspan="9" class="empty-state" data-i18n="loading">กำลังโหลด...</td></tr></tbody>
           </table>
@@ -3255,6 +3260,22 @@ function _fcAdjustWeekend(d){ // เสาร์/อาทิตย์ → จ�
   return d;
 }
 function _fcDateStr(d){const p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;}
+// Sort state for the Forecast detail table
+let _fcSort={key:'forecastDate',dir:1};
+function fcSortBy(key){
+  if(_fcSort.key===key)_fcSort.dir*=-1; else _fcSort={key,dir:1};
+  renderForecast();
+}
+function _fcApplySort(rows){
+  const {key,dir}=_fcSort;
+  const num=k=>k==='qty'||k==='week'||k==='cycle';
+  return rows.slice().sort((a,b)=>{
+    let x=a[key],y=b[key];
+    if(num(key)){x=+x||0;y=+y||0;return (x-y)*dir;}
+    x=String(x||'');y=String(y||'');
+    return x<y?-dir:(x>y?dir:0);
+  });
+}
 function _fcMonday(dateStr){const x=new Date(dateStr+'T00:00:00');const dow=(x.getDay()+6)%7;x.setDate(x.getDate()-dow);return x;}
 
 // เริ่มพยากรณ์จากวันจันทร์ของ (สัปดาห์ปัจจุบัน + leadWeeks) — เว้นช่วงที่ล็อกการผลิตแล้ว
@@ -3371,9 +3392,16 @@ function renderForecast(){
    + `<div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;font-size:11.5px;color:var(--muted)">`
    + Object.entries(TCOL).map(([tp,c])=>`<span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${c};margin-right:4px"></span>${tp}${tp==='Company Farm'?' (Own)':''}</span>`).join('')
    + `</div>`;
-  // ตารางรายละเอียด (ตาม filter)
+  // ตารางรายละเอียด (ตาม filter + sort ที่เลือก)
   const TBG={'Company Farm':'#16a34a','Contract Farm':'#d97706','Customer':'#2563eb'};
-  tbody.innerHTML=rows.length?rows.map(r=>`<tr>
+  // ลูกศรบอกคอลัมน์ที่กำลัง sort
+  document.querySelectorAll('#fcTable thead th.fc-sort').forEach(th=>{
+    const key=(th.getAttribute('onclick')||'').match(/fcSortBy\('(\w+)'\)/)?.[1];
+    const base=th.textContent.replace(/\s*[▲▼]\s*$/,'').trim();
+    th.textContent=base+(key===_fcSort.key?(_fcSort.dir>0?' ▲':' ▼'):'');
+  });
+  const sorted=_fcApplySort(rows);
+  tbody.innerHTML=sorted.length?sorted.map(r=>`<tr>
     <td style="white-space:nowrap">${r.forecastDate}</td>
     <td>${r.week}</td>
     <td>${esc(r.farm)}</td>
