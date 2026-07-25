@@ -36,6 +36,27 @@ const _strings = <String, Map<String, String>>{
   'profileSaved': {'th': '✅ บันทึกโปรไฟล์แล้ว', 'en': '✅ Profile saved'},
   'announcements': {'th': 'ประกาศ', 'en': 'Announcements'},
   'noAnnouncements': {'th': 'ยังไม่มีประกาศ', 'en': 'No announcements yet'},
+  // Forecast
+  'forecast': {'th': 'พยากรณ์', 'en': 'Forecast'},
+  'fcTitle': {'th': 'คาดการณ์การลงลูกไก่', 'en': 'Chick Placement Forecast'},
+  'fcAllWeeks': {'th': 'ทุกสัปดาห์', 'en': 'All weeks'},
+  'fcTotal': {'th': 'รวมที่ต้องผลิต', 'en': 'Total to produce'},
+  'fcNoData': {
+    'th': 'ยังไม่มีข้อมูลพอ — ต้องมีการลงลูกไก่ใน 60 วันล่าสุด',
+    'en': 'Not enough data — needs placements in the last 60 days'
+  },
+  'fcBasedOn': {'th': 'อ้างอิงการลง', 'en': 'Based on'},
+  'fcSettings': {'th': 'ตั้งค่าการพยากรณ์', 'en': 'Forecast settings'},
+  'fcLeadWeeks': {'th': 'เว้นล่วงหน้า (สัปดาห์)', 'en': 'Lead time (weeks)'},
+  'fcHorizonWeeks': {'th': 'ดูล่วงหน้า (สัปดาห์)', 'en': 'Look ahead (weeks)'},
+  'fcCycleDays': {'th': 'รอบการเลี้ยง (วัน)', 'en': 'Cycle length (days)'},
+  'fcSortBy': {'th': 'เรียงตาม', 'en': 'Sort by'},
+  'fcSortDate': {'th': 'วันที่', 'en': 'Date'},
+  'fcSortQty': {'th': 'จำนวน', 'en': 'Chicks'},
+  'fcSortFarm': {'th': 'ฟาร์ม', 'en': 'Farm'},
+  'fcWeeklyTitle': {'th': 'ความต้องการรายสัปดาห์', 'en': 'Weekly demand'},
+  'fcDetailTitle': {'th': 'รายละเอียด', 'en': 'Detail'},
+  'allTypes': {'th': 'ทุกประเภท', 'en': 'All types'},
   // Dashboard
   'kpiDelivered': {'th': 'ส่งแล้ว (ตัว)', 'en': 'DOC Delivered'},
   'kpiOrdered': {'th': 'ยอดสั่ง (ตัว)', 'en': 'DOC Ordered'},
