@@ -643,35 +643,34 @@
     <!-- ═══════════════ FORECAST TAB ═══════════════ -->
     <div id="tab-forecast" class="hidden">
       <div class="toolbar">
-        <label style="font-size:13px;display:flex;align-items:center;gap:6px"><span data-i18n="fcCycleLabel">รอบการเลี้ยง (วัน)</span>
-          <input type="number" id="fcCycleDays" value="60" min="1" max="365" style="width:72px" onchange="renderForecast()">
+        <select id="fcWeekSel" onchange="renderForecast()" title="เลือกสัปดาห์ที่ต้องการดู"></select>
+        <label style="font-size:12.5px;display:flex;align-items:center;gap:6px"><span data-i18n="fcHorizonLabel">ดูล่วงหน้า (สัปดาห์)</span>
+          <input type="number" id="fcHorizonWeeks" value="12" min="1" max="52" style="width:58px" onchange="renderForecast()">
         </label>
-        <select id="fcCycles" onchange="renderForecast()">
-          <option value="1" data-i18n="fcCyc1">คาดการณ์ 1 รอบ</option>
-          <option value="2" selected data-i18n="fcCyc2">คาดการณ์ 2 รอบ</option>
-          <option value="3" data-i18n="fcCyc3">คาดการณ์ 3 รอบ</option>
-        </select>
         <select id="fcHatchery" onchange="renderForecast()">
           <option value="" data-i18n="allHatcheries">โรงฟักทั้งหมด</option>
           <option>Chengkau</option><option>Kluang</option><option>K.Kangsar</option><option>Sg. Sayong</option><option>Kota</option><option>External</option>
         </select>
-        <select id="fcHorizon" onchange="renderForecast()">
-          <option value="4" data-i18n="fcHz4">4 สัปดาห์ข้างหน้า</option>
-          <option value="8" selected data-i18n="fcHz8">8 สัปดาห์ข้างหน้า</option>
-          <option value="13" data-i18n="fcHz13">13 สัปดาห์ข้างหน้า</option>
-          <option value="all" data-i18n="fcHzAll">อนาคตทั้งหมด</option>
+        <select id="fcType" onchange="renderForecast()">
+          <option value="" data-i18n="allCustomerTypes">ประเภทลูกค้าทั้งหมด</option>
+          <option>Company Farm</option><option>Contract Farm</option><option>Customer</option>
         </select>
-        <label style="font-size:12px;display:flex;align-items:center;gap:5px"><input type="checkbox" id="fcShowPast" onchange="renderForecast()"> <span data-i18n="fcShowPast">แสดงที่เลยกำหนด</span></label>
+        <label style="font-size:12.5px;display:flex;align-items:center;gap:6px"><span data-i18n="fcLeadLabel">เว้นล่วงหน้า (สัปดาห์)</span>
+          <input type="number" id="fcLeadWeeks" value="5" min="0" max="20" style="width:58px" onchange="renderForecast()" title="จำนวนสัปดาห์ที่ล็อกการผลิตไว้แล้ว — เริ่มพยากรณ์หลังจากนี้">
+        </label>
+        <label style="font-size:12.5px;display:flex;align-items:center;gap:6px"><span data-i18n="fcCycleLabel">รอบการเลี้ยง (วัน)</span>
+          <input type="number" id="fcCycleDays" value="60" min="1" max="365" style="width:64px" onchange="renderForecast()">
+        </label>
         <button class="btn-secondary" onclick="exportForecastExcel()" data-i18n="exportExcelBtn">📊 Export Excel</button>
       </div>
       <div class="kpi-grid">
         <div class="kpi"><div class="kpi-label" data-i18n="fcKpiTotal">ลูกไก่ที่คาดว่าต้องผลิต (ตัว)</div><div class="kpi-value kpi-blue" id="fcKpiTotal">0</div></div>
-        <div class="kpi"><div class="kpi-label" data-i18n="fcKpiCount">จำนวนครั้งที่คาดว่าจะลง</div><div class="kpi-value" id="fcKpiCount">0</div></div>
-        <div class="kpi"><div class="kpi-label" data-i18n="fcKpi4">4 สัปดาห์ข้างหน้า (ตัว)</div><div class="kpi-value kpi-orange" id="fcKpi4">0</div></div>
-        <div class="kpi"><div class="kpi-label" data-i18n="fcKpiFarms">ฟาร์มที่ครอบคลุม</div><div class="kpi-value kpi-green" id="fcKpiFarms">0</div></div>
+        <div class="kpi"><div class="kpi-label">🏭 Company Farm (Own)</div><div class="kpi-value kpi-green" id="fcKpiCompany">0</div></div>
+        <div class="kpi"><div class="kpi-label">📄 Contract Farm</div><div class="kpi-value kpi-orange" id="fcKpiContract">0</div></div>
+        <div class="kpi"><div class="kpi-label">👤 Customer</div><div class="kpi-value" id="fcKpiCustomer">0</div></div>
       </div>
       <div class="card">
-        <div class="card-header"><span class="card-title" data-i18n="fcWeeklyTitle">📈 คาดการณ์ความต้องการลูกไก่รายสัปดาห์</span></div>
+        <div class="card-header"><span class="card-title" data-i18n="fcWeeklyTitle">📈 คาดการณ์ความต้องการลูกไก่รายสัปดาห์</span><span class="live-status" id="fcRangeLabel"></span></div>
         <div id="fcWeeklyChart" style="padding:10px 6px"></div>
       </div>
       <div class="card">
@@ -680,11 +679,11 @@
           <table id="fcTable">
             <thead><tr>
               <th data-i18n="fcThDate">วันคาดการณ์</th><th>Wk</th>
-              <th data-i18n="fcThFarm">ฟาร์ม</th><th>Hatchery</th><th>Breed</th>
+              <th data-i18n="fcThFarm">ฟาร์ม</th><th data-i18n="fcThType">ประเภท</th><th>Hatchery</th><th>Breed</th>
               <th class="num" data-i18n="fcThQty">ลูกไก่ (ตัว)</th>
               <th data-i18n="fcThBased">อ้างอิงจากการลงวันที่</th><th data-i18n="fcThCycle">รอบที่</th>
             </tr></thead>
-            <tbody id="fcTbody"><tr><td colspan="8" class="empty-state" data-i18n="loading">กำลังโหลด...</td></tr></tbody>
+            <tbody id="fcTbody"><tr><td colspan="9" class="empty-state" data-i18n="loading">กำลังโหลด...</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -1220,12 +1219,12 @@ const ROW_CLASS = {'Customer':'row-direct','Contract Farm':'row-contract','Compa
 const I18N = {
   th: {
     navForecast:'Forecast ลูกไก่',
-    fcCycleLabel:'รอบการเลี้ยง (วัน)', fcCyc1:'คาดการณ์ 1 รอบ', fcCyc2:'คาดการณ์ 2 รอบ', fcCyc3:'คาดการณ์ 3 รอบ',
-    fcHz4:'4 สัปดาห์ข้างหน้า', fcHz8:'8 สัปดาห์ข้างหน้า', fcHz13:'13 สัปดาห์ข้างหน้า', fcHzAll:'อนาคตทั้งหมด', fcShowPast:'แสดงที่เลยกำหนด',
-    fcKpiTotal:'ลูกไก่ที่คาดว่าต้องผลิต (ตัว)', fcKpiCount:'จำนวนครั้งที่คาดว่าจะลง', fcKpi4:'4 สัปดาห์ข้างหน้า (ตัว)', fcKpiFarms:'ฟาร์มที่ครอบคลุม',
+    fcCycleLabel:'รอบการเลี้ยง (วัน)', fcLeadLabel:'เว้นล่วงหน้า (สัปดาห์)',
+    fcHorizonLabel:'ดูล่วงหน้า (สัปดาห์)',
+    fcAllWeeks:'ทุกสัปดาห์', fcKpiTotal:'ลูกไก่ที่คาดว่าต้องผลิต (ตัว)',
     fcWeeklyTitle:'📈 คาดการณ์ความต้องการลูกไก่รายสัปดาห์', fcDetailTitle:'📋 รายละเอียดการคาดการณ์',
-    fcThDate:'วันคาดการณ์', fcThFarm:'ฟาร์ม', fcThQty:'ลูกไก่ (ตัว)', fcThBased:'อ้างอิงจากการลงวันที่', fcThCycle:'รอบที่',
-    fcOverdue:'เลยกำหนด', fcEmpty:'ยังไม่มีข้อมูลเพียงพอสำหรับคาดการณ์ — ต้องมีการบันทึกการลงลูกไก่ก่อน',
+    fcThDate:'วันคาดการณ์', fcThFarm:'ฟาร์ม', fcThType:'ประเภท', fcThQty:'ลูกไก่ (ตัว)', fcThBased:'อ้างอิงจากการลงวันที่', fcThCycle:'รอบที่',
+    fcEmpty:'ยังไม่มีข้อมูลเพียงพอสำหรับคาดการณ์ — ต้องมีการบันทึกการลงลูกไก่ในช่วง 60 วันที่ผ่านมาก่อน',
     syncTypesBtn:'🔗 Sync ประเภท', syncTypesTitle:'🔗 Sync ประเภทลูกค้าจาก Customer Reference', syncTypesRunBtn:'🔗 อัปเดตทั้งหมด',
     syncTypesHint:'อัปเดตรายการที่คีย์ไปแล้วให้ประเภทลูกค้าตรงกับ Customer Reference — จับคู่ด้วยชื่อฟาร์ม (ไม่สนตัวพิมพ์เล็ก/ใหญ่) ฟาร์มที่ไม่มีใน Reference จะคงข้อมูลเดิมที่คีย์ไว้',
     copyWeekBtn:'⏮️ คัดลอกสัปดาห์', copyWeekTitle:'คัดลอกแผน Order จากสัปดาห์ก่อน', cwSourceLabel:'สัปดาห์ต้นทาง', cwOffsetLabel:'คัดลอกไปยัง', cwRunBtn:'⏮️ คัดลอก',
@@ -1296,12 +1295,12 @@ const I18N = {
   },
   en: {
     navForecast:'Chick Forecast',
-    fcCycleLabel:'Cycle length (days)', fcCyc1:'Project 1 cycle', fcCyc2:'Project 2 cycles', fcCyc3:'Project 3 cycles',
-    fcHz4:'Next 4 weeks', fcHz8:'Next 8 weeks', fcHz13:'Next 13 weeks', fcHzAll:'All upcoming', fcShowPast:'Show overdue',
-    fcKpiTotal:'Forecast chicks to produce', fcKpiCount:'Expected placements', fcKpi4:'Next 4 weeks (chicks)', fcKpiFarms:'Farms covered',
+    fcCycleLabel:'Cycle length (days)', fcLeadLabel:'Lead time (weeks)',
+    fcHorizonLabel:'Look ahead (weeks)',
+    fcAllWeeks:'All weeks', fcKpiTotal:'Forecast chicks to produce',
     fcWeeklyTitle:'📈 Weekly Chick Demand Forecast', fcDetailTitle:'📋 Forecast Detail',
-    fcThDate:'Forecast Date', fcThFarm:'Farm', fcThQty:'Chicks', fcThBased:'Based on placement', fcThCycle:'Cycle',
-    fcOverdue:'Overdue', fcEmpty:'Not enough data to forecast yet — placement records are required first.',
+    fcThDate:'Forecast Date', fcThFarm:'Farm', fcThType:'Type', fcThQty:'Chicks', fcThBased:'Based on placement', fcThCycle:'Cycle',
+    fcEmpty:'Not enough data to forecast yet — placements in the last 60 days are required.',
     syncTypesBtn:'🔗 Sync Types', syncTypesTitle:'🔗 Sync Customer Types from Reference', syncTypesRunBtn:'🔗 Update All',
     syncTypesHint:'Update already-keyed records so the customer type matches the Customer Reference — matched by farm name (case-insensitive). Farms not in the Reference keep the data you keyed in.',
     copyWeekBtn:'⏮️ Copy Week', copyWeekTitle:'Copy Order Plan from a Previous Week', cwSourceLabel:'Source week', cwOffsetLabel:'Copy to', cwRunBtn:'⏮️ Copy',
@@ -3258,36 +3257,57 @@ function _fcAdjustWeekend(d){ // เสาร์/อาทิตย์ → จ�
 function _fcDateStr(d){const p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;}
 function _fcMonday(dateStr){const x=new Date(dateStr+'T00:00:00');const dow=(x.getDay()+6)%7;x.setDate(x.getDate()-dow);return x;}
 
-function buildForecast(){
-  const cycleDays=Math.max(1,parseInt(document.getElementById('fcCycleDays').value)||60);
-  const numCycles=Math.max(1,Math.min(3,parseInt(document.getElementById('fcCycles').value)||2));
-  const hFilter=document.getElementById('fcHatchery').value;
-  const horizon=document.getElementById('fcHorizon').value;
-  const showPast=document.getElementById('fcShowPast').checked;
-  // 1) หา "การลงลูกไก่ครั้งล่าสุด" ของแต่ละฟาร์ม — รวมยอดในวันเดียวกัน + โรงฟักหลัก
-  const events=new Map(); // farmKey -> {farm,date,qty,hatch:{},breeds:Set}
-  (allRecords||[]).forEach(r=>{
-    if(!r.record_date)return;
-    const q=_fcPlacedQty(r); if(q<=0)return;
-    const k=_normName(r.customer_name);
-    let e=events.get(k);
-    if(!e || r.record_date>e.date){ e={farm:r.customer_name,date:r.record_date,qty:0,hatch:{},breeds:new Set()}; events.set(k,e); }
-    if(r.record_date===e.date){ e.qty+=q; e.hatch[r.hatchery]=(e.hatch[r.hatchery]||0)+q; if(r.breed)e.breeds.add(r.breed); }
-  });
+// เริ่มพยากรณ์จากวันจันทร์ของ (สัปดาห์ปัจจุบัน + leadWeeks) — เว้นช่วงที่ล็อกการผลิตแล้ว
+function _fcStartDate(leadWeeks){
   const today=new Date();today.setHours(0,0,0,0);
-  const horizonEnd=horizon==='all'?null:(()=>{const d=new Date(today);d.setDate(d.getDate()+parseInt(horizon)*7);return d;})();
+  const mon=new Date(today); mon.setDate(mon.getDate()-((mon.getDay()+6)%7)); // Monday ของสัปดาห์นี้
+  mon.setDate(mon.getDate()+leadWeeks*7);
+  return mon;
+}
+
+// สร้าง forecast — เลื่อน "การลงลูกไก่ทุกครั้งในช่วง cycleDays วันล่าสุด" ไปข้างหน้าทีละรอบ
+// (ไม่ใช่แค่ครั้งล่าสุดต่อฟาร์ม → ยอดรวมคงที่ตรงกับกำลังผลิตจริง)
+function buildForecast(applyWeekFilter){
+  const cycleDays=Math.max(1,parseInt(document.getElementById('fcCycleDays').value)||60);
+  const horizonWeeks=Math.max(1,Math.min(52,parseInt(document.getElementById('fcHorizonWeeks').value)||12));
+  const leadWeeks=Math.max(0,parseInt(document.getElementById('fcLeadWeeks').value)||0);
+  const hFilter=document.getElementById('fcHatchery').value;
+  const typeFilter=document.getElementById('fcType').value;
+  const weekFilter=applyWeekFilter?(document.getElementById('fcWeekSel').value||''):'';
+  const today=new Date();today.setHours(0,0,0,0);
+  const startDate=_fcStartDate(leadWeeks);
+  const horizonEnd=new Date(startDate); horizonEnd.setDate(horizonEnd.getDate()+horizonWeeks*7-1); // ถึงวันอาทิตย์ของสัปดาห์สุดท้าย (สัปดาห์เต็ม)
+  const srcStart=new Date(today); srcStart.setDate(srcStart.getDate()-cycleDays); // ต้นทาง = cycleDays วันล่าสุด
+  const srcStartStr=_fcDateStr(srcStart), todayStr=_fcDateStr(today);
+  // รวมการลงลูกไก่เป็น event ต่อ ฟาร์ม+วัน (จากทุก record ในช่วงต้นทาง)
+  const events=new Map(); // farm|date -> {farm,date,qty,type:{},hatch:{},breeds:Set}
+  (allRecords||[]).forEach(r=>{
+    if(!r.record_date||r.record_date<srcStartStr||r.record_date>todayStr)return;
+    const q=_fcPlacedQty(r); if(q<=0)return;
+    const key=_normName(r.customer_name)+'|'+r.record_date;
+    let e=events.get(key);
+    if(!e){ e={farm:r.customer_name,date:r.record_date,qty:0,type:{},hatch:{},breeds:new Set()}; events.set(key,e); }
+    e.qty+=q;
+    if(r.customer_type)e.type[r.customer_type]=(e.type[r.customer_type]||0)+q;
+    if(r.hatchery)e.hatch[r.hatchery]=(e.hatch[r.hatchery]||0)+q;
+    if(r.breed)e.breeds.add(r.breed);
+  });
+  const dom=o=>Object.entries(o).sort((a,b)=>b[1]-a[1])[0]?.[0]||'';
   const rows=[];
   events.forEach(e=>{
-    const dominantHatch=Object.entries(e.hatch).sort((a,b)=>b[1]-a[1])[0]?.[0]||'';
-    if(hFilter && dominantHatch!==hFilter)return;
+    const hatch=dom(e.hatch), type=dom(e.type);
+    if(hFilter && hatch!==hFilter)return;
+    if(typeFilter && type!==typeFilter)return;
     const base=new Date(e.date+'T00:00:00');
-    for(let c=1;c<=numCycles;c++){
+    // เลื่อนไปข้างหน้าทีละรอบจนเต็มช่วงที่ดู — แต่ละ event ให้ 1 ครั้งต่อรอบ (ยอดรวมคงที่)
+    for(let c=1;c<=52;c++){
       const d=new Date(base); d.setDate(d.getDate()+cycleDays*c); _fcAdjustWeekend(d); d.setHours(0,0,0,0);
-      const overdue=d<today;
-      if(overdue && !showPast)continue;
-      if(horizonEnd && d>horizonEnd)continue;
-      rows.push({farm:e.farm,hatchery:dominantHatch,breeds:[...e.breeds].join(', '),
-        anchorDate:e.date,forecastDate:_fcDateStr(d),week:getISOWeek(d),cycle:c,qty:e.qty,overdue});
+      if(d>horizonEnd)break;
+      if(d<startDate)continue;                 // เว้นช่วง lead time
+      const wk=getISOWeek(d);
+      if(weekFilter && String(wk)!==String(weekFilter))continue;
+      rows.push({farm:e.farm,ctype:type,hatchery:hatch,breeds:[...e.breeds].join(', '),
+        anchorDate:e.date,forecastDate:_fcDateStr(d),week:wk,cycle:c,qty:e.qty});
     }
   });
   rows.sort((a,b)=>a.forecastDate<b.forecastDate?-1:(a.forecastDate>b.forecastDate?1:0));
@@ -3297,67 +3317,82 @@ function buildForecast(){
 function renderForecast(){
   const tbody=document.getElementById('fcTbody'); if(!tbody)return;
   const en=currentLang==='en';
-  const rows=buildForecast();
-  // KPIs
-  const today=new Date();today.setHours(0,0,0,0);
-  const in4=new Date(today);in4.setDate(in4.getDate()+28);
+  const allRows=buildForecast(false);       // ทุกสัปดาห์ (ไว้เติม dropdown + กราฟภาพรวม)
+  // เติม dropdown เลือกสัปดาห์จากสัปดาห์ที่มีข้อมูล
+  const sel=document.getElementById('fcWeekSel');
+  const weekMeta=new Map(); // wk -> mondayStr (earliest)
+  allRows.forEach(r=>{const m=_fcDateStr(_fcMonday(r.forecastDate)); if(!weekMeta.has(r.week)||m<weekMeta.get(r.week))weekMeta.set(r.week,m);});
+  const weekList=[...weekMeta.keys()].sort((a,b)=>weekMeta.get(a)<weekMeta.get(b)?-1:1);
+  const prev=sel.value;
+  sel.innerHTML=`<option value="">📅 ${t('fcAllWeeks')}</option>`+weekList.map(w=>{
+    const d=new Date(weekMeta.get(w)+'T00:00:00');
+    return `<option value="${w}">Week ${w} · ${d.getDate()}/${d.getMonth()+1}</option>`;
+  }).join('');
+  if(weekList.map(String).includes(prev))sel.value=prev;
+  const rows=buildForecast(true);           // ตาม filter สัปดาห์ที่เลือก
+  // KPIs — รวม + แยกตามประเภทลูกค้า
+  const byType={'Company Farm':0,'Contract Farm':0,'Customer':0};
+  rows.forEach(r=>{ if(byType[r.ctype]!=null)byType[r.ctype]+=r.qty; });
   const total=rows.reduce((s,r)=>s+r.qty,0);
-  const total4=rows.filter(r=>new Date(r.forecastDate+'T00:00:00')<=in4).reduce((s,r)=>s+r.qty,0);
-  const farms=new Set(rows.map(r=>_normName(r.farm))).size;
   document.getElementById('fcKpiTotal').textContent=total.toLocaleString();
-  document.getElementById('fcKpiCount').textContent=rows.length.toLocaleString();
-  document.getElementById('fcKpi4').textContent=total4.toLocaleString();
-  document.getElementById('fcKpiFarms').textContent=farms.toLocaleString();
-  document.getElementById('fcCount').textContent=`${rows.length} ${en?'placements':'ครั้ง'}`;
-  // Weekly rollup + horizontal bars
+  document.getElementById('fcKpiCompany').textContent=byType['Company Farm'].toLocaleString();
+  document.getElementById('fcKpiContract').textContent=byType['Contract Farm'].toLocaleString();
+  document.getElementById('fcKpiCustomer').textContent=byType['Customer'].toLocaleString();
+  const farms=new Set(rows.map(r=>_normName(r.farm))).size;
+  document.getElementById('fcCount').textContent=`${rows.length} ${en?'placements':'ครั้ง'} · ${farms} ${en?'farms':'ฟาร์ม'}`;
+  // ป้ายช่วงเวลา
+  const rangeEl=document.getElementById('fcRangeLabel');
+  if(allRows.length){const a=allRows[0],b=allRows[allRows.length-1];rangeEl.textContent=`Wk ${a.week}–${b.week}`;}else rangeEl.textContent='';
   const chart=document.getElementById('fcWeeklyChart');
-  if(!rows.length){
+  if(!allRows.length){
     chart.innerHTML=`<p style="text-align:center;padding:22px;color:var(--muted)">${t('fcEmpty')}</p>`;
-    tbody.innerHTML=`<tr><td colspan="8" class="empty-state">${t('fcEmpty')}</td></tr>`;
+    tbody.innerHTML=`<tr><td colspan="9" class="empty-state">${t('fcEmpty')}</td></tr>`;
     return;
   }
-  const weeks=new Map(); // mondayStr -> {week,qty,byHatch:{}}
-  rows.forEach(r=>{
-    const mon=_fcDateStr(_fcMonday(r.forecastDate));
-    const g=weeks.get(mon)||{week:r.week,qty:0,byHatch:{}};
-    g.qty+=r.qty; g.byHatch[r.hatchery]=(g.byHatch[r.hatchery]||0)+r.qty; weeks.set(mon,g);
-  });
+  // กราฟรายสัปดาห์ (ภาพรวมทุกสัปดาห์) แยกสีตามประเภทลูกค้า + ไฮไลต์สัปดาห์ที่เลือก
+  const TCOL={'Company Farm':'#16a34a','Contract Farm':'#d97706','Customer':'#2563eb'};
+  const selWk=document.getElementById('fcWeekSel').value;
+  const weeks=new Map();
+  allRows.forEach(r=>{const mon=_fcDateStr(_fcMonday(r.forecastDate));const g=weeks.get(mon)||{week:r.week,qty:0,byType:{}};g.qty+=r.qty;g.byType[r.ctype]=(g.byType[r.ctype]||0)+r.qty;weeks.set(mon,g);});
   const weekArr=[...weeks.entries()].sort((a,b)=>a[0]<b[0]?-1:1);
   const maxQty=Math.max(...weekArr.map(([,g])=>g.qty),1);
-  const HCOL={'Chengkau':'#2563eb','Kluang':'#d97706','K.Kangsar':'#16a34a','Sg. Sayong':'#7c3aed','Kota':'#db2777','External':'#64748b'};
   chart.innerHTML=weekArr.map(([mon,g])=>{
     const d=new Date(mon+'T00:00:00'); const end=new Date(d);end.setDate(end.getDate()+6);
     const range=`${d.getDate()}/${d.getMonth()+1} – ${end.getDate()}/${end.getMonth()+1}`;
-    const seg=Object.entries(g.byHatch).sort((a,b)=>b[1]-a[1]).map(([h,q])=>
-      `<div title="${esc(h)}: ${q.toLocaleString()}" style="width:${(q/maxQty*100).toFixed(2)}%;background:${HCOL[h]||'#94a3b8'}"></div>`).join('');
-    return `<div style="display:flex;align-items:center;gap:10px;margin:5px 0">
-      <div style="width:132px;flex-shrink:0;font-size:12px"><b>Wk ${g.week}</b> <span style="color:var(--muted)">${range}</span></div>
+    const isSel=selWk&&String(g.week)===String(selWk);
+    const seg=['Company Farm','Contract Farm','Customer'].filter(tp=>g.byType[tp]).map(tp=>
+      `<div title="${tp}: ${g.byType[tp].toLocaleString()}" style="width:${(g.byType[tp]/maxQty*100).toFixed(2)}%;background:${TCOL[tp]}"></div>`).join('');
+    return `<div style="display:flex;align-items:center;gap:10px;margin:5px 0;${isSel?'background:var(--primary-tint,#eef4ff);border-radius:6px;padding:2px 4px':''}">
+      <div style="width:150px;flex-shrink:0;font-size:12px;cursor:pointer" onclick="document.getElementById('fcWeekSel').value='${g.week}';renderForecast()"><b>Wk ${g.week}</b> <span style="color:var(--muted)">${range}</span></div>
       <div style="flex:1;display:flex;height:22px;border-radius:5px;overflow:hidden;background:var(--bg)">${seg}</div>
-      <div style="width:92px;flex-shrink:0;text-align:right;font-size:12.5px;font-weight:700">${g.qty.toLocaleString()}</div>
+      <div style="width:96px;flex-shrink:0;text-align:right;font-size:12.5px;font-weight:700">${g.qty.toLocaleString()}</div>
     </div>`;
   }).join('')
-   + `<div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:11px;color:var(--muted)">`
-   + Object.entries(HCOL).map(([h,c])=>`<span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${c};margin-right:4px"></span>${h}</span>`).join('')
+   + `<div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;font-size:11.5px;color:var(--muted)">`
+   + Object.entries(TCOL).map(([tp,c])=>`<span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${c};margin-right:4px"></span>${tp}${tp==='Company Farm'?' (Own)':''}</span>`).join('')
    + `</div>`;
-  // Detail table
-  tbody.innerHTML=rows.map(r=>`<tr${r.overdue?' style="background:#fff5f5"':''}>
-    <td style="white-space:nowrap">${r.forecastDate}${r.overdue?` <span style="font-size:10px;color:#b91c1c">(${t('fcOverdue')})</span>`:''}</td>
+  // ตารางรายละเอียด (ตาม filter)
+  const TBG={'Company Farm':'#16a34a','Contract Farm':'#d97706','Customer':'#2563eb'};
+  tbody.innerHTML=rows.length?rows.map(r=>`<tr>
+    <td style="white-space:nowrap">${r.forecastDate}</td>
     <td>${r.week}</td>
     <td>${esc(r.farm)}</td>
+    <td><span style="font-size:11px;padding:1px 7px;border-radius:4px;color:#fff;background:${TBG[r.ctype]||'#94a3b8'}">${esc(r.ctype||'-')}</span></td>
     <td>${esc(r.hatchery)}</td>
     <td>${esc(r.breeds||'-')}</td>
     <td class="num" style="font-weight:600">${r.qty.toLocaleString()}</td>
     <td style="white-space:nowrap;color:var(--muted);font-size:12px">${r.anchorDate}</td>
     <td style="text-align:center">+${r.cycle}</td>
-  </tr>`).join('');
+  </tr>`).join('')
+    :`<tr><td colspan="9" class="empty-state">${en?'No placements in the selected week':'ไม่มีการลงลูกไก่ในสัปดาห์ที่เลือก'}</td></tr>`;
 }
 
 function exportForecastExcel(){
-  const rows=buildForecast();
+  const rows=buildForecast(true);
   if(!rows.length)return toast(currentLang==='en'?'No forecast data':'ไม่มีข้อมูลคาดการณ์','error');
-  const h=['Forecast Date','Week','Farm','Hatchery','Breed','Chicks','Based On Placement','Cycle','Overdue'];
-  const d=rows.map(r=>[r.forecastDate,r.week,r.farm,r.hatchery,r.breeds,r.qty,r.anchorDate,'+'+r.cycle,r.overdue?'Y':'']);
-  const ws=XLSX.utils.aoa_to_sheet([h,...d]); ws['!cols']=[14,6,26,12,10,12,16,7,8].map(w=>({wch:w}));
+  const h=['Forecast Date','Week','Farm','Customer Type','Hatchery','Breed','Chicks','Based On Placement','Cycle'];
+  const d=rows.map(r=>[r.forecastDate,r.week,r.farm,r.ctype,r.hatchery,r.breeds,r.qty,r.anchorDate,'+'+r.cycle]);
+  const ws=XLSX.utils.aoa_to_sheet([h,...d]); ws['!cols']=[14,6,26,14,12,10,12,16,7].map(w=>({wch:w}));
   const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Forecast');
   logActivity('export_forecast','export','',`${rows.length} rows`);
   XLSX.writeFile(wb,`DOC-Forecast_${new Date().toISOString().slice(0,10)}.xlsx`);
