@@ -70,6 +70,18 @@ class _EntryScreenState extends State<EntryScreen> {
                           value: w, child: Text('Week $w'))),
                     ],
                   ),
+                  PopupMenuButton<String>(
+                    tooltip: tr('moreActions'),
+                    icon: const Icon(Icons.more_vert),
+                    onSelected: (v) {
+                      if (v == 'copy') _copyWeekDialog(context, svc, weeks);
+                      if (v == 'sync') _syncTypesDialog(context, svc);
+                    },
+                    itemBuilder: (_) => [
+                      PopupMenuItem(value: 'copy', child: Text(tr('copyWeek'))),
+                      PopupMenuItem(value: 'sync', child: Text(tr('syncTypes'))),
+                    ],
+                  ),
                 ]),
               ),
               Padding(
@@ -108,6 +120,160 @@ class _EntryScreenState extends State<EntryScreen> {
           ),
         );
       },
+    );
+  }
+
+  // ── Copy Week ──
+  Future<void> _copyWeekDialog(
+      BuildContext context, DataService svc, List<int> weeks) async {
+    if (weeks.isEmpty) return;
+    int source = weeks.first;
+    int offset = 1;
+    var busy = false;
+    await showDialog<void>(
+      context: context,
+      builder: (c) => StatefulBuilder(
+        builder: (c, setD) => AlertDialog(
+          title: Text(tr('copyWeekTitle')),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(children: [
+                Text('${tr('cwSource')}: '),
+                const Spacer(),
+                DropdownButton<int>(
+                  value: source,
+                  onChanged: (v) => setD(() => source = v!),
+                  items: weeks
+                      .map((w) => DropdownMenuItem(
+                          value: w, child: Text('Week $w')))
+                      .toList(),
+                ),
+              ]),
+              Row(children: [
+                Text('${tr('cwOffset')}: '),
+                const Spacer(),
+                DropdownButton<int>(
+                  value: offset,
+                  onChanged: (v) => setD(() => offset = v!),
+                  items: [1, 2, 3, 4]
+                      .map((n) =>
+                          DropdownMenuItem(value: n, child: Text('+$n')))
+                      .toList(),
+                ),
+              ]),
+              const SizedBox(height: 8),
+              Text(tr('cwHint'),
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+            ],
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(c), child: Text(tr('cancel'))),
+            FilledButton(
+              onPressed: busy
+                  ? null
+                  : () async {
+                      setD(() => busy = true);
+                      try {
+                        final res = await svc.copyWeek(source, offset);
+                        if (c.mounted) Navigator.pop(c);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                              content: Text(
+                                  '✅ +${res['created']} / skip ${res['skipped']}')));
+                        }
+                      } catch (e) {
+                        setD(() => busy = false);
+                        if (c.mounted) {
+                          ScaffoldMessenger.of(c).showSnackBar(
+                              SnackBar(content: Text('❌ $e')));
+                        }
+                      }
+                    },
+              child: busy
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2))
+                  : Text(tr('cwRun')),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Sync Customer Types ──
+  Future<void> _syncTypesDialog(BuildContext context, DataService svc) async {
+    showDialog<void>(
+      context: context,
+      builder: (c) => FutureBuilder<Map<String, int>>(
+        future: svc.syncCustomerTypes(apply: false),
+        builder: (c, snap) {
+          final preview = snap.data;
+          var busy = false;
+          return StatefulBuilder(
+            builder: (c, setD) => AlertDialog(
+              title: Text(tr('syncTypesTitle')),
+              content: preview == null
+                  ? const SizedBox(
+                      height: 60,
+                      child: Center(child: CircularProgressIndicator()))
+                  : Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                            '${tr('syncMatched')}: ${preview['matched']}   ·   ${tr('syncChanges')}: ${preview['changes']} (${preview['farms']} ${tr('fcSortFarm')})'),
+                        const SizedBox(height: 8),
+                        Text(tr('syncHint'),
+                            style: TextStyle(
+                                fontSize: 12, color: Colors.grey.shade600)),
+                      ],
+                    ),
+              actions: [
+                TextButton(
+                    onPressed: () => Navigator.pop(c),
+                    child: Text(tr('cancel'))),
+                FilledButton(
+                  onPressed: (preview == null ||
+                          (preview['changes'] ?? 0) == 0 ||
+                          busy)
+                      ? null
+                      : () async {
+                          setD(() => busy = true);
+                          try {
+                            final res =
+                                await svc.syncCustomerTypes(apply: true);
+                            if (c.mounted) Navigator.pop(c);
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                      content: Text(
+                                          '✅ ${tr('done')} · ${res['changes']}')));
+                            }
+                          } catch (e) {
+                            setD(() => busy = false);
+                            if (c.mounted) {
+                              ScaffoldMessenger.of(c).showSnackBar(
+                                  SnackBar(content: Text('❌ $e')));
+                            }
+                          }
+                        },
+                  child: busy
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2))
+                      : Text(tr('syncApply')),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 }

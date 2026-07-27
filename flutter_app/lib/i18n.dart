@@ -57,6 +57,34 @@ const _strings = <String, Map<String, String>>{
   'fcWeeklyTitle': {'th': 'ความต้องการรายสัปดาห์', 'en': 'Weekly demand'},
   'fcDetailTitle': {'th': 'รายละเอียด', 'en': 'Detail'},
   'allTypes': {'th': 'ทุกประเภท', 'en': 'All types'},
+  // Copy week / Sync types (entry actions)
+  'moreActions': {'th': 'เพิ่มเติม', 'en': 'More'},
+  'copyWeek': {'th': '⏮️ คัดลอกสัปดาห์', 'en': '⏮️ Copy Week'},
+  'copyWeekTitle': {
+    'th': 'คัดลอกแผน Order จากสัปดาห์ก่อน',
+    'en': 'Copy Order Plan from a Previous Week'
+  },
+  'cwSource': {'th': 'สัปดาห์ต้นทาง', 'en': 'Source week'},
+  'cwOffset': {'th': 'คัดลอกไปยัง (สัปดาห์)', 'en': 'Copy forward (weeks)'},
+  'cwHint': {
+    'th': 'คัดลอกเฉพาะข้อมูล Order — ข้ามรายการที่มีอยู่แล้ว',
+    'en': 'Copies order data only — skips rows that already exist'
+  },
+  'cwRun': {'th': 'คัดลอก', 'en': 'Copy'},
+  'syncTypes': {'th': '🔗 Sync ประเภทลูกค้า', 'en': '🔗 Sync Customer Types'},
+  'syncTypesTitle': {
+    'th': 'Sync ประเภทลูกค้าจาก Customer Reference',
+    'en': 'Sync Customer Types from Reference'
+  },
+  'syncHint': {
+    'th': 'อัปเดตประเภทลูกค้าให้ตรงกับ Customer Reference (จับคู่ด้วยชื่อฟาร์ม)',
+    'en': 'Update customer type to match the Customer Reference (matched by farm name)'
+  },
+  'syncMatched': {'th': 'ตรงกับ Reference', 'en': 'Matched'},
+  'syncChanges': {'th': 'จะถูกอัปเดต', 'en': 'Will update'},
+  'syncApply': {'th': 'อัปเดตทั้งหมด', 'en': 'Update all'},
+  'nothingToDo': {'th': 'ไม่มีรายการให้ทำ', 'en': 'Nothing to do'},
+  'done': {'th': 'สำเร็จ', 'en': 'Done'},
   // Dashboard
   'kpiDelivered': {'th': 'ส่งแล้ว (ตัว)', 'en': 'DOC Delivered'},
   'kpiOrdered': {'th': 'ยอดสั่ง (ตัว)', 'en': 'DOC Ordered'},
