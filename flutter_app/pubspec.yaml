@@ -21,6 +21,11 @@ dev_dependencies:
   flutter_lints: ^4.0.0
   flutter_launcher_icons: ^0.14.1
 
+# Pin transitive `jni` to 1.0.0 — jni 1.0.1 (2026-07-27) ships an Android
+# build.gradle that calls kotlin() and breaks `assembleRelease`. 1.0.0 works.
+dependency_overrides:
+  jni: 1.0.0
+
 flutter_launcher_icons:
   android: true
   ios: false
