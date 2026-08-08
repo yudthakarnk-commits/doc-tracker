@@ -2332,18 +2332,21 @@ function buildCombinedMatrix(planPiv, actPiv, tgtByType){
     });
     const dTot=aTot-pTot, pctTot=pTot?(dTot/pTot*100):null;
     const tgt=tgtByType[c]||0;
+    // Actual vs Target (right-most column)
+    const dTgt=aTot-tgt, pctTgt=tgt?(dTgt/tgt*100):null;
     totPG+=pTot; totAG+=aTot;
 
     html+=`<tr class="group-hdr"><td colspan="${nc}" style="background:${ghBg}">${c.toUpperCase()}</td></tr>`;
     html+=`<tr class="sub-order"><td class="sub-label" style="color:#1e40af">📋 Order</td>${pr}<td class="col-total" style="color:#1e40af;font-weight:700">${pTot?pTot.toLocaleString():'-'}</td><td style="color:#6b7280;font-size:12px">${tgt?tgt.toLocaleString():'-'}</td></tr>`;
-    html+=`<tr class="sub-actual"><td class="sub-label" style="color:#15803d">✅ Actual</td>${ar}<td class="col-total" style="color:#15803d;font-weight:700">${aTot?aTot.toLocaleString():'-'}</td><td>-</td></tr>`;
-    html+=`<tr class="sub-diff"><td class="sub-label">↕ Diff</td>${dr}<td class="col-total ${dTot>0?'diff-pos':dTot<0?'diff-neg':''}" style="font-weight:700">${dTot!==0?(dTot>0?'+':'')+dTot.toLocaleString():'-'}</td><td>-</td></tr>`;
-    html+=`<tr class="sub-pct"><td class="sub-label">% Gap</td>${pctr}<td class="col-total ${pctTot===null?'':pctTot>0?'diff-pos':'diff-neg'}" style="font-weight:700;font-size:12px">${pctTot===null?'-':(pctTot>0?'+':'')+pctTot.toFixed(1)+'%'}</td><td>-</td></tr>`;
+    html+=`<tr class="sub-actual"><td class="sub-label" style="color:#15803d">✅ Actual</td>${ar}<td class="col-total" style="color:#15803d;font-weight:700">${aTot?aTot.toLocaleString():'-'}</td><td style="color:#15803d;font-weight:600">${tgt?aTot.toLocaleString():'-'}</td></tr>`;
+    html+=`<tr class="sub-diff"><td class="sub-label">↕ Diff</td>${dr}<td class="col-total ${dTot>0?'diff-pos':dTot<0?'diff-neg':''}" style="font-weight:700">${dTot!==0?(dTot>0?'+':'')+dTot.toLocaleString():'-'}</td><td class="${tgt?(dTgt>0?'diff-pos':dTgt<0?'diff-neg':'diff-zero'):''}" style="font-weight:600">${tgt?(dTgt>0?'+':'')+dTgt.toLocaleString():'-'}</td></tr>`;
+    html+=`<tr class="sub-pct"><td class="sub-label">% Gap</td>${pctr}<td class="col-total ${pctTot===null?'':pctTot>0?'diff-pos':'diff-neg'}" style="font-weight:700;font-size:12px">${pctTot===null?'-':(pctTot>0?'+':'')+pctTot.toFixed(1)+'%'}</td><td class="${pctTgt===null?'':pctTgt>0?'diff-pos':'diff-neg'}" style="font-weight:600;font-size:12px">${pctTgt===null?'-':(pctTgt>0?'+':'')+pctTgt.toFixed(1)+'%'}</td></tr>`;
   });
 
   // Grand Total
   const dG=totAG-totPG, pctG=totPG?(dG/totPG*100):null;
   const tgtG=Object.values(tgtByType).reduce((s,v)=>s+v,0);
+  const dTgtG=totAG-tgtG, pctTgtG=tgtG?(dTgtG/tgtG*100):null;
   let tpr='',tar='',tdr='',tpctr='';
   HATCHERIES.forEach(h=>{
     const p=totPH[h],a=totAH[h],d=a-p,pct=p?(d/p*100):null;
@@ -2354,9 +2357,9 @@ function buildCombinedMatrix(planPiv, actPiv, tgtByType){
   });
   html+=`<tr class="grand-hdr"><td colspan="${nc}">GRAND TOTAL</td></tr>`;
   html+=`<tr class="grand-row"><td class="sub-label">📋 Order</td>${tpr}<td class="col-total" style="font-weight:700">${totPG?totPG.toLocaleString():'-'}</td><td>${tgtG?tgtG.toLocaleString():'-'}</td></tr>`;
-  html+=`<tr class="grand-row"><td class="sub-label">✅ Actual</td>${tar}<td class="col-total" style="font-weight:700;color:#6ee7b7">${totAG?totAG.toLocaleString():'-'}</td><td>-</td></tr>`;
-  html+=`<tr class="grand-row"><td class="sub-label">↕ Diff</td>${tdr}<td class="col-total ${dG>0?'diff-pos':dG<0?'diff-neg':''}" style="font-weight:700">${dG!==0?(dG>0?'+':'')+dG.toLocaleString():'-'}</td><td>-</td></tr>`;
-  html+=`<tr class="grand-row"><td class="sub-label">% Gap</td>${tpctr}<td class="col-total ${pctG===null?'':pctG>0?'diff-pos':'diff-neg'}" style="font-weight:700;font-size:12px">${pctG===null?'-':(pctG>0?'+':'')+pctG.toFixed(1)+'%'}</td><td>-</td></tr>`;
+  html+=`<tr class="grand-row"><td class="sub-label">✅ Actual</td>${tar}<td class="col-total" style="font-weight:700;color:#6ee7b7">${totAG?totAG.toLocaleString():'-'}</td><td style="font-weight:700;color:#6ee7b7">${tgtG?totAG.toLocaleString():'-'}</td></tr>`;
+  html+=`<tr class="grand-row"><td class="sub-label">↕ Diff</td>${tdr}<td class="col-total ${dG>0?'diff-pos':dG<0?'diff-neg':''}" style="font-weight:700">${dG!==0?(dG>0?'+':'')+dG.toLocaleString():'-'}</td><td class="${tgtG?(dTgtG>0?'diff-pos':dTgtG<0?'diff-neg':''):''}" style="font-weight:700">${tgtG?(dTgtG>0?'+':'')+dTgtG.toLocaleString():'-'}</td></tr>`;
+  html+=`<tr class="grand-row"><td class="sub-label">% Gap</td>${tpctr}<td class="col-total ${pctG===null?'':pctG>0?'diff-pos':'diff-neg'}" style="font-weight:700;font-size:12px">${pctG===null?'-':(pctG>0?'+':'')+pctG.toFixed(1)+'%'}</td><td class="${pctTgtG===null?'':pctTgtG>0?'diff-pos':'diff-neg'}" style="font-weight:700;font-size:12px">${pctTgtG===null?'-':(pctTgtG>0?'+':'')+pctTgtG.toFixed(1)+'%'}</td></tr>`;
   html+='</tbody>';
   return html;
 }
