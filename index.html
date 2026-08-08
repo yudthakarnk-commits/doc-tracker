@@ -1253,7 +1253,7 @@ const I18N = {
   th: {
     truckUtilSection:'🚚 การใช้รถขนส่ง', byMonth:'📆 รายเดือน', byYear:'📆 รายปี', allTime:'🗓 ทั้งหมด',
     tuTrucks:'จำนวนรถที่วิ่ง', tuTrips:'จำนวนเที่ยววิ่ง', tuChicks:'ลูกไก่ที่ขนส่ง (ตัว)', tuAvg:'เฉลี่ยต่อเที่ยว (ตัว)',
-    tuThTruck:'ทะเบียนรถ', tuThTrips:'เที่ยว', tuThChicks:'ลูกไก่รวม (ตัว)', tuThAvg:'เฉลี่ย/เที่ยว', tuThHatch:'โรงฟักที่วิ่ง', tuThDays:'จำนวนวัน', tuThLast:'วิ่งล่าสุด', tuNoData:'ไม่มีข้อมูลการขนส่งในช่วงนี้',
+    tuThTruck:'ทะเบียนรถ', tuThTrips:'เที่ยว', tuThChicks:'ลูกไก่รวม (ตัว)', tuThAvg:'เฉลี่ย/เที่ยว', tuThDist:'ระยะทางรวม (กม.)', tuThTime:'เวลาเฉลี่ย', tuThDOA:'%DOA', tuThHatch:'โรงฟักที่วิ่ง', tuThDays:'จำนวนวัน', tuThLast:'วิ่งล่าสุด', tuNoData:'ไม่มีข้อมูลการขนส่งในช่วงนี้',
     navForecast:'Forecast ลูกไก่',
     fcCycleLabel:'รอบการเลี้ยง (วัน)', fcLeadLabel:'เว้นล่วงหน้า (สัปดาห์)',
     fcHorizonLabel:'ดูล่วงหน้า (สัปดาห์)',
@@ -1332,7 +1332,7 @@ const I18N = {
   en: {
     truckUtilSection:'🚚 TRUCK UTILIZATION', byMonth:'📆 By Month', byYear:'📆 By Year', allTime:'🗓 All Time',
     tuTrucks:'Trucks used', tuTrips:'Total trips', tuChicks:'Chicks transported', tuAvg:'Avg per trip',
-    tuThTruck:'Truck Plate', tuThTrips:'Trips', tuThChicks:'Total Chicks', tuThAvg:'Avg/Trip', tuThHatch:'Hatcheries', tuThDays:'Days', tuThLast:'Last run', tuNoData:'No transport data in this period',
+    tuThTruck:'Truck Plate', tuThTrips:'Trips', tuThChicks:'Total Chicks', tuThAvg:'Avg/Trip', tuThDist:'Total Dist (km)', tuThTime:'Avg Time', tuThDOA:'%DOA', tuThHatch:'Hatcheries', tuThDays:'Days', tuThLast:'Last run', tuNoData:'No transport data in this period',
     navForecast:'Chick Forecast',
     fcCycleLabel:'Cycle length (days)', fcLeadLabel:'Lead time (weeks)',
     fcHorizonLabel:'Look ahead (weeks)',
@@ -2265,11 +2265,16 @@ function renderTruckSummary(){
   const trucks=new Map();
   rows.forEach(r=>{
     const key=String(r.truck_plate).trim();
-    const g=trucks.get(key)||{plate:key,trips:0,chicks:0,hatch:new Set(),days:new Set(),last:''};
-    g.trips++; g.chicks+=(r.total_actual||0); if(r.hatchery)g.hatch.add(r.hatchery); if(r.record_date){g.days.add(r.record_date); if(r.record_date>g.last)g.last=r.record_date;}
+    const g=trucks.get(key)||{plate:key,trips:0,chicks:0,dist:0,durMins:0,durCount:0,doa:0,hatch:new Set(),days:new Set(),last:''};
+    g.trips++; g.chicks+=(r.total_actual||0);
+    const dk=parseFloat(r.distance_km); if(!isNaN(dk))g.dist+=dk;
+    if(r.departure_time&&r.arrival_time){g.durMins+=calcTransportDuration(r.departure_time,r.arrival_time).totalMins; g.durCount++;}
+    g.doa+=(r.doa_count||0);
+    if(r.hatchery)g.hatch.add(r.hatchery); if(r.record_date){g.days.add(r.record_date); if(r.record_date>g.last)g.last=r.record_date;}
     trucks.set(key,g);
   });
   const list=[...trucks.values()].sort((a,b)=>b.chicks-a.chicks);
+  const fmtDur=m=>{if(m==null)return '-';const h=Math.floor(m/60),mm=Math.round(m%60);return h?`${h}h ${mm}m`:`${mm}m`;};
   // KPIs
   const totTrips=list.reduce((s,t)=>s+t.trips,0), totChicks=list.reduce((s,t)=>s+t.chicks,0);
   document.getElementById('tuTrucks').textContent=list.length.toLocaleString();
@@ -2277,20 +2282,27 @@ function renderTruckSummary(){
   document.getElementById('tuChicks').textContent=totChicks.toLocaleString();
   document.getElementById('tuAvg').textContent=totTrips?Math.round(totChicks/totTrips).toLocaleString():'0';
   if(!list.length){tbl.innerHTML=`<tbody><tr><td style="padding:18px;text-align:center;color:var(--muted)">${t('tuNoData')}</td></tr></tbody>`;return;}
-  let h=`<thead><tr><th style="text-align:left">${t('tuThTruck')}</th><th class="num">${t('tuThTrips')}</th><th class="num">${t('tuThChicks')}</th><th class="num">${t('tuThAvg')}</th><th style="text-align:left">${t('tuThHatch')}</th><th class="num">${t('tuThDays')}</th><th>${t('tuThLast')}</th></tr></thead><tbody>`;
+  let h=`<thead><tr><th style="text-align:left">${t('tuThTruck')}</th><th class="num">${t('tuThTrips')}</th><th class="num">${t('tuThChicks')}</th><th class="num">${t('tuThAvg')}</th><th class="num">${t('tuThDist')}</th><th class="num">${t('tuThTime')}</th><th class="num">${t('tuThDOA')}</th><th style="text-align:left">${t('tuThHatch')}</th><th class="num">${t('tuThDays')}</th><th>${t('tuThLast')}</th></tr></thead><tbody>`;
+  let totDist=0,totDoa=0;
   list.forEach(g=>{
+    totDist+=g.dist; totDoa+=g.doa;
+    const avgDur=g.durCount?g.durMins/g.durCount:null;
+    const doaPct=g.chicks?(g.doa/g.chicks*100):null;
     h+=`<tr>
       <td style="text-align:left;font-weight:600;color:var(--primary)">🚚 ${esc(g.plate)}</td>
       <td class="num">${g.trips.toLocaleString()}</td>
       <td class="num" style="font-weight:600;color:#15803d">${g.chicks.toLocaleString()}</td>
       <td class="num">${g.trips?Math.round(g.chicks/g.trips).toLocaleString():'-'}</td>
+      <td class="num">${g.dist?g.dist.toLocaleString(undefined,{maximumFractionDigits:1}):'-'}</td>
+      <td class="num">${fmtDur(avgDur)}</td>
+      <td class="num ${doaPct===null?'':doaPct>0?'diff-neg':'diff-zero'}">${doaPct===null?'-':doaPct.toFixed(2)+'%'}</td>
       <td style="text-align:left;font-size:12px">${[...g.hatch].map(esc).join(', ')}</td>
       <td class="num">${g.days.size}</td>
       <td style="font-size:12px;color:var(--muted)">${g.last||'-'}</td>
     </tr>`;
   });
-  // total row
-  h+=`<tr class="row-total"><td style="text-align:left;font-weight:700">${en?'Total':'รวม'}</td><td class="num" style="font-weight:700">${totTrips.toLocaleString()}</td><td class="num" style="font-weight:700">${totChicks.toLocaleString()}</td><td class="num" style="font-weight:700">${totTrips?Math.round(totChicks/totTrips).toLocaleString():'-'}</td><td colspan="3"></td></tr>`;
+  const totDoaPct=totChicks?(totDoa/totChicks*100):null;
+  h+=`<tr class="row-total"><td style="text-align:left;font-weight:700">${en?'Total':'รวม'}</td><td class="num" style="font-weight:700">${totTrips.toLocaleString()}</td><td class="num" style="font-weight:700">${totChicks.toLocaleString()}</td><td class="num" style="font-weight:700">${totTrips?Math.round(totChicks/totTrips).toLocaleString():'-'}</td><td class="num" style="font-weight:700">${totDist?totDist.toLocaleString(undefined,{maximumFractionDigits:1}):'-'}</td><td class="num"></td><td class="num" style="font-weight:700">${totDoaPct===null?'-':totDoaPct.toFixed(2)+'%'}</td><td colspan="3"></td></tr>`;
   tbl.innerHTML=h+'</tbody>';
 }
 
