@@ -638,6 +638,34 @@
       <div class="summary-section" data-section="sexHatchery"><div class="summary-title" data-i18n="sexHatcherySection">ACTUAL CHICKS BY SEX × HATCHERY (%)</div><div class="trend-grid" style="grid-template-columns:2fr 1fr"><div class="chart-card"><h4 data-i18n="chartSexHatchery">📊 ลูกไก่ตามเพศ × โรงฟัก</h4><canvas id="trendSexHatchery"></canvas></div><div class="chart-card"><h4 data-i18n="chartMFRatio">⚖️ M:F Ratio รวม (%)</h4><canvas id="trendMFRatio"></canvas></div></div><table class="matrix" id="sexHatcheryMatrix"></table></div>
       <div class="summary-section" data-section="topCustomers"><div class="summary-title" data-i18n="topCustomersSection">TOP CUSTOMERS</div><table class="matrix" id="topCustomersMatrix"></table></div>
       <div class="summary-section" data-section="difference"><div class="summary-title" data-i18n="diffSection">DIFFERENCE (ACTUAL − ORDER)</div><table class="matrix" id="diffMatrix"></table></div>
+      <!-- ── TRUCK UTILIZATION ── -->
+      <div class="summary-section" data-section="truckUtil">
+        <div class="summary-title" data-i18n="truckUtilSection">🚚 TRUCK UTILIZATION</div>
+        <div class="toolbar" style="margin-bottom:10px">
+          <select id="truckPeriod" onchange="onTruckPeriodChange()">
+            <option value="day" data-i18n="byDay">📆 By Day</option>
+            <option value="week" selected data-i18n="byWeek">📅 By Week</option>
+            <option value="month" data-i18n="byMonth">📆 By Month</option>
+            <option value="year" data-i18n="byYear">📆 By Year</option>
+            <option value="all" data-i18n="allTime">🗓 All Time</option>
+          </select>
+          <input type="date" id="truckDate" onchange="renderTruckSummary()" class="hidden"/>
+          <select id="truckWeek" onchange="renderTruckSummary()"></select>
+          <select id="truckMonth" onchange="renderTruckSummary()" class="hidden"></select>
+          <select id="truckYear" onchange="renderTruckSummary()" class="hidden"></select>
+          <select id="truckHatchery" onchange="renderTruckSummary()">
+            <option value="" data-i18n="allHatcheries">โรงฟักทั้งหมด</option>
+            <option>Chengkau</option><option>Kluang</option><option>K.Kangsar</option><option>Sg. Sayong</option><option>Kota</option><option>External</option>
+          </select>
+        </div>
+        <div class="kpi-grid" style="margin-bottom:10px">
+          <div class="kpi"><div class="kpi-label" data-i18n="tuTrucks">จำนวนรถที่วิ่ง</div><div class="kpi-value kpi-blue" id="tuTrucks">0</div></div>
+          <div class="kpi"><div class="kpi-label" data-i18n="tuTrips">จำนวนเที่ยววิ่ง</div><div class="kpi-value" id="tuTrips">0</div></div>
+          <div class="kpi"><div class="kpi-label" data-i18n="tuChicks">ลูกไก่ที่ขนส่ง (ตัว)</div><div class="kpi-value kpi-green" id="tuChicks">0</div></div>
+          <div class="kpi"><div class="kpi-label" data-i18n="tuAvg">เฉลี่ยต่อเที่ยว (ตัว)</div><div class="kpi-value kpi-orange" id="tuAvg">0</div></div>
+        </div>
+        <div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="matrix" id="truckSummaryTable"></table></div>
+      </div>
     </div>
 
     <!-- ═══════════════ FORECAST TAB ═══════════════ -->
@@ -1223,6 +1251,9 @@ const ROW_CLASS = {'Customer':'row-direct','Contract Farm':'row-contract','Compa
 
 const I18N = {
   th: {
+    truckUtilSection:'🚚 การใช้รถขนส่ง', byMonth:'📆 รายเดือน', byYear:'📆 รายปี', allTime:'🗓 ทั้งหมด',
+    tuTrucks:'จำนวนรถที่วิ่ง', tuTrips:'จำนวนเที่ยววิ่ง', tuChicks:'ลูกไก่ที่ขนส่ง (ตัว)', tuAvg:'เฉลี่ยต่อเที่ยว (ตัว)',
+    tuThTruck:'ทะเบียนรถ', tuThTrips:'เที่ยว', tuThChicks:'ลูกไก่รวม (ตัว)', tuThAvg:'เฉลี่ย/เที่ยว', tuThHatch:'โรงฟักที่วิ่ง', tuThDays:'จำนวนวัน', tuThLast:'วิ่งล่าสุด', tuNoData:'ไม่มีข้อมูลการขนส่งในช่วงนี้',
     navForecast:'Forecast ลูกไก่',
     fcCycleLabel:'รอบการเลี้ยง (วัน)', fcLeadLabel:'เว้นล่วงหน้า (สัปดาห์)',
     fcHorizonLabel:'ดูล่วงหน้า (สัปดาห์)',
@@ -1299,6 +1330,9 @@ const I18N = {
     signupSuccess:'สมัครสำเร็จ! ตรวจสอบอีเมล', fillEmailPwd:'กรุณากรอกอีเมลและรหัสผ่าน'
   },
   en: {
+    truckUtilSection:'🚚 TRUCK UTILIZATION', byMonth:'📆 By Month', byYear:'📆 By Year', allTime:'🗓 All Time',
+    tuTrucks:'Trucks used', tuTrips:'Total trips', tuChicks:'Chicks transported', tuAvg:'Avg per trip',
+    tuThTruck:'Truck Plate', tuThTrips:'Trips', tuThChicks:'Total Chicks', tuThAvg:'Avg/Trip', tuThHatch:'Hatcheries', tuThDays:'Days', tuThLast:'Last run', tuNoData:'No transport data in this period',
     navForecast:'Chick Forecast',
     fcCycleLabel:'Cycle length (days)', fcLeadLabel:'Lead time (weeks)',
     fcHorizonLabel:'Look ahead (weeks)',
@@ -2184,6 +2218,80 @@ function renderSummary(){
   document.getElementById('sexHatcheryMatrix').innerHTML=buildSexHatcheryMatrix(hM,hF,hU); renderSexCharts(hM,hF,hU);
   document.getElementById('topCustomersMatrix').innerHTML=buildTopCustomersMatrix(rows); document.getElementById('diffMatrix').innerHTML=buildDiffMatrix(planPivot,actPivot);
   renderHeatmap(rows);
+  populateTruckFilters(); renderTruckSummary();
+}
+
+// ══════════════════════════════════════════════════════════════
+// TRUCK UTILIZATION — สรุปการใช้รถขนส่งแต่ละคัน (มีฟิลเตอร์ช่วงเวลาของตัวเอง)
+// ══════════════════════════════════════════════════════════════
+let _truckFiltersReady=false;
+function populateTruckFilters(){
+  const MNAMES=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  // Weeks (by recency)
+  const wLatest={}; allRecords.forEach(r=>{if(r.record_date&&r.week_no!=null){if(!wLatest[r.week_no]||r.record_date>wLatest[r.week_no])wLatest[r.week_no]=r.record_date;}});
+  const weeks=[...new Set(allRecords.map(r=>r.week_no).filter(w=>w!=null))].sort((a,b)=>(wLatest[b]||'')>(wLatest[a]||'')?1:-1);
+  const wSel=document.getElementById('truckWeek'); if(wSel){const prev=wSel.value; wSel.innerHTML=weeks.map(w=>`<option value="${w}">Week ${w}</option>`).join(''); if(weeks.includes(parseInt(prev)))wSel.value=prev; else if(!_truckFiltersReady){const cur=getISOWeek(new Date()); wSel.value=weeks.includes(cur)?String(cur):(weeks.length?String(weeks[0]):'');}}
+  // Months
+  const months=[...new Set(allRecords.map(r=>r.record_date?.slice(0,7)).filter(Boolean))].sort().reverse();
+  const mSel=document.getElementById('truckMonth'); if(mSel){const prev=mSel.value; mSel.innerHTML=months.map(ym=>{const[y,m]=ym.split('-');return`<option value="${ym}">${MNAMES[+m-1]} ${y}</option>`}).join(''); if(months.includes(prev))mSel.value=prev;}
+  // Years
+  const years=[...new Set(allRecords.map(r=>r.record_date?.slice(0,4)).filter(Boolean))].sort().reverse();
+  const ySel=document.getElementById('truckYear'); if(ySel){const prev=ySel.value; ySel.innerHTML=years.map(y=>`<option value="${y}">${y}</option>`).join(''); if(years.includes(prev))ySel.value=prev;}
+  // Default day = latest record date
+  const dEl=document.getElementById('truckDate'); if(dEl&&!dEl.value){const latest=allRecords.map(r=>r.record_date).filter(Boolean).sort().reverse()[0]; if(latest)dEl.value=latest;}
+  _truckFiltersReady=true;
+}
+function onTruckPeriodChange(){
+  const p=document.getElementById('truckPeriod').value;
+  document.getElementById('truckDate').classList.toggle('hidden',p!=='day');
+  document.getElementById('truckWeek').classList.toggle('hidden',p!=='week');
+  document.getElementById('truckMonth').classList.toggle('hidden',p!=='month');
+  document.getElementById('truckYear').classList.toggle('hidden',p!=='year');
+  renderTruckSummary();
+}
+function renderTruckSummary(){
+  const tbl=document.getElementById('truckSummaryTable'); if(!tbl)return;
+  const en=currentLang==='en';
+  const p=document.getElementById('truckPeriod').value;
+  const hatch=document.getElementById('truckHatchery').value;
+  let rows=allRecords.filter(r=>r.truck_plate&&String(r.truck_plate).trim());
+  let scope='';
+  if(p==='day'){const d=document.getElementById('truckDate').value; rows=rows.filter(r=>r.record_date===d); scope=d;}
+  else if(p==='week'){const w=document.getElementById('truckWeek').value; rows=rows.filter(r=>String(r.week_no)===w); scope='Week '+w;}
+  else if(p==='month'){const m=document.getElementById('truckMonth').value; rows=rows.filter(r=>r.record_date?.slice(0,7)===m); scope=m;}
+  else if(p==='year'){const y=document.getElementById('truckYear').value; rows=rows.filter(r=>r.record_date?.slice(0,4)===y); scope=y;}
+  if(hatch) rows=rows.filter(r=>r.hatchery===hatch);
+  // group by truck plate
+  const trucks=new Map();
+  rows.forEach(r=>{
+    const key=String(r.truck_plate).trim();
+    const g=trucks.get(key)||{plate:key,trips:0,chicks:0,hatch:new Set(),days:new Set(),last:''};
+    g.trips++; g.chicks+=(r.total_actual||0); if(r.hatchery)g.hatch.add(r.hatchery); if(r.record_date){g.days.add(r.record_date); if(r.record_date>g.last)g.last=r.record_date;}
+    trucks.set(key,g);
+  });
+  const list=[...trucks.values()].sort((a,b)=>b.chicks-a.chicks);
+  // KPIs
+  const totTrips=list.reduce((s,t)=>s+t.trips,0), totChicks=list.reduce((s,t)=>s+t.chicks,0);
+  document.getElementById('tuTrucks').textContent=list.length.toLocaleString();
+  document.getElementById('tuTrips').textContent=totTrips.toLocaleString();
+  document.getElementById('tuChicks').textContent=totChicks.toLocaleString();
+  document.getElementById('tuAvg').textContent=totTrips?Math.round(totChicks/totTrips).toLocaleString():'0';
+  if(!list.length){tbl.innerHTML=`<tbody><tr><td style="padding:18px;text-align:center;color:var(--muted)">${t('tuNoData')}</td></tr></tbody>`;return;}
+  let h=`<thead><tr><th style="text-align:left">${t('tuThTruck')}</th><th class="num">${t('tuThTrips')}</th><th class="num">${t('tuThChicks')}</th><th class="num">${t('tuThAvg')}</th><th style="text-align:left">${t('tuThHatch')}</th><th class="num">${t('tuThDays')}</th><th>${t('tuThLast')}</th></tr></thead><tbody>`;
+  list.forEach(g=>{
+    h+=`<tr>
+      <td style="text-align:left;font-weight:600;color:var(--primary)">🚚 ${esc(g.plate)}</td>
+      <td class="num">${g.trips.toLocaleString()}</td>
+      <td class="num" style="font-weight:600;color:#15803d">${g.chicks.toLocaleString()}</td>
+      <td class="num">${g.trips?Math.round(g.chicks/g.trips).toLocaleString():'-'}</td>
+      <td style="text-align:left;font-size:12px">${[...g.hatch].map(esc).join(', ')}</td>
+      <td class="num">${g.days.size}</td>
+      <td style="font-size:12px;color:var(--muted)">${g.last||'-'}</td>
+    </tr>`;
+  });
+  // total row
+  h+=`<tr class="row-total"><td style="text-align:left;font-weight:700">${en?'Total':'รวม'}</td><td class="num" style="font-weight:700">${totTrips.toLocaleString()}</td><td class="num" style="font-weight:700">${totChicks.toLocaleString()}</td><td class="num" style="font-weight:700">${totTrips?Math.round(totChicks/totTrips).toLocaleString():'-'}</td><td colspan="3"></td></tr>`;
+  tbl.innerHTML=h+'</tbody>';
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -3035,7 +3143,7 @@ function selectCustomerAC(id){
 }
 
 // ===== Features =====
-const SUMMARY_SECTIONS=[{id:'charts1'},{id:'charts2'},{id:'charts3'},{id:'matrices'},{id:'deliveryReport'},{id:'targetVsActual'},{id:'hatcheryFunnel'},{id:'sexHatchery'},{id:'topCustomers'},{id:'difference'}];
+const SUMMARY_SECTIONS=[{id:'charts1'},{id:'charts2'},{id:'charts3'},{id:'matrices'},{id:'deliveryReport'},{id:'targetVsActual'},{id:'hatcheryFunnel'},{id:'sexHatchery'},{id:'topCustomers'},{id:'difference'},{id:'truckUtil'}];
 function getCustomizePrefs(){try{return JSON.parse(localStorage.getItem('summary_customize')||'{}');}catch{return {};}}
 function saveCustomizePrefs(p){localStorage.setItem('summary_customize',JSON.stringify(p));}
 function applySectionVisibility(){const h=getCustomizePrefs().hiddenSections||[]; SUMMARY_SECTIONS.forEach(s=>{const el=document.querySelector(`[data-section="${s.id}"]`);if(el)el.style.display=h.includes(s.id)?'none':'';});}
