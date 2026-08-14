@@ -108,7 +108,11 @@
   .adv-kpi-card.forecast{border-left-color:#f59e0b}
   .adv-kpi-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:1px}
   .adv-kpi-period{font-size:10px;color:var(--muted);margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .adv-kpi-value{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--text)}
+  .adv-kpi-value{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--text)}
+  .adv-kpi-card.wow .adv-kpi-value{color:#2563eb}
+  .adv-kpi-card.mom .adv-kpi-value{color:#7c3aed}
+  .adv-kpi-card.yoy .adv-kpi-value{color:#059669}
+  .adv-kpi-card.forecast .adv-kpi-value{color:#d97706}
   .adv-kpi-change{font-size:12px;font-weight:600;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .adv-kpi-change.up{color:var(--success)}
   .adv-kpi-change.down{color:var(--danger)}
@@ -252,12 +256,17 @@
   .acct-avatar-preview:hover{border-color:var(--primary);box-shadow:0 0 0 4px rgba(37,99,235,.15)}
   /* ── Dashboard KPI Strip ── */
   .dash-kpi-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:16px}
-  .dash-kpi-card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 18px;display:flex;align-items:center;gap:14px;border:1px solid var(--border);transition:all .15s}
-  .dash-kpi-card:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
-  .dash-kpi-icon{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+  .dash-kpi-card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 18px;display:flex;align-items:center;gap:14px;border:1px solid var(--border);border-top:3px solid var(--kpi,#2563eb);transition:all .15s}
+  .dash-kpi-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px)}
+  .dash-kpi-card.k-blue{--kpi:#2563eb}
+  .dash-kpi-card.k-purple{--kpi:#7c3aed}
+  .dash-kpi-card.k-green{--kpi:#16a34a}
+  .dash-kpi-card.k-amber{--kpi:#d97706}
+  .dash-kpi-card.k-red{--kpi:#dc2626}
+  .dash-kpi-icon{width:48px;height:48px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:23px;flex-shrink:0;box-shadow:inset 0 0 0 1px rgba(0,0,0,.04)}
   .dash-kpi-body{min-width:0;flex:1}
   .dash-kpi-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px}
-  .dash-kpi-value{font-size:24px;font-weight:800;color:var(--text);line-height:1.1;font-variant-numeric:tabular-nums}
+  .dash-kpi-value{font-size:25px;font-weight:800;color:var(--kpi,var(--text));line-height:1.1;font-variant-numeric:tabular-nums}
   .dash-kpi-sub{font-size:11px;color:var(--muted);margin-top:2px}
   /* Sidebar Overlay (mobile) */
   .sidebar-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:99;display:none;top:56px}
@@ -464,40 +473,40 @@
 
       <!-- Live KPI Strip -->
       <div class="dash-kpi-strip" id="dashKPIStrip">
-        <div class="dash-kpi-card">
-          <div class="dash-kpi-icon" style="background:#dbeafe;color:#1d4ed8">📦</div>
+        <div class="dash-kpi-card k-blue">
+          <div class="dash-kpi-icon" style="background:#dbeafe;color:#2563eb">📦</div>
           <div class="dash-kpi-body">
             <div class="dash-kpi-label">Total DOC Delivered</div>
             <div class="dash-kpi-value" id="dashTotalAct">—</div>
             <div class="dash-kpi-sub" id="dashTotalActSub">chicks (all time)</div>
           </div>
         </div>
-        <div class="dash-kpi-card">
-          <div class="dash-kpi-icon" style="background:#dcfce7;color:#166534">📋</div>
+        <div class="dash-kpi-card k-purple">
+          <div class="dash-kpi-icon" style="background:#ede9fe;color:#7c3aed">📋</div>
           <div class="dash-kpi-body">
             <div class="dash-kpi-label">Total Orders Placed</div>
             <div class="dash-kpi-value" id="dashTotalOrd">—</div>
             <div class="dash-kpi-sub" id="dashTotalOrdSub">chicks ordered</div>
           </div>
         </div>
-        <div class="dash-kpi-card">
-          <div class="dash-kpi-icon" style="background:#fef9c3;color:#854d0e">🎯</div>
+        <div class="dash-kpi-card k-green">
+          <div class="dash-kpi-icon" style="background:#dcfce7;color:#16a34a">🎯</div>
           <div class="dash-kpi-body">
             <div class="dash-kpi-label">Fulfillment Rate</div>
             <div class="dash-kpi-value" id="dashFulfill">—</div>
             <div class="dash-kpi-sub">actual ÷ ordered</div>
           </div>
         </div>
-        <div class="dash-kpi-card">
-          <div class="dash-kpi-icon" style="background:#f3e8ff;color:#6b21a8">👥</div>
+        <div class="dash-kpi-card k-amber">
+          <div class="dash-kpi-icon" style="background:#fef3c7;color:#d97706">👥</div>
           <div class="dash-kpi-body">
             <div class="dash-kpi-label">Active Customers</div>
             <div class="dash-kpi-value" id="dashCusts">—</div>
             <div class="dash-kpi-sub" id="dashCustsSub">unique farms</div>
           </div>
         </div>
-        <div class="dash-kpi-card">
-          <div class="dash-kpi-icon" style="background:#fee2e2;color:#991b1b">💀</div>
+        <div class="dash-kpi-card k-red">
+          <div class="dash-kpi-icon" style="background:#fee2e2;color:#dc2626">💀</div>
           <div class="dash-kpi-body">
             <div class="dash-kpi-label">Overall DOA Rate</div>
             <div class="dash-kpi-value" id="dashDOA">—</div>
@@ -2386,9 +2395,10 @@ function renderTrendCharts(scopedRows){
   const ordData=[...weekKeys.map(k=>wMap[k].o),...(ma4!==null?[null]:[])];
   const actData=[...weekKeys.map(k=>wMap[k].a),...(ma4!==null?[null]:[])];
   const fctData=ma4!==null?[...Array(weekKeys.length-1).fill(null),wMap[weekKeys[weekKeys.length-1]]?.a||0,ma4]:[];
+  const mkGrad=(hex)=>((ctx)=>{const ch=ctx.chart,a=ch.chartArea;if(!a)return hex+'22';const g=ch.ctx.createLinearGradient(0,a.top,0,a.bottom);g.addColorStop(0,hex+'59');g.addColorStop(1,hex+'08');return g;});
   const trendDatasets=[
-    {label:'Ordered',data:ordData,borderColor:'#2563eb',backgroundColor:'rgba(37,99,235,.1)',fill:true,tension:.3,spanGaps:false},
-    {label:'Actual',data:actData,borderColor:'#10b981',backgroundColor:'rgba(16,185,129,.1)',fill:true,tension:.3,spanGaps:false}
+    {label:'Ordered',data:ordData,borderColor:'#2563eb',backgroundColor:mkGrad('#2563eb'),borderWidth:3,fill:true,tension:.35,spanGaps:false,pointRadius:0,pointHoverRadius:5,pointHoverBackgroundColor:'#2563eb',pointHoverBorderColor:'#fff',pointHoverBorderWidth:2},
+    {label:'Actual',data:actData,borderColor:'#16a34a',backgroundColor:mkGrad('#16a34a'),borderWidth:3,fill:true,tension:.35,spanGaps:false,pointRadius:0,pointHoverRadius:5,pointHoverBackgroundColor:'#16a34a',pointHoverBorderColor:'#fff',pointHoverBorderWidth:2}
   ];
   if(ma4!==null) trendDatasets.push({label:'Forecast (MA4)',data:fctData,borderColor:'#f59e0b',backgroundColor:'transparent',borderDash:[6,4],borderWidth:2,tension:0,fill:false,spanGaps:true,pointRadius:fctData.map((v,i)=>v!==null&&i===fctData.length-1?6:0),pointBackgroundColor:'#f59e0b',pointBorderColor:'#fff',pointBorderWidth:2});
   if(chartTrend) chartTrend.destroy(); chartTrend=new Chart(document.getElementById('trendLine'),{type:'line',data:{labels:trendLabels,datasets:trendDatasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'},datalabels:{display:false},tooltip:{callbacks:{footer:items=>{const idx=items[0]?.dataIndex;if(idx===trendLabels.length-1&&ma4!==null)return'📈 MA4 Forecast';return'';}}}}  ,scales:{y:{ticks:{callback:v=>v.toLocaleString()}}}}});
