@@ -11,7 +11,7 @@ ThemeData _base(Brightness brightness) {
     colorScheme: scheme,
     fontFamily: _font,
     scaffoldBackgroundColor:
-        isDark ? const Color(0xFF0F141B) : const Color(0xFFF6F7F9),
+        isDark ? const Color(0xFF0F141B) : const Color(0xFFE9EEF6),
     appBarTheme: AppBarTheme(
       centerTitle: false,
       elevation: 0,

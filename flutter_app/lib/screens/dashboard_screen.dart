@@ -247,6 +247,8 @@ class _KpiGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final surface = Theme.of(context).cardColor;
+    final border = Theme.of(context).dividerColor;
     return GridView.count(
       crossAxisCount: 2,
       shrinkWrap: true,
@@ -254,19 +256,49 @@ class _KpiGrid extends StatelessWidget {
       mainAxisSpacing: 12,
       crossAxisSpacing: 12,
       childAspectRatio: 1.7,
-      children: cards
-          .map((k) => Card(
+      children: cards.map((k) {
+        return Container(
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color.alphaBlend(k.color.withOpacity(.14), surface),
+                surface,
+              ],
+            ),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: border),
+            boxShadow: [
+              BoxShadow(
+                  color: Colors.black.withOpacity(.06),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3)),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(height: 4, color: k.color),
+              Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.all(14),
+                  padding: const EdgeInsets.all(13),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(children: [
                         Container(
-                          padding: const EdgeInsets.all(6),
+                          padding: const EdgeInsets.all(7),
                           decoration: BoxDecoration(
-                            color: k.color.withOpacity(.12),
+                            color: k.color.withOpacity(.20),
                             borderRadius: BorderRadius.circular(10),
+                            boxShadow: [
+                              BoxShadow(
+                                  color: k.color.withOpacity(.28),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2)),
+                            ],
                           ),
                           child: Text(k.emoji,
                               style: const TextStyle(fontSize: 16)),
@@ -291,8 +323,11 @@ class _KpiGrid extends StatelessWidget {
                     ],
                   ),
                 ),
-              ))
-          .toList(),
+              ),
+            ],
+          ),
+        );
+      }).toList(),
     );
   }
 }
@@ -396,21 +431,37 @@ class _TrendChart extends StatelessWidget {
             spots: ordSpots,
             isCurved: true,
             color: const Color(0xFF2563EB),
-            barWidth: 2.5,
+            barWidth: 3.5,
             dotData: const FlDotData(show: false),
             belowBarData: BarAreaData(
-                show: true,
-                color: const Color(0xFF2563EB).withOpacity(.08)),
+              show: true,
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  const Color(0xFF2563EB).withOpacity(.30),
+                  const Color(0xFF2563EB).withOpacity(.02),
+                ],
+              ),
+            ),
           ),
           LineChartBarData(
             spots: actSpots,
             isCurved: true,
-            color: const Color(0xFF10B981),
-            barWidth: 2.5,
+            color: const Color(0xFF16A34A),
+            barWidth: 3.5,
             dotData: const FlDotData(show: false),
             belowBarData: BarAreaData(
-                show: true,
-                color: const Color(0xFF10B981).withOpacity(.08)),
+              show: true,
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  const Color(0xFF16A34A).withOpacity(.30),
+                  const Color(0xFF16A34A).withOpacity(.02),
+                ],
+              ),
+            ),
           ),
         ],
       ),

@@ -343,27 +343,52 @@ class _ForecastScreenState extends State<ForecastScreen> {
     );
   }
 
-  Widget _kpi(String label, int value, Color color, {bool big = false}) => Card(
-        margin: EdgeInsets.zero,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
-              const SizedBox(height: 3),
-              Text(_nf.format(value),
-                  style: TextStyle(
-                      fontSize: big ? 24 : 16,
-                      fontWeight: FontWeight.w800,
-                      color: color)),
-            ],
-          ),
+  Widget _kpi(String label, int value, Color color, {bool big = false}) {
+    final surface = Theme.of(context).cardColor;
+    final border = Theme.of(context).dividerColor;
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color.alphaBlend(color.withOpacity(.13), surface), surface],
         ),
-      );
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: border),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withOpacity(.05),
+              blurRadius: 8,
+              offset: const Offset(0, 2)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(height: 3, color: color),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+                const SizedBox(height: 3),
+                Text(_nf.format(value),
+                    style: TextStyle(
+                        fontSize: big ? 24 : 16,
+                        fontWeight: FontWeight.w800,
+                        color: color)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _detailTile(_FRow r) {
     final color = _typeColors[r.ctype] ?? Colors.grey;
