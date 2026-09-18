@@ -2181,7 +2181,7 @@ async function saveRecord(){
     const res=await sb.from('doc_records').insert(data).select();
     error=res.error; savedRow=res.data?.[0];
   }
-  if(error) return toast(error.message,'error');
+  if(error) return toast(dbErrMsg(error),'error');
   // อัปเดต allRecords ทันที (ไม่รอ Realtime) เพื่อให้ตารางแสดงข้อมูลใหม่ทันที
   if(savedRow){
     if(id){const i=allRecords.findIndex(r=>String(r.id)===String(id));if(i>=0)allRecords[i]=savedRow;}
@@ -3605,7 +3605,16 @@ async function exportPDF(){
   }catch(e){toast(e.message,'error');}finally{hd.remove();imgs.forEach(i=>i.remove());cvs.forEach(c=>c.style.display='');if(tb)tb.style.display=od;ol.remove();}
 }
 
-function toast(m,t='info'){const el=document.createElement('div');el.className='toast '+t;el.textContent=m;document.body.appendChild(el);setTimeout(()=>el.remove(),2800)}
+function toast(m,t='info'){const el=document.createElement('div');el.className='toast '+t;el.textContent=m;document.body.appendChild(el);setTimeout(()=>el.remove(),t==='error'?6000:2800)}
+// แปลง error จากฐานข้อมูลให้เป็นข้อความที่ผู้ใช้เข้าใจได้
+function dbErrMsg(error){
+  const en=currentLang==='en', msg=error?.message||'';
+  if(error?.code==='23505'||/duplicate key value/i.test(msg)){
+    return en?'Cannot save — the database has a no-duplicate rule (same customer + date + hatchery). For a second lorry on the same day, enter a different DO Number or Truck Plate. If it still fails, ask the admin to adjust doc_records_unique_idx.'
+             :'บันทึกไม่ได้ — ฐานข้อมูลมีกฎห้ามข้อมูลซ้ำ (ลูกค้า + วันที่ + โรงฟักเดียวกัน) กรณีส่งหลายเที่ยวในวันเดียว ให้กรอกเลข DO หรือทะเบียนรถให้ต่างกัน ถ้ายังบันทึกไม่ได้ แจ้งผู้ดูแลระบบให้ปรับกฎ doc_records_unique_idx';
+  }
+  return msg;
+}
 function esc(s){if(s==null)return'';return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 
 // ===========================================================
