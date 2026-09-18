@@ -34,11 +34,6 @@
 
 
 -- ── BEFORE ────────────────────────────────────────────────────────────────
--- NOTE: the first 9 of the 11 split rows were read directly; the pair making
--- up COALESCE(u_ordered, 0) is reconstructed from the row count (3 plain
--- columns + 4 COALESCE = 11 before, + 2 COALESCE = 15 after, both observed).
--- Confirm with query 1 in ../queries/inspect.sql and delete this note.
---
 -- CREATE UNIQUE INDEX doc_records_unique_idx ON public.doc_records USING btree (
 --   record_date,
 --   hatchery,
@@ -100,6 +95,9 @@ COMMIT;
 --   COALESCE(do_number, ''::text),
 --   COALESCE(truck_plate, ''::text)
 -- );
+--
+-- Verified against the live database on 2026-09-18 with query 1 in
+-- ../queries/inspect.sql — 15 split rows, matching this definition exactly.
 
 
 -- ── DOWN ──────────────────────────────────────────────────────────────────
