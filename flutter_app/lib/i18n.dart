@@ -184,10 +184,28 @@ const _strings = <String, Map<String, String>>{
   },
   'grandTotal': {'th': 'ยอดรวมทั้งหมด', 'en': 'GRAND TOTAL'},
   'gap': {'th': '% ต่าง', 'en': '% Gap'},
+  // Errors
+  'dupRecord': {
+    'th': 'บันทึกไม่ได้ — ฐานข้อมูลมีกฎห้ามข้อมูลซ้ำ (ลูกค้า + วันที่ + โรงฟักเดียวกัน) '
+        'กรณีส่งหลายเที่ยวในวันเดียว ให้กรอกเลข DO หรือทะเบียนรถให้ต่างกัน',
+    'en': 'Cannot save — the database has a no-duplicate rule (same customer + date + '
+        'hatchery). For another lorry on the same day, enter a different DO Number '
+        'or Truck Plate.'
+  },
 };
 
 /// Translate a key using the current language.
 String tr(String key) => _strings[key]?[lang.value] ?? key;
+
+/// Turn a raw database error into something the user can act on.
+/// Anything we don't recognise is passed through unchanged.
+String dbErrMsg(Object e) {
+  final s = e.toString();
+  if (s.contains('duplicate key value') || s.contains('code: 23505')) {
+    return tr('dupRecord');
+  }
+  return '❌ $s';
+}
 
 const _monthsTh = [
   'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.',

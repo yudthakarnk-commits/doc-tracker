@@ -3271,7 +3271,7 @@ function handleImportCSV(e){
       }
       await loadRecords(); renderEntry(); renderSummary();
       toast(`✅ Imported ${imported} records`, 'success'); e.target.value='';
-    }catch(err){toast(err.message,'error');}
+    }catch(err){toast(dbErrMsg(err),'error');}
   }; r.readAsBinaryString(file);
 }
 
@@ -3373,7 +3373,7 @@ async function runCopyWeek(){
     await loadRecords(); populateWeekFilters(); renderEntry(); renderSummary();
     toast(`✅ ${currentLang==='en'?'Copied':'คัดลอกแล้ว'} ${c.rows.length} ${currentLang==='en'?'rows':'รายการ'}${c.skipped.length?` (${currentLang==='en'?'skipped':'ข้าม'} ${c.skipped.length})`:''}`,'success');
     closeCopyWeekModal();
-  }catch(err){toast(err.message,'error');}
+  }catch(err){toast(dbErrMsg(err),'error');}
   finally{btn.disabled=false;}
 }
 
@@ -3610,8 +3610,8 @@ function toast(m,t='info'){const el=document.createElement('div');el.className='
 function dbErrMsg(error){
   const en=currentLang==='en', msg=error?.message||'';
   if(error?.code==='23505'||/duplicate key value/i.test(msg)){
-    return en?'Cannot save — the database has a no-duplicate rule (same customer + date + hatchery). For a second lorry on the same day, enter a different DO Number or Truck Plate. If it still fails, ask the admin to adjust doc_records_unique_idx.'
-             :'บันทึกไม่ได้ — ฐานข้อมูลมีกฎห้ามข้อมูลซ้ำ (ลูกค้า + วันที่ + โรงฟักเดียวกัน) กรณีส่งหลายเที่ยวในวันเดียว ให้กรอกเลข DO หรือทะเบียนรถให้ต่างกัน ถ้ายังบันทึกไม่ได้ แจ้งผู้ดูแลระบบให้ปรับกฎ doc_records_unique_idx';
+    return en?'Cannot save — the database has a no-duplicate rule (same customer + date + hatchery). For another lorry on the same day, enter a different DO Number or Truck Plate.'
+             :'บันทึกไม่ได้ — ฐานข้อมูลมีกฎห้ามข้อมูลซ้ำ (ลูกค้า + วันที่ + โรงฟักเดียวกัน) กรณีส่งหลายเที่ยวในวันเดียว ให้กรอกเลข DO หรือทะเบียนรถให้ต่างกัน';
   }
   return msg;
 }

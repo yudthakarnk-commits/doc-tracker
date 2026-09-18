@@ -188,7 +188,9 @@ class _EntryScreenState extends State<EntryScreen> {
                         setD(() => busy = false);
                         if (c.mounted) {
                           ScaffoldMessenger.of(c).showSnackBar(
-                              SnackBar(content: Text('❌ $e')));
+                              SnackBar(
+                                  content: Text(dbErrMsg(e)),
+                                  duration: const Duration(seconds: 8)));
                         }
                       }
                     },
@@ -258,7 +260,9 @@ class _EntryScreenState extends State<EntryScreen> {
                             setD(() => busy = false);
                             if (c.mounted) {
                               ScaffoldMessenger.of(c).showSnackBar(
-                                  SnackBar(content: Text('❌ $e')));
+                                  SnackBar(
+                                  content: Text(dbErrMsg(e)),
+                                  duration: const Duration(seconds: 8)));
                             }
                           }
                         },

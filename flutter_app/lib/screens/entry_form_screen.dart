@@ -175,7 +175,9 @@ class _EntryFormScreenState extends State<EntryFormScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('❌ $e')));
+            .showSnackBar(SnackBar(
+                content: Text(dbErrMsg(e)),
+                duration: const Duration(seconds: 8)));
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -212,7 +214,9 @@ class _EntryFormScreenState extends State<EntryFormScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('❌ $e')));
+            .showSnackBar(SnackBar(
+                content: Text(dbErrMsg(e)),
+                duration: const Duration(seconds: 8)));
         setState(() => _busy = false);
       }
     }
