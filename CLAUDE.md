@@ -9,6 +9,7 @@
 | `index.html`, `sw.js`, `manifest.json` | Web PWA (single-file, vanilla JS + Chart.js) | GitHub Pages: yudthakarnk-commits.github.io/doc-tracker/ |
 | `flutter_app/` | แอพมือถือ Flutter (Material 3, TH/EN, light/dark) | GitHub Actions build APK → release tag `apk-latest` |
 | `.github/workflows/build-apk.yml` | CI: build Android APK ทุกครั้งที่ push แก้ `flutter_app/**` | — |
+| `db/` | บันทึกกฎ/การเปลี่ยนแปลงใน Supabase ที่มองไม่เห็นจากโค้ด (ไม่ใช่ schema dump เต็ม) | รันมือใน Supabase SQL editor |
 
 ## Backend (Supabase)
 
@@ -16,6 +17,7 @@
 - ตารางหลัก `doc_records`: week_no, record_date, hatchery, customer_type, customer_name, breed, m/f/u_ordered, m/f/u_actual, total_ordered/total_actual (generated — ห้าม insert), do_number, truck_plate, departure_time, location, distance_km, doa_count, delivery_status, driver_token, unit_price, vaccine_*, avg_weight_*
 - id อาจเป็น bigint หรือ uuid — โค้ด Flutter เก็บเป็น `Object?` ส่งกลับตรงๆ
 - PostgREST จำกัด 1000 แถว/ครั้ง → ต้อง paginate ด้วย `.range()` (ทำแล้วทั้งสองแอพ)
+- ⚠️ `doc_records` มี unique index `doc_records_unique_idx` ที่ **ไม่ปรากฏในโค้ดเลย** — insert ที่ชนจะได้ SQLSTATE 23505 คีย์รวม **ยอดสั่ง m/f/u_ordered** + `do_number` + `truck_plate` ด้วย รายละเอียดและวิธีตรวจอยู่ใน `db/`
 - Auth: email/password (บัญชีเดียวกันทั้งเว็บและแอพ)
 - Driver mode (เว็บ): ลิงก์ `?drv={id}&tk={driver_token}` ให้คนขับอัปเดตสถานะโดยไม่ login — QR ในแอพมือถือใช้ format เดียวกัน
 
