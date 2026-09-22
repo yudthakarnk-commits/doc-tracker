@@ -251,6 +251,8 @@ const cC=p=>p>1?'var(--re)':p>=.85?'var(--gr)':p>=.6?'var(--am)':'var(--re)';
 const cL=p=>p>1?'Over Cap':p>=.85?'Optimal':p>=.6?'Good':'Low';
 const isoWeek=d=>{const dt=new Date(d);dt.setHours(0,0,0,0);dt.setDate(dt.getDate()+3-(dt.getDay()+6)%7);const wk1=new Date(dt.getFullYear(),0,4);return 1+Math.round(((dt-wk1)/86400000-3+(wk1.getDay()+6)%7)/7);};
 const weekStart=d=>{const dt=new Date(d);const day=dt.getDay()||7;dt.setDate(dt.getDate()-day+1);return dt.toISOString().split('T')[0];};
+// ISO year — not always the calendar year, e.g. 2026-12-28 is in ISO week 1 of 2027.
+const isoWeekYear=d=>{const dt=new Date(d);dt.setHours(0,0,0,0);dt.setDate(dt.getDate()+3-(dt.getDay()+6)%7);return dt.getFullYear();};
 const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
 // ── Toast ──
@@ -577,11 +579,27 @@ function pgCandle(){
 function pgForecast(){
   const supByWk={};
   state.settings.filter(s=>s.status!=='completed').forEach(s=>{const wk=s.hatch_week_no||isoWeek(s.hatch_date);if(!supByWk[wk])supByWk[wk]={wk,date:s.hatch_date,byH:{}};supByWk[wk].byH[s.hatchery]=(supByWk[wk].byH[s.hatchery]||0)+(s.forecast_doc||0);});
+  // A target's week belongs to the year of its target_date (the week's Monday).
+  // Rows written before DOC Tracker started recording that are treated as belonging
+  // to the current year, which is what they were in practice.
+  const curY=isoWeekYear(td()),curWk=isoWeek(td());
   const demByWk={};
-  state.docTargets.forEach(t=>{if(t.target_week)demByWk[t.target_week]=(demByWk[t.target_week]||0)+(t.booking||0);});
+  state.docTargets.forEach(t=>{
+    if(!t.target_week)return;
+    const ty=t.target_date?isoWeekYear(t.target_date):curY;
+    if(ty!==curY)return;
+    demByWk[t.target_week]=(demByWk[t.target_week]||0)+(t.booking||0);
+  });
+  // Planning looks forward. Sorting every known week ascending and taking the first
+  // twelve showed the *lowest* week numbers — months that had already gone by, with
+  // no supply against them, which read as a catastrophic shortfall.
   const allWks=[...new Set([...Object.keys(supByWk),...Object.keys(demByWk)])].map(Number).sort((a,b)=>a-b);
   const wkOpts=allWks.map(String);
-  const weeks=allWks.filter(wk=>!state.fFcWk||wk===parseInt(state.fFcWk)).slice(0,12);
+  const weeks=state.fFcWk
+    ? allWks.filter(wk=>wk===parseInt(state.fFcWk))
+    : (allWks.filter(wk=>wk>=curWk).slice(0,12).length
+        ? allWks.filter(wk=>wk>=curWk).slice(0,12)
+        : allWks.slice(-12));
   return'<div><div class="al agr mb12">Supply = forecast DOC from egg settings. Demand = DOC Tracker booking targets. Gap = Supply − Demand.</div>'+
     filterBar([{type:'select',key:'fFcWk',label:'All Weeks',opts:wkOpts}])+
     (weeks.length?
