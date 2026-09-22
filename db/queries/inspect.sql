@@ -18,6 +18,36 @@ ORDER BY 1;
 
 
 -- ══════════════════════════════════════════════════════════════════════════
+-- 1b. EVERY rule on a table, before designing any migration
+--
+-- Run all three. A migration was written once against the unique indexes alone
+-- and failed on a CHECK nobody had looked at — after the app that depended on
+-- it had already shipped. Indexes, CHECK constraints and triggers, every time.
+--
+-- Set the table list once and reuse it in all three.
+-- ══════════════════════════════════════════════════════════════════════════
+
+-- indexes
+SELECT tablename, indexname, indexdef
+FROM pg_indexes
+WHERE schemaname = 'public' AND tablename IN ('doc_targets', 'hatchery_estimates');
+
+-- check constraints, split so the editor cannot truncate them
+SELECT conrelid::regclass AS tbl, conname, u.ordinality AS n, u.part
+FROM pg_constraint,
+     LATERAL unnest(string_to_array(pg_get_constraintdef(oid), ' AND ')) WITH ORDINALITY AS u(part, ordinality)
+WHERE conrelid IN ('public.doc_targets'::regclass, 'public.hatchery_estimates'::regclass)
+  AND contype = 'c'
+ORDER BY 1, 2, 3;
+
+-- triggers
+SELECT event_object_table AS tbl, trigger_name, action_timing, event_manipulation
+FROM information_schema.triggers
+WHERE event_object_table IN ('doc_targets', 'hatchery_estimates')
+ORDER BY 1, 2;
+
+
+-- ══════════════════════════════════════════════════════════════════════════
 -- 2. Every unique rule on doc_records
 -- ══════════════════════════════════════════════════════════════════════════
 
