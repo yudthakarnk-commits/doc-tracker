@@ -261,7 +261,7 @@ function toast(msg,type='success'){const w=document.getElementById('toastWrap');
 // ── State ──
 let state={
   user:null,page:'db',loading:false,
-  lots:[],settings:[],farmPlans:[],docTargets:[],openingStock:[],customers:[],
+  lots:[],settings:[],farmPlans:[],docTargets:[],openingStock:[],customers:[],eggSales:[],
   sortLots:{col:'recv_date',dir:-1},
   sortSett:{col:'hatch_date',dir:1},
   sortCool:{col:'recv_date',dir:-1},
@@ -276,7 +276,7 @@ function thS(key,col,label){const s=state[key];return '<th class="sortable'+(s.c
 // ── Supabase ──
 async function initSupabase(){sb=supabase.createClient(SB_URL,SB_KEY);const{data:{session}}=await sb.auth.getSession();if(session)await afterLogin(session.user);else showLogin();}
 async function afterLogin(user){setState({user,loading:true});await loadAll();setState({loading:false});sb.channel('h-os').on('postgres_changes',{event:'*',schema:'public',table:'egg_lots'},()=>loadLots()).on('postgres_changes',{event:'*',schema:'public',table:'egg_settings'},()=>loadSettings()).on('postgres_changes',{event:'*',schema:'public',table:'farm_egg_plan'},()=>loadFarmPlans()).on('postgres_changes',{event:'*',schema:'public',table:'doc_targets'},()=>loadDocTargets()).on('postgres_changes',{event:'*',schema:'public',table:'cool_room_opening_stock'},()=>loadOpeningStock()).subscribe();}
-async function loadAll(){await Promise.all([loadLots(),loadSettings(),loadFarmPlans(),loadDocTargets(),loadOpeningStock(),loadCustomers()]);}
+async function loadAll(){await Promise.all([loadLots(),loadSettings(),loadFarmPlans(),loadDocTargets(),loadOpeningStock(),loadCustomers(),loadEggSales()]);}
 // Customer reference is DOC Tracker's own table — same names, types and codes, so an
 // allocation made here lands in DOC Tracker without any translation.
 async function loadCustomers(){try{const{data,error}=await sb.from('customers').select('customer_name,customer_type,customer_code').order('customer_name',{ascending:true});if(!error)setState({customers:data||[]});}catch(e){}}
@@ -284,11 +284,14 @@ async function loadOpeningStock(){try{const{data,error}=await sb.from('cool_room
 async function loadLots(){try{const{data,error}=await sb.from('egg_lots').select('*').order('recv_date',{ascending:false});if(!error)setState({lots:data||[]});}catch(e){}}
 async function loadSettings(){try{const{data,error}=await sb.from('egg_settings').select('*').order('hatch_date',{ascending:true});if(!error)setState({settings:data||[]});}catch(e){}}
 async function loadFarmPlans(){try{const{data,error}=await sb.from('farm_egg_plan').select('*').order('week_no',{ascending:true}).limit(60);if(!error)setState({farmPlans:data||[]});}catch(e){}}
+// Eggs sold off rather than set. One row per farm+house sold in a week, because a
+// week can have several; the supply table only ever shows the weekly total.
+async function loadEggSales(){try{const{data,error}=await sb.from('egg_sales').select('*').order('week_no',{ascending:true});if(!error)setState({eggSales:data||[]});}catch(e){}}
 async function loadDocTargets(){try{const{data,error}=await sb.from('doc_targets').select('*').order('target_week',{ascending:true});if(!error)setState({docTargets:data||[]});}catch(e){}}
 
 function showLogin(){document.getElementById('root').innerHTML=renderLogin();document.getElementById('loginPw').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});}
 async function doLogin(){const em=document.getElementById('loginEmail').value.trim(),pw=document.getElementById('loginPw').value,err=document.getElementById('loginErr');err.style.display='none';if(!em||!pw){err.textContent='Please enter email and password.';err.style.display='flex';return;}const{data,error}=await sb.auth.signInWithPassword({email:em,password:pw});if(error){err.textContent=error.message;err.style.display='flex';return;}await afterLogin(data.user);}
-async function doLogout(){await sb.auth.signOut();setState({user:null,lots:[],settings:[],farmPlans:[],docTargets:[],openingStock:[],customers:[]});showLogin();}
+async function doLogout(){await sb.auth.signOut();setState({user:null,lots:[],settings:[],farmPlans:[],docTargets:[],openingStock:[],customers:[],eggSales:[]});showLogin();}
 
 // ── Icons ──
 function ic(n,s=14,col=''){col=col||'currentColor';
@@ -382,9 +385,15 @@ function pgSupply(){
   const curWk=isoWeek(td());
   const demandByWk={};
   state.docTargets.forEach(t=>{if(t.target_week)demandByWk[t.target_week]=(demandByWk[t.target_week]||0)+(t.booking||0);});
+  // Sales detail is per farm and house; the table shows only the week's total.
+  const soldByWk={};
+  (state.eggSales||[]).forEach(s=>{soldByWk[s.week_no]=(soldByWk[s.week_no]||0)+(s.qty_he||0);});
 
   const tableRows=sortData(plans,'week_no',1).map(p=>{
-    const total=(p.total_farm_he||0)+(p.actual_buy_he||0);
+    // Eggs sold are gone — they cannot be set, so they come out of what is
+    // available. Leaving them in would make every Gap look better than it is.
+    const sold=soldByWk[p.week_no]||0;
+    const total=(p.total_farm_he||0)+(p.actual_buy_he||0)-sold;
     const demand=demandByWk[p.week_no+3]||0;
     const gap=total-demand;
     const isCur=p.week_no===curWk;
@@ -395,6 +404,7 @@ function pgSupply(){
       '<td class="mn ta-r" style="font-weight:600">'+fN(p.total_farm_he||0)+'</td>'+
       '<td class="mn ta-r" style="color:var(--am)">'+(p.plan_buy_he?fN(p.plan_buy_he):'—')+'</td>'+
       '<td class="mn ta-r" style="color:var(--bl)">'+(p.actual_buy_he?fN(p.actual_buy_he):'—')+'</td>'+
+      '<td class="mn ta-r" style="color:var(--pu)">'+(sold?'−'+fN(sold):'—')+'</td>'+
       '<td class="mn ta-r" style="font-weight:600">'+fN(total)+'</td>'+
       '<td class="mn ta-r" style="color:var(--t3)">'+(demand?fN(demand):'—')+'</td>'+
       '<td class="mn ta-r"><span class="'+(demand?(gap<0?'gap-neg':gap>0?'gap-pos':'gap-neu'):'gap-neu')+'">'+(demand?(gap>=0?'+':'')+fN(gap):'—')+'</span></td>'+
@@ -404,7 +414,7 @@ function pgSupply(){
   return'<div>'+
     // sticky action bar
     '<div class="supply-sticky">'+
-    '<div class="al abl" style="flex:1;margin:0;font-size:11.5px">'+ic('info',11)+' Egg set W<b>N</b> → DOC hatch W<b>N+3</b>. Click any row to edit. <span class="tg">+Gap</span> = surplus, <span class="tr2">−Gap</span> = shortfall → needs external buy.</div>'+
+    '<div class="al abl" style="flex:1;margin:0;font-size:11.5px">'+ic('info',11)+' Egg set W<b>N</b> → DOC hatch W<b>N+3</b>. Total Avail = Farm + Actual Buy <b>− Sold</b>. Click any row to edit. <span class="tg">+Gap</span> = surplus, <span class="tr2">−Gap</span> = shortfall → needs external buy.</div>'+
     '<button class="btn bpri" onclick="openFarmPlanModal()">'+ic('plus',12)+' Add Week</button>'+
     '<button class="btn bsec bsm" onclick="scrollToCurrentWeek()" title="Jump to current week">▶ W'+curWk+'</button>'+
     '</div>'+
@@ -412,7 +422,7 @@ function pgSupply(){
       '<div style="padding:20px"><div class="card" style="text-align:center;padding:40px;color:var(--t3)"><div>No farm plan data yet</div><button class="btn bpri bsm" style="margin-top:12px" onclick="openFarmPlanModal()">'+ic('plus',11)+' Add First Week</button></div></div>':
       '<div style="padding:20px"><div class="card"><div class="ovx-sticky"><table style="border-collapse:collapse"><thead><tr>'+
       thS('sortLots','week_no','Wk')+'<th>Week End</th>'+FARMS.map(f=>'<th>'+f+'</th>').join('')+
-      '<th>Total Farm</th><th>Plan Buy</th><th>Actual Buy</th><th>Total Avail</th><th>Demand (W+3)</th><th>Gap</th><th></th></tr></thead>'+
+      '<th>Total Farm</th><th>Plan Buy</th><th>Actual Buy</th><th title="Eggs sold off instead of set">Sold</th><th title="Total Farm + Actual Buy − Sold">Total Avail</th><th>Demand (W+3)</th><th>Gap</th><th></th></tr></thead>'+
       '<tbody>'+tableRows+'</tbody></table></div></div></div>')+
     '</div>';
 }
@@ -653,17 +663,50 @@ function pgReports(){const hist=state.settings.filter(s=>s.status==='completed'&
 function showModal(h){const o=document.createElement('div');o.className='mov';o.id='activeModal';o.innerHTML='<div class="mo" onclick="event.stopPropagation()">'+h+'</div>';o.onclick=()=>closeModal();document.body.appendChild(o);}
 function closeModal(){document.getElementById('activeModal')?.remove();}
 
+// ── Egg sales lines inside the farm plan modal ──────────────────────────────
+// Held outside state because they are modal-local until Save; state.eggSales is
+// only refreshed from the database afterwards.
+let _fpSales=[], _fpSalesDeleted=[];
+function fpRenderSales(){
+  const el=document.getElementById('fp_sales');if(!el)return;
+  el.innerHTML=_fpSales.length?_fpSales.map((s,i)=>
+    '<div class="fr3 mb8">'+
+      '<div class="fld"><select class="inp" onchange="_fpSales['+i+'].farm=this.value">'+
+        FARMS.map(f=>'<option'+(s.farm===f?' selected':'')+'>'+esc(f)+'</option>').join('')+'</select></div>'+
+      '<div class="fld"><input class="inp" placeholder="เล้า / House" value="'+esc(s.house||'')+'" oninput="_fpSales['+i+'].house=this.value"/></div>'+
+      '<div class="fld"><div style="display:flex;gap:6px">'+
+        '<input class="inp" type="number" min="0" placeholder="0 HE" style="flex:1;min-width:0" value="'+(s.qty||'')+'" oninput="_fpSales['+i+'].qty=parseInt(this.value)||0"/>'+
+        '<button class="btn bsec bsm" style="flex:0 0 auto" title="Remove this line" onclick="fpRemoveSale('+i+')">✕</button>'+
+      '</div></div>'+
+    '</div>').join('')
+    :'<div style="font-size:11px;color:var(--t3);padding:4px 0">No eggs sold this week</div>';
+}
+function fpAddSale(){_fpSales.push({farm:FARMS[0],house:'',qty:0});fpRenderSales();}
+function fpRemoveSale(i){
+  const s=_fpSales[i];
+  if(s&&s.id)_fpSalesDeleted.push(s.id);   // removed from the database on Save, not now
+  _fpSales.splice(i,1);fpRenderSales();
+}
+
 function openFarmPlanModal(id){
   const p=id?state.farmPlans.find(x=>x.id===id):null;
   const curWk=isoWeek(td());
+  _fpSalesDeleted=[];
+  _fpSales=p?(state.eggSales||[]).filter(s=>s.week_no===p.week_no)
+              .map(s=>({id:s.id,farm:s.farm,house:s.house||'',qty:s.qty_he||0})):[];
   showModal('<div class="moh"><span class="mot">'+(p?'Edit W'+p.week_no:'Add Farm Plan Week')+'</span><button class="btn bsec bsm" onclick="closeModal()">✕</button></div>'+
     '<div class="mob"><div class="fr2 mb12"><div class="fld"><label>Week No</label><input class="inp" id="fp_week" type="number" value="'+(p?.week_no||curWk)+'"/></div><div class="fld"><label>Week End Date</label><input class="inp" id="fp_date" type="date" value="'+(p?.week_end_date||td())+'"/></div></div>'+
     '<div style="font-size:10px;color:var(--t3);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Farm HE Production</div>'+
     '<div class="fr2 mb12">'+FARMS.map((f,i)=>'<div class="fld"><label>'+f+'</label><input class="inp" id="fp_'+FARM_KEYS[i]+'" type="number" value="'+(p?.[FARM_KEYS[i]]||0)+'" placeholder="0"/></div>').join('')+'</div>'+
     '<div style="font-size:10px;color:var(--t3);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">External Purchase</div>'+
     '<div class="fr2 mb12"><div class="fld"><label>Plan Buy HE</label><input class="inp" id="fp_plan_buy" type="number" value="'+(p?.plan_buy_he||0)+'"/></div><div class="fld"><label>Actual Buy HE</label><input class="inp" id="fp_actual_buy" type="number" value="'+(p?.actual_buy_he||0)+'"/></div></div>'+
+    '<div style="font-size:10px;color:var(--t3);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Egg Sales — ขายไข่</div>'+
+    '<div class="fr3" style="font-size:10px;color:var(--t3);margin-bottom:4px"><div>Farm</div><div>House / เล้า</div><div>Qty (HE)</div></div>'+
+    '<div id="fp_sales"></div>'+
+    '<button class="btn bsec bsm mb12" onclick="fpAddSale()">'+ic('plus',11)+' Add sale</button>'+
     '<div class="fld"><label>Notes</label><input class="inp" id="fp_notes" value="'+(p?.notes||'')+'"/></div></div>'+
     '<div class="mof"><button class="btn bsec" onclick="closeModal()">Cancel</button><button class="btn bpri" onclick="saveFarmPlan(\''+(p?.id||'')+'\')">Save</button></div>');
+  fpRenderSales();
 }
 async function saveFarmPlan(id){
   const d={week_no:parseInt(document.getElementById('fp_week').value),week_end_date:document.getElementById('fp_date').value,plan_buy_he:parseInt(document.getElementById('fp_plan_buy').value)||0,actual_buy_he:parseInt(document.getElementById('fp_actual_buy').value)||0,notes:document.getElementById('fp_notes').value||null,updated_at:new Date().toISOString()};
@@ -671,7 +714,35 @@ async function saveFarmPlan(id){
   let error;
   if(id){({error}=await sb.from('farm_egg_plan').update(d).eq('id',id));}else{({error}=await sb.from('farm_egg_plan').upsert(d,{onConflict:'week_no,week_end_date'}));}
   if(error){toast(error.message,'error');return;}
-  toast('Farm plan saved');closeModal();await loadFarmPlans();
+
+  // Egg sales: write the changes, and only remove what the user deleted once the
+  // writes have gone through — deleting first loses lines if a write is rejected.
+  const salesErr=await saveEggSalesLines(d.week_no,d.week_end_date);
+
+  toast(salesErr?'Farm plan saved, but sales not fully saved: '+salesErr:'Farm plan saved',salesErr?'error':'success');
+  closeModal();await Promise.all([loadFarmPlans(),loadEggSales()]);
+}
+
+async function saveEggSalesLines(week_no,week_end_date){
+  const updates=_fpSales.filter(s=>s.id);
+  const inserts=_fpSales.filter(s=>!s.id&&(s.qty||0)>0)
+    .map(s=>({week_no,week_end_date,farm:s.farm,house:(s.house||'').trim()||null,qty_he:s.qty||0}));
+  for(const s of updates){
+    const{error}=await sb.from('egg_sales')
+      .update({week_no,week_end_date,farm:s.farm,house:(s.house||'').trim()||null,qty_he:s.qty||0})
+      .eq('id',s.id);
+    if(error)return error.message;
+  }
+  if(inserts.length){
+    const{error}=await sb.from('egg_sales').insert(inserts);
+    if(error)return error.message;
+  }
+  if(_fpSalesDeleted.length){
+    const{error}=await sb.from('egg_sales').delete().in('id',_fpSalesDeleted);
+    if(error)return error.message;
+    _fpSalesDeleted=[];
+  }
+  return null;
 }
 
 function openLotModal(){
