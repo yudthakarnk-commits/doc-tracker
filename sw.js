@@ -1,8 +1,10 @@
-/* DOC Tracker — Service Worker v1.5 */
-const CACHE = 'doc-tracker-v4';
+/* DOC Tracker — Service Worker v1.6 */
+const CACHE = 'doc-tracker-v5';
 const CDN_CACHE = 'doc-tracker-cdn-v3';
 
-const APP_SHELL = ['./index.html', './manifest.json'];
+// Two pages share this origin (and therefore the Supabase session):
+// index.html = DOC Tracker (downstream), hatchery-os.html = HatcheryOS (upstream).
+const APP_SHELL = ['./index.html', './hatchery-os.html', './manifest.json'];
 
 const CDN_URLS = [
   'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js',
@@ -82,7 +84,10 @@ self.addEventListener('fetch', event => {
         }
         return response;
       })
-      .catch(() => caches.match(request).then(c => c || caches.match('./index.html')))
+      // Offline: serve the cached response, else the shell of whichever app was asked for
+      .catch(() => caches.match(request).then(
+        c => c || caches.match(url.pathname.includes('hatchery-os') ? './hatchery-os.html' : './index.html')
+      ))
   );
 });
 

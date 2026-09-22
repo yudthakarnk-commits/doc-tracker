@@ -446,6 +446,8 @@
     <button class="bnav-item" data-tab="summary" onclick="switchTab('summary')"><span class="bnav-icon">📊</span><span>Summary</span></button>
     <button class="bnav-item" data-tab="forecast" onclick="switchTab('forecast')"><span class="bnav-icon">📈</span><span>Forecast</span></button>
     <button class="bnav-item" data-tab="transport" onclick="switchTab('transport')"><span class="bnav-icon">🚚</span><span>Transport</span></button>
+    <!-- Upstream app — the sidebar is hidden at this width, so it needs its own entry here -->
+    <a class="bnav-item" href="./hatchery-os.html" style="text-decoration:none"><span class="bnav-icon">🥚</span><span>Hatchery</span></a>
     <button class="bnav-item hidden" data-tab="admin" id="adminTabMobile" onclick="switchTab('admin')"><span class="bnav-icon">⚙️</span><span>Admin</span></button>
   </nav>
 
@@ -458,6 +460,9 @@
       <button class="nav-item" data-tab="forecast" onclick="switchTab('forecast')" title="Forecast" data-i18n-title="navForecast"><span class="nav-icon">📈</span><span class="nav-label" data-i18n="navForecast">Forecast ลูกไก่</span></button>
       <button class="nav-item" data-tab="transport" onclick="switchTab('transport')" title="Transport"><span class="nav-icon">🚚</span><span class="nav-label">Transport</span></button>
       <button class="nav-item hidden" data-tab="admin" id="adminTab" onclick="switchTab('admin')" title="Admin"><span class="nav-icon">⚙️</span><span class="nav-label">Admin</span></button>
+      <!-- Upstream: same origin, so the Supabase session carries over — no second login. -->
+      <div class="sidebar-section-label">Upstream</div>
+      <a class="nav-item" href="./hatchery-os.html" title="HatcheryOS — egg supply, cool room, incubation" style="text-decoration:none"><span class="nav-icon">🥚</span><span class="nav-label">HatcheryOS</span></a>
     </nav>
 
     <div class="main-content" id="mainContent">

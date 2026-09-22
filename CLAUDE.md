@@ -6,14 +6,26 @@
 
 | Path | คืออะไร | Deploy |
 |---|---|---|
-| `index.html`, `sw.js`, `manifest.json` | Web PWA (single-file, vanilla JS + Chart.js) | GitHub Pages: yudthakarnk-commits.github.io/doc-tracker/ |
+| `index.html`, `sw.js`, `manifest.json` | **DOC Tracker** — ปลายน้ำ (ออร์เดอร์/ส่งมอบ/ขนส่ง) Web PWA single-file, vanilla JS + Chart.js | GitHub Pages: yudthakarnk-commits.github.io/doc-tracker/ |
+| `hatchery-os.html` | **HatcheryOS** — ต้นน้ำ (รับไข่ → cool room → ตู้ฟัก → ส่องไข่ → ประเมิน DOC) single-file เหมือนกัน | หน้าเดียวกันบน GitHub Pages: `/hatchery-os.html` |
 | `flutter_app/` | แอพมือถือ Flutter (Material 3, TH/EN, light/dark) | GitHub Actions build APK → release tag `apk-latest` |
 | `.github/workflows/build-apk.yml` | CI: build Android APK ทุกครั้งที่ push แก้ `flutter_app/**` | — |
 | `db/` | บันทึกกฎ/การเปลี่ยนแปลงใน Supabase ที่มองไม่เห็นจากโค้ด (ไม่ใช่ schema dump เต็ม) | รันมือใน Supabase SQL editor |
 
+## สองแอพบน origin เดียวกัน (DOC Tracker ↔ HatcheryOS)
+
+- อยู่ **origin เดียวกัน** → Supabase เก็บ session ไว้ใน localStorage ร่วมกัน **ล็อกอินครั้งเดียวใช้ได้ทั้งคู่** อย่าแยก origin ไม่งั้นต้องล็อกอินสองรอบ
+- สลับไปมาผ่าน: sidebar (จอใหญ่) + bottom nav ปุ่ม "Hatchery" (จอมือถือ) ฝั่ง DOC Tracker / nav group "Downstream" ฝั่ง HatcheryOS
+- ⚠️ **master data ต้องตรงกัน** ไม่งั้น join ข้ามแอพไม่ได้:
+  - โรงฟัก — `HATCH` ใน hatchery-os.html ต้องตรงกับ `AppConfig.hatcheries` ยกเว้น `External` (ไม่ใช่โรงฟัก ไม่ต้องมีใน HatcheryOS) · `Kota` ยังไม่ได้ตั้งค่า weekly capacity (`wc:0` → หน้า Capacity แสดง "not configured" แทนตัวเลขมั่ว)
+  - สายพันธุ์ — HatcheryOS ใช้ชื่อสายเต็ม (`Ross 308`) เพราะตาราง `STD` ผูกกับสายพันธุ์ ส่วน DOC Tracker เก็บโค้ดสั้น (`ROSS`) **แปลงที่ขอบด้วย `toDocBreed()` / `fromDocBreed()`** อย่าไปแบนฝั่งใดฝั่งหนึ่ง
+- ตอนนี้ข้อมูลไหล **ทางเดียว**: HatcheryOS อ่าน `doc_targets` มาเป็น Sales Demand · ยังไม่มีเส้นทางเขียนกลับ `egg_settings` → `doc_records`
+- HatcheryOS ธีมมืด/อังกฤษล้วน/re-render ทั้งหน้า ส่วน DOC Tracker ธีมสว่าง/TH-EN/แก้ DOM ตรงๆ — คนละแนว ตั้งใจแยกไว้ก่อน ค่อยยุบรวมทีหลัง
+
 ## Backend (Supabase)
 
-- URL/anon key ฝังใน `flutter_app/lib/config.dart` และใน `index.html`
+- URL/anon key ฝังใน `flutter_app/lib/config.dart`, `index.html` และ `hatchery-os.html`
+- ตาราง HatcheryOS: `egg_lots`, `egg_settings`, `farm_egg_plan`, `cool_room_opening_stock` (อยู่ project เดียวกับ DOC Tracker)
 - ตารางหลัก `doc_records`: week_no, record_date, hatchery, customer_type, customer_name, breed, m/f/u_ordered, m/f/u_actual, total_ordered/total_actual (generated — ห้าม insert), do_number, truck_plate, departure_time, location, distance_km, doa_count, delivery_status, driver_token, unit_price, vaccine_*, avg_weight_*
 - id อาจเป็น bigint หรือ uuid — โค้ด Flutter เก็บเป็น `Object?` ส่งกลับตรงๆ
 - PostgREST จำกัด 1000 แถว/ครั้ง → ต้อง paginate ด้วย `.range()` (ทำแล้วทั้งสองแอพ)
