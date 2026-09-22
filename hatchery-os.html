@@ -726,7 +726,7 @@ async function saveFarmPlan(id){
 async function saveEggSalesLines(week_no,week_end_date){
   const updates=_fpSales.filter(s=>s.id);
   const inserts=_fpSales.filter(s=>!s.id&&(s.qty||0)>0)
-    .map(s=>({week_no,week_end_date,farm:s.farm,house:(s.house||'').trim()||null,qty_he:s.qty||0}));
+    .map(s=>({week_no,week_end_date,farm:s.farm,house:(s.house||'').trim()||null,qty_he:s.qty||0,created_by:state.user?.id||null}));
   for(const s of updates){
     const{error}=await sb.from('egg_sales')
       .update({week_no,week_end_date,farm:s.farm,house:(s.house||'').trim()||null,qty_he:s.qty||0})

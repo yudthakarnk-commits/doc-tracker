@@ -1,9 +1,13 @@
 -- ══════════════════════════════════════════════════════════════════════════
 -- 2026-09-22 — egg_sales: eggs sold off instead of being set
 --
--- STATUS: DRAFT — the RLS policies at the bottom still have to be matched to
---         the ones already on farm_egg_plan. Do not run until that is done,
---         or the table will exist but nobody will be able to read it.
+-- STATUS: NOT YET APPLIED
+--
+-- RLS mirrors farm_egg_plan exactly, read from pg_policies: one SELECT policy
+-- and one ALL policy, both for the authenticated role with a plain true
+-- predicate. Not invented — a table with RLS on and no policy returns zero rows
+-- to everyone, which looks like a broken feature rather than a permissions
+-- problem.
 --
 -- Why a table rather than columns on farm_egg_plan
 --   A week can have several sales, each from a different farm and house, so it
@@ -40,20 +44,20 @@ CREATE INDEX IF NOT EXISTS egg_sales_week_idx ON public.egg_sales (week_no);
 
 ALTER TABLE public.egg_sales ENABLE ROW LEVEL SECURITY;
 
+-- Same two policies farm_egg_plan has. The ALL policy already covers SELECT;
+-- the separate read policy is kept so the pair matches the other tables.
+DROP POLICY IF EXISTS "Authenticated read egg_sales"  ON public.egg_sales;
+DROP POLICY IF EXISTS "Authenticated write egg_sales" ON public.egg_sales;
+
+CREATE POLICY "Authenticated read egg_sales"
+  ON public.egg_sales FOR SELECT TO authenticated
+  USING (true);
+
+CREATE POLICY "Authenticated write egg_sales"
+  ON public.egg_sales FOR ALL TO authenticated
+  USING (true) WITH CHECK (true);
+
 COMMIT;
-
-
--- ── RLS — FILL THIS IN BEFORE RUNNING ─────────────────────────────────────
--- Copy the shape of the policies already on farm_egg_plan. Read them with:
---
---   SELECT tablename, policyname, cmd, roles::text, qual, with_check
---   FROM pg_policies
---   WHERE schemaname = 'public' AND tablename = 'farm_egg_plan'
---   ORDER BY policyname;
---
--- Then create the equivalents for egg_sales. Do not invent a policy: a table
--- with RLS enabled and no policy returns zero rows to everyone, which looks
--- exactly like "the feature does not work" and is easy to misdiagnose.
 
 
 -- ── VERIFY ────────────────────────────────────────────────────────────────
