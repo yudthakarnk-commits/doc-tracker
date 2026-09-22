@@ -95,6 +95,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
 .agr{background:var(--grl);border:1px solid rgba(63,185,80,.3);color:#7ee787}
 .are{background:var(--rel);border:1px solid rgba(248,81,73,.3);color:#ff7b72}
 .abl{background:var(--bll);border:1px solid rgba(88,166,255,.3);color:#79c0ff}
+.aam{background:var(--aml);border:1px solid rgba(210,153,34,.3);color:#e3b341}
 /* ── Forms ── */
 .fld{display:flex;flex-direction:column;gap:4px}
 .fld label{font-size:10px;color:var(--t3);font-weight:600;text-transform:uppercase;letter-spacing:.4px}
@@ -198,9 +199,10 @@ const FARM_KEYS=['farm_rantau','farm_sg_sayong','farm_ulu_tiram','farm_kluang','
 // is a source marker for DOC bought in from outside — not a hatchery that sets
 // eggs — so it is deliberately absent here.
 // wc = weekly setter capacity in eggs. 0 means "not configured yet": the capacity
-// page already guards with `hh.wc>0`, so it shows no utilisation rather than a
-// made-up number.
-const HATCH=[{name:'Chengkau',typ:'SS',wc:774144},{name:'Kluang',typ:'SS',wc:345600},{name:'K.Kangsar',typ:'MS',wc:622080},{name:'Sg. Sayong',typ:'MS',wc:311040},{name:'Kota',typ:'MS',wc:0}];
+// page guards with `hh.wc>0` and shows "not configured" rather than a made-up number.
+// irregular = capacity is an upper bound, not something to plan against. Kota's output
+// is a by-product of other production, so its 50k is a ceiling that varies week to week.
+const HATCH=[{name:'Chengkau',typ:'SS',wc:774144},{name:'Kluang',typ:'SS',wc:345600},{name:'K.Kangsar',typ:'MS',wc:622080},{name:'Sg. Sayong',typ:'MS',wc:311040},{name:'Kota',typ:'MS',wc:50000,irregular:true}];
 const HN=HATCH.map(h=>h.name);
 
 // HatcheryOS keeps the full strain name because the hatchability standards in STD
@@ -211,9 +213,16 @@ const BREED_TO_DOC={'Ross 308':'ROSS','Cobb 500':'COBB','Custom':null};
 const DOC_TO_BREED={'ROSS':'Ross 308','COBB':'Cobb 500'};
 const toDocBreed=b=>BREED_TO_DOC[b]??null;
 const fromDocBreed=b=>DOC_TO_BREED[String(b||'').toUpperCase()]??'Custom';
+
+// Must match AppConfig.customerTypes in DOC Tracker.
+const DOC_CTYPES=['Customer','Contract Farm','Company Farm'];
+const _normName=s=>String(s||'').trim().toLowerCase();
 const BC=['cA','cB','cC'];
 const bI=b=>b==='Ross 308'?0:b==='Cobb 500'?1:2;
-const TOTAL_CAP=HATCH.reduce((s,h)=>s+(h.wc||0),0);
+// Planning capacity counts firm setters only. Kota is flagged irregular, so counting
+// its ceiling here would quietly promise volume that may not exist that week.
+const TOTAL_CAP=HATCH.reduce((s,h)=>s+(h.irregular?0:(h.wc||0)),0);
+const TOTAL_CAP_MAX=HATCH.reduce((s,h)=>s+(h.wc||0),0);
 
 const STD={'Ross 308':{24:72,25:75,26:78,27:81,28:83,29:85,30:86,31:87,32:87,33:86,34:85,35:84,36:83,37:81,38:79,39:77,40:74,41:72,42:69,43:67,44:65,45:63,46:61,47:59,48:57,49:55,50:53},'Cobb 500':{24:70,25:73,26:76,27:79,28:82,29:84,30:85,31:86,32:86,33:85,34:84,35:82,36:80,37:78,38:76,39:74,40:71,41:68,42:65,43:63,44:61,45:59,46:57,47:55,48:53,49:51,50:49},'Custom':{}};
 
@@ -250,7 +259,7 @@ function toast(msg,type='success'){const w=document.getElementById('toastWrap');
 // ── State ──
 let state={
   user:null,page:'db',loading:false,
-  lots:[],settings:[],farmPlans:[],docTargets:[],openingStock:[],
+  lots:[],settings:[],farmPlans:[],docTargets:[],openingStock:[],customers:[],
   sortLots:{col:'recv_date',dir:-1},
   sortSett:{col:'hatch_date',dir:1},
   sortCool:{col:'recv_date',dir:-1},
@@ -265,7 +274,10 @@ function thS(key,col,label){const s=state[key];return '<th class="sortable'+(s.c
 // ── Supabase ──
 async function initSupabase(){sb=supabase.createClient(SB_URL,SB_KEY);const{data:{session}}=await sb.auth.getSession();if(session)await afterLogin(session.user);else showLogin();}
 async function afterLogin(user){setState({user,loading:true});await loadAll();setState({loading:false});sb.channel('h-os').on('postgres_changes',{event:'*',schema:'public',table:'egg_lots'},()=>loadLots()).on('postgres_changes',{event:'*',schema:'public',table:'egg_settings'},()=>loadSettings()).on('postgres_changes',{event:'*',schema:'public',table:'farm_egg_plan'},()=>loadFarmPlans()).on('postgres_changes',{event:'*',schema:'public',table:'doc_targets'},()=>loadDocTargets()).on('postgres_changes',{event:'*',schema:'public',table:'cool_room_opening_stock'},()=>loadOpeningStock()).subscribe();}
-async function loadAll(){await Promise.all([loadLots(),loadSettings(),loadFarmPlans(),loadDocTargets(),loadOpeningStock()]);}
+async function loadAll(){await Promise.all([loadLots(),loadSettings(),loadFarmPlans(),loadDocTargets(),loadOpeningStock(),loadCustomers()]);}
+// Customer reference is DOC Tracker's own table — same names, types and codes, so an
+// allocation made here lands in DOC Tracker without any translation.
+async function loadCustomers(){try{const{data,error}=await sb.from('customers').select('customer_name,customer_type,customer_code').order('customer_name',{ascending:true});if(!error)setState({customers:data||[]});}catch(e){}}
 async function loadOpeningStock(){try{const{data,error}=await sb.from('cool_room_opening_stock').select('*').order('week_no',{ascending:false}).limit(100);if(!error)setState({openingStock:data||[]});}catch(e){}}
 async function loadLots(){try{const{data,error}=await sb.from('egg_lots').select('*').order('recv_date',{ascending:false});if(!error)setState({lots:data||[]});}catch(e){}}
 async function loadSettings(){try{const{data,error}=await sb.from('egg_settings').select('*').order('hatch_date',{ascending:true});if(!error)setState({settings:data||[]});}catch(e){}}
@@ -274,7 +286,7 @@ async function loadDocTargets(){try{const{data,error}=await sb.from('doc_targets
 
 function showLogin(){document.getElementById('root').innerHTML=renderLogin();document.getElementById('loginPw').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});}
 async function doLogin(){const em=document.getElementById('loginEmail').value.trim(),pw=document.getElementById('loginPw').value,err=document.getElementById('loginErr');err.style.display='none';if(!em||!pw){err.textContent='Please enter email and password.';err.style.display='flex';return;}const{data,error}=await sb.auth.signInWithPassword({email:em,password:pw});if(error){err.textContent=error.message;err.style.display='flex';return;}await afterLogin(data.user);}
-async function doLogout(){await sb.auth.signOut();setState({user:null,lots:[],settings:[],farmPlans:[],docTargets:[],openingStock:[]});showLogin();}
+async function doLogout(){await sb.auth.signOut();setState({user:null,lots:[],settings:[],farmPlans:[],docTargets:[],openingStock:[],customers:[]});showLogin();}
 
 // ── Icons ──
 function ic(n,s=14,col=''){col=col||'currentColor';
@@ -541,7 +553,7 @@ function pgSched(){
   const steps=[{l:'Setting',d:0},{l:'Day 7',d:7},{l:'Candle',d:18},{l:'Hatcher',d:18},{l:'Hatch',d:21}];
   return'<div>'+filterBar([{type:'select',key:'fSchedH',label:'All Hatcheries',opts:HN},{type:'select',key:'fSchedS',label:'All Status',opts:['incubating','candling','transfer']}])+
     (active.length===0?'<div class="al abl mb12">No active settings match filter.</div>':'')+
-    active.map(s=>{const day=Math.min(Math.max(dD(s.set_date,td()),0),21);const ad=s.adj_hatchability||aH(s.breed,s.wop,s.storage_days);return'<div class="card mb12"><div class="fl aic jb mb12"><div class="fl aic" style="gap:8px"><span class="mn tg" style="font-weight:600">'+esc(s.set_id)+'</span><span>'+esc(s.hatchery)+'</span><span class="'+BC[bI(s.breed)]+'">'+s.breed+'</span><span class="mn" style="color:var(--t3)">WOP '+s.wop+'w</span>'+aBdg(s.storage_days,s.wop)+'</div><div class="fl aic" style="gap:6px">'+sBdg(s.status)+(s.status==='incubating'&&day>=17?'<button class="btn bsec bsm" onclick="advSetting(\''+s.id+'\',\'candling\')">→ Candle</button>':'')+(s.status==='candling'?'<button class="btn bsec bsm" onclick="advSetting(\''+s.id+'\',\'transfer\')">→ Transfer</button>':'')+(s.status==='transfer'?'<button class="btn bpri bsm" onclick="openCompleteModal(\''+s.id+'\')">Complete Hatch</button>':'')+'</div></div>'+
+    active.map(s=>{const day=Math.min(Math.max(dD(s.set_date,td()),0),21);const ad=s.adj_hatchability||aH(s.breed,s.wop,s.storage_days);return'<div class="card mb12"><div class="fl aic jb mb12"><div class="fl aic" style="gap:8px"><span class="mn tg" style="font-weight:600">'+esc(s.set_id)+'</span><span>'+esc(s.hatchery)+'</span><span class="'+BC[bI(s.breed)]+'">'+s.breed+'</span><span class="mn" style="color:var(--t3)">WOP '+s.wop+'w</span>'+aBdg(s.storage_days,s.wop)+(s.customer_name?'<span class="bdg '+(s.doc_record_id?'dg':'db')+'" title="'+(s.doc_record_id?'Order already created in DOC Tracker':'Order will be created when this batch hatches')+'">'+(s.doc_record_id?'✓ ':'→ ')+esc(s.customer_name)+'</span>':'<span class="bdg dm" title="No customer allocated — this batch will not create a DOC Tracker order">unallocated</span>')+'</div><div class="fl aic" style="gap:6px">'+sBdg(s.status)+(s.status==='incubating'&&day>=17?'<button class="btn bsec bsm" onclick="advSetting(\''+s.id+'\',\'candling\')">→ Candle</button>':'')+(s.status==='candling'?'<button class="btn bsec bsm" onclick="advSetting(\''+s.id+'\',\'transfer\')">→ Transfer</button>':'')+(s.status==='transfer'?'<button class="btn bpri bsm" onclick="openCompleteModal(\''+s.id+'\')">Complete Hatch</button>':'')+'</div></div>'+
       '<div class="tline mb12">'+steps.map((st,i)=>{const dn=day>=st.d&&i<steps.length-1,ac=!dn&&Math.abs(day-st.d)<=1;return'<div class="tls '+(dn?'done':ac?'curr':'fut')+'"><div class="tld">'+(dn?'✓':st.d)+'</div><div class="tll">'+st.l+'</div></div>';}).join('')+'</div>'+
       '<div class="gr4">'+[{l:'Set Date',v:fS(s.set_date)},{l:'Hatch Date',v:fS(s.hatch_date),c:'var(--am)'},{l:'Adj Hatch%',v:ad+'%',c:ad>=gS(s.breed,s.wop)?'var(--gr)':'var(--am)'},{l:'Forecast DOC',v:fN(s.forecast_doc||Math.round((s.set_qty||0)*ad/100)),c:'var(--gr)'}].map(k=>'<div><div style="font-size:10px;color:var(--t3);font-weight:600;margin-bottom:3px">'+k.l+'</div><div style="font-size:14px;font-weight:600;color:'+(k.c||'var(--t)')+'">'+k.v+'</div></div>').join('')+'</div>'+
       '<div class="mt12"><div class="fl aic jb mb4"><span style="font-size:11px;color:var(--t3)">Day '+day+' / 21</span><span style="font-size:11px;color:var(--t3)">'+Math.round(day/21*100)+'%</span></div><div class="pbar"><div class="pbf" style="width:'+day/21*100+'%;background:var(--am)"></div></div></div></div>';}).join('')+
@@ -584,7 +596,7 @@ function pgForecast(){
 // ══════════════════════════════════════════
 // CAPACITY
 // ══════════════════════════════════════════
-function pgCapacity(){return'<div><div class="gr2 mb12">'+HATCH.map(hh=>{const iu=state.settings.filter(s=>s.hatchery===hh.name&&s.status!=='completed').reduce((a,r)=>a+(r.set_qty||0),0);const u=hh.wc>0?iu/hh.wc:0;const cfg=hh.wc>0;return'<div class="card"><div class="fl aic jb mb12"><div><div style="font-size:15px;font-weight:700">'+hh.name+'</div><div style="font-size:11px;color:var(--t3)">'+hh.typ+' Stage</div></div><div style="text-align:right"><div style="font-size:22px;font-weight:700;color:'+(cfg?cC(u):'var(--t3)')+'">'+(cfg?Math.round(u*100)+'%':'—')+'</div><div style="font-size:11px;color:var(--t3)">'+(cfg?cL(u):'Capacity not set')+'</div></div></div><div class="row-val"><span>Weekly Capacity</span><span class="mn'+(cfg?'':' ')+'" style="'+(cfg?'':'color:var(--am)')+'">'+(cfg?fN(hh.wc):'not configured')+'</span></div><div class="row-val"><span>In Use</span><span class="mn tg">'+fN(iu)+'</span></div><div class="row-val"><span>Available</span><span class="mn" style="color:var(--t3)">'+(cfg?fN(hh.wc-iu):'—')+'</span></div><div class="pbar mt8" style="height:6px"><div class="pbf" style="width:'+(cfg?Math.min(u*100,100):0)+'%;background:'+cC(u)+'"></div></div></div>';}).join('')+'</div></div>';}
+function pgCapacity(){return'<div><div class="gr2 mb12">'+HATCH.map(hh=>{const iu=state.settings.filter(s=>s.hatchery===hh.name&&s.status!=='completed').reduce((a,r)=>a+(r.set_qty||0),0);const u=hh.wc>0?iu/hh.wc:0;const cfg=hh.wc>0;return'<div class="card"><div class="fl aic jb mb12"><div><div style="font-size:15px;font-weight:700">'+hh.name+(hh.irregular?'<span class="bdg da" style="margin-left:6px;font-size:9px">By-product</span>':'')+'</div><div style="font-size:11px;color:var(--t3)">'+hh.typ+' Stage'+(hh.irregular?' · ceiling only, output varies':'')+'</div></div><div style="text-align:right"><div style="font-size:22px;font-weight:700;color:'+(cfg?cC(u):'var(--t3)')+'">'+(cfg?Math.round(u*100)+'%':'—')+'</div><div style="font-size:11px;color:var(--t3)">'+(cfg?cL(u):'Capacity not set')+'</div></div></div><div class="row-val"><span>Weekly Capacity</span><span class="mn'+(cfg?'':' ')+'" style="'+(cfg?'':'color:var(--am)')+'">'+(cfg?fN(hh.wc):'not configured')+'</span></div><div class="row-val"><span>In Use</span><span class="mn tg">'+fN(iu)+'</span></div><div class="row-val"><span>Available</span><span class="mn" style="color:var(--t3)">'+(cfg?fN(hh.wc-iu):'—')+'</span></div><div class="pbar mt8" style="height:6px"><div class="pbf" style="width:'+(cfg?Math.min(u*100,100):0)+'%;background:'+cC(u)+'"></div></div></div>';}).join('')+'</div></div>';}
 
 // ══════════════════════════════════════════
 // BREED STANDARDS
@@ -673,6 +685,14 @@ function openSetModal(lotId){
     '<div class="mob"><div class="box mb12">'+lot.breed+' | WOP '+lot.wop+' | '+lot.farm+' → '+lot.hatchery+' | <b class="tg">'+fN(lot.stock_remaining)+' HE</b></div>'+
     '<div class="fr2 mb12"><div class="fld"><label>Setting Quantity</label><input class="inp" type="number" id="set_qty" placeholder="'+lot.stock_remaining+'" max="'+lot.stock_remaining+'" oninput="updateSetPrev(\''+lotId+'\')"/></div><div class="fld"><label>Setting Date</label><input class="inp" type="date" id="set_date" value="'+td()+'" oninput="updateSetPrev(\''+lotId+'\')"/></div></div>'+
     '<div id="setPrev"><div class="box"><div class="row-val"><span>Storage days</span><b>'+age+'d</b></div><div class="row-val"><span>Std WOP '+lot.wop+'</span><b>'+std+'%</b></div><div class="row-val"><span>Decay</span><b class="ta">-'+dc(age,lot.wop)+'%</b></div><div class="row-val"><span>Adj hatchability</span><b class="tg">'+adj+'%</b></div><div class="sep"></div><div class="row-val"><span>Hatch date (+21d)</span><b class="ta">'+fD(aD(td(),21))+'</b></div></div></div>'+
+    // Customer is chosen here, not at hatch time: these eggs are committed to a buyer
+    // from the moment they go in the setter.
+    '<div class="sep mt8"></div>'+
+    '<div class="fld"><label>Allocate to Customer <span style="color:var(--t3);font-weight:400">— optional, creates the DOC Tracker order when this batch hatches</span></label>'+
+    '<input class="inp" id="set_customer" list="custList" placeholder="Type or pick a customer…" oninput="onSetCustomer()"/>'+
+    '<datalist id="custList">'+state.customers.map(c=>'<option value="'+esc(c.customer_name)+'">'+esc(c.customer_type||'')+'</option>').join('')+'</datalist></div>'+
+    '<div class="fr2 mb12"><div class="fld"><label>Customer Type</label><select class="inp" id="set_ctype">'+DOC_CTYPES.map(t=>'<option>'+t+'</option>').join('')+'</select></div>'+
+    '<div class="fld"><label>Customer Code</label><input class="inp" id="set_ccode" placeholder="—"/></div></div>'+
     '<div class="fld mt8"><label>Set ID</label><input class="inp" id="set_id" value="SET-'+n+'" style="color:var(--t3)"/></div></div>'+
     '<div class="mof"><button class="btn bsec" onclick="closeModal()">Cancel</button><button class="btn bpri" onclick="confirmSetting(\''+lotId+'\')">Confirm Setting</button></div>');
 }
@@ -684,6 +704,17 @@ function updateSetPrev(lotId){
   const el=document.getElementById('setPrev');
   if(el)el.innerHTML='<div class="box"><div class="row-val"><span>Storage days</span><b>'+age+'d</b></div><div class="row-val"><span>Std WOP '+lot.wop+'</span><b>'+std+'%</b></div><div class="row-val"><span>Decay</span><b class="ta">-'+dec+'%</b></div><div class="row-val"><span>Adj hatchability</span><b class="tg">'+adj+'%</b></div><div class="sep"></div><div class="row-val"><span>Hatch date (+21d)</span><b class="ta">'+fD(aD(sd,21))+'</b></div>'+(qty?'<div class="row-val"><span>Expected DOC</span><b class="tg" style="font-size:16px;font-weight:700">'+fN(Math.round(qty*adj/100))+'</b></div>':'')+'</div>';
 }
+// Mirrors DOC Tracker's auto-link on save: a known farm's type and code follow the
+// Customer Reference so the same farm cannot end up typed two different ways.
+function onSetCustomer(){
+  const nameEl=document.getElementById('set_customer');if(!nameEl)return;
+  const ref=state.customers.find(c=>_normName(c.customer_name)===_normName(nameEl.value));
+  if(!ref)return;
+  const t=document.getElementById('set_ctype'),c=document.getElementById('set_ccode');
+  if(t&&ref.customer_type)t.value=ref.customer_type;
+  if(c&&ref.customer_code&&!c.value.trim())c.value=ref.customer_code;
+}
+
 async function confirmSetting(lotId){
   const lot=state.lots.find(l=>l.id===lotId);if(!lot)return;
   const qty=parseInt(document.getElementById('set_qty').value)||0;if(!qty){toast('Enter quantity','error');return;}
@@ -691,8 +722,23 @@ async function confirmSetting(lotId){
   const sd=document.getElementById('set_date').value;
   const age=Math.max(dD(lot.recv_date,sd),0),std=gS(lot.breed,lot.wop),adj=aH(lot.breed,lot.wop,age),dec=dc(age,lot.wop);
   const hd=aD(sd,21),hWk=isoWeek(hd);
-  const{error:se}=await sb.from('egg_settings').insert({set_id:document.getElementById('set_id').value,lot_id:lot.id,hatchery:lot.hatchery,breed:lot.breed,wop:lot.wop,storage_days:age,set_qty:qty,set_date:sd,hatch_week_no:hWk,std_hatchability:std,storage_decay:dec,adj_hatchability:adj,forecast_doc:Math.round(qty*adj/100),status:'incubating',created_by:state.user.id});
-  if(se){toast(se.message,'error');return;}
+  const row={set_id:document.getElementById('set_id').value,lot_id:lot.id,hatchery:lot.hatchery,breed:lot.breed,wop:lot.wop,storage_days:age,set_qty:qty,set_date:sd,hatch_week_no:hWk,std_hatchability:std,storage_decay:dec,adj_hatchability:adj,forecast_doc:Math.round(qty*adj/100),status:'incubating',created_by:state.user.id};
+  // Only send the allocation columns when there is an allocation. Without this, a
+  // deploy that lands before the 2026-09-22 migration would break setting entirely
+  // instead of just leaving the new feature unavailable.
+  const cust=(document.getElementById('set_customer')?.value||'').trim();
+  if(cust){
+    row.customer_name=cust;
+    row.customer_type=document.getElementById('set_ctype')?.value||null;
+    row.customer_code=(document.getElementById('set_ccode')?.value||'').trim()||null;
+  }
+  const{error:se}=await sb.from('egg_settings').insert(row);
+  if(se){
+    if(se.code==='PGRST204'||/customer_name/.test(se.message||''))
+      toast('Customer allocation needs the 2026-09-22 database migration — set without a customer, or ask the admin to run it','error');
+    else toast(se.message,'error');
+    return;
+  }
   const ns=lot.stock_remaining-qty;
   await sb.from('egg_lots').update({stock_remaining:ns,status:ns===0?'incubating':'cool_room'}).eq('id',lot.id);
   toast('Setting confirmed — Hatch '+fS(hd)+', Forecast '+fN(Math.round(qty*adj/100))+' DOC');
@@ -701,8 +747,64 @@ async function confirmSetting(lotId){
 async function advSetting(id,ns){const{error}=await sb.from('egg_settings').update({status:ns}).eq('id',id);if(error){toast(error.message,'error');return;}toast('Status updated → '+ns);await loadSettings();}
 function openCandleModal(sid){const s=state.settings.find(x=>x.id===sid);if(!s)return;showModal('<div class="moh"><span class="mot">Candling — '+s.set_id+'</span><button class="btn bsec bsm" onclick="closeModal()">✕</button></div><div class="mob"><div class="box mb12">'+s.breed+' | WOP '+s.wop+' | '+s.hatchery+' | Set: '+fN(s.set_qty)+'</div><div class="fr3 mb12"><div class="fld"><label>Clear (fertile)</label><input class="inp" type="number" id="c_clear" placeholder="0"/></div><div class="fld"><label>Infertile</label><input class="inp" type="number" id="c_inf" placeholder="0"/></div><div class="fld"><label>Dead in shell</label><input class="inp" type="number" id="c_dead" placeholder="0"/></div></div><div class="fld mb12"><label>Candling Date</label><input class="inp" type="date" id="c_date" value="'+td()+'"/></div></div><div class="mof"><button class="btn bsec" onclick="closeModal()">Cancel</button><button class="btn bpri" onclick="saveCandling(\''+sid+'\')">Save</button></div>');}
 async function saveCandling(id){const d={candling_date:document.getElementById('c_date').value,candling_clear:parseInt(document.getElementById('c_clear').value)||0,candling_infertile:parseInt(document.getElementById('c_inf').value)||0,candling_dead:parseInt(document.getElementById('c_dead').value)||0,status:'transfer'};const{error}=await sb.from('egg_settings').update(d).eq('id',id);if(error){toast(error.message,'error');return;}toast('Candling saved');closeModal();await loadSettings();}
-function openCompleteModal(sid){const s=state.settings.find(x=>x.id===sid);if(!s)return;showModal('<div class="moh"><span class="mot">Complete Hatch — '+s.set_id+'</span><button class="btn bsec bsm" onclick="closeModal()">✕</button></div><div class="mob"><div class="box mb12">'+s.breed+' | '+s.hatchery+' | Forecast: <b class="tg">'+fN(s.forecast_doc)+' DOC</b></div><div class="fr2 mb12"><div class="fld"><label>Actual DOC Produced</label><input class="inp" type="number" id="h_doc" placeholder="'+(s.forecast_doc||0)+'"/></div><div class="fld"><label>Actual Hatch%</label><input class="inp" type="number" step="0.1" id="h_pct" placeholder="'+(s.adj_hatchability||0)+'"/></div></div></div><div class="mof"><button class="btn bsec" onclick="closeModal()">Cancel</button><button class="btn bpri" onclick="completeHatch(\''+sid+'\')">Complete</button></div>');}
-async function completeHatch(id){const doc=parseInt(document.getElementById('h_doc').value)||0,pct=parseFloat(document.getElementById('h_pct').value)||0;const{error}=await sb.from('egg_settings').update({actual_doc:doc,actual_hatch_pct:pct,status:'completed'}).eq('id',id);if(error){toast(error.message,'error');return;}toast('Hatch completed — '+fN(doc)+' DOC');closeModal();await loadSettings();}
+function openCompleteModal(sid){const s=state.settings.find(x=>x.id===sid);if(!s)return;
+  const handover=s.doc_record_id
+    ? '<div class="al abl mb12">'+ic('info',11)+' Already sent to DOC Tracker — completing again will not create a second order.</div>'
+    : s.customer_name
+      ? '<div class="al agr mb12">'+ic('truck',11)+' Allocated to <b>'+esc(s.customer_name)+'</b>'+(s.customer_type?' ('+esc(s.customer_type)+')':'')+' — an order will be created in DOC Tracker on completion.</div>'
+      : '<div class="al aam mb12">'+ic('alert',11)+' No customer allocated — this hatch will stay in HatcheryOS only. Add the customer in DOC Tracker by hand if it needs an order.</div>';
+  showModal('<div class="moh"><span class="mot">Complete Hatch — '+s.set_id+'</span><button class="btn bsec bsm" onclick="closeModal()">✕</button></div><div class="mob"><div class="box mb12">'+s.breed+' | '+s.hatchery+' | Forecast: <b class="tg">'+fN(s.forecast_doc)+' DOC</b></div>'+handover+'<div class="fr2 mb12"><div class="fld"><label>Actual DOC Produced</label><input class="inp" type="number" id="h_doc" placeholder="'+(s.forecast_doc||0)+'"/></div><div class="fld"><label>Actual Hatch%</label><input class="inp" type="number" step="0.1" id="h_pct" placeholder="'+(s.adj_hatchability||0)+'"/></div></div></div><div class="mof"><button class="btn bsec" onclick="closeModal()">Cancel</button><button class="btn bpri" onclick="completeHatch(\''+sid+'\')">Complete</button></div>');}
+const DAY_NAMES=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+// Hand the finished batch over to DOC Tracker as one order line.
+// forecast_doc becomes the ordered quantity and actual_doc the delivered quantity,
+// so Order vs Actual downstream reads as "what incubation promised vs what it gave".
+// Returns {ok} | {skipped} | {error}.
+async function pushHatchToDocTracker(s,actualDoc){
+  if(!s.customer_name) return{skipped:'no customer allocated'};
+  if(s.doc_record_id)  return{skipped:'already sent'};
+  const hd=s.hatch_date||aD(s.set_date,21);
+  const row={
+    week_no:s.hatch_week_no||isoWeek(hd),
+    record_date:hd,
+    day_name:DAY_NAMES[new Date(hd).getDay()],
+    hatchery:s.hatchery,
+    customer_type:s.customer_type||'Customer',
+    customer_name:s.customer_name,
+    customer_code:s.customer_code||null,
+    breed:toDocBreed(s.breed),          // 'Ross 308' → 'ROSS'; Custom → null
+    u_ordered:s.forecast_doc||null,     // mixed/unsexed: a hatch is not sexed here
+    u_actual:actualDoc||null,
+    notes:'HatcheryOS '+s.set_id,
+    user_id:state.user.id
+  };
+  const{data,error}=await sb.from('doc_records').insert(row).select('id');
+  if(error){
+    if(error.code==='23505'||/duplicate key value/i.test(error.message||''))
+      return{error:'DOC Tracker already has a matching order for '+s.customer_name+' on '+fS(hd)+' — not duplicated'};
+    return{error:error.message};
+  }
+  const newId=data?.[0]?.id;
+  // The order exists now; failing to record the back-link must not read as a failure
+  // to hand over. Worst case the badge says "will be created" until someone re-links.
+  if(newId){const{error:le}=await sb.from('egg_settings').update({doc_record_id:newId}).eq('id',s.id);
+    if(le)return{ok:true,warn:'order created but not linked back ('+le.message+')'};}
+  return{ok:true};
+}
+
+async function completeHatch(id){
+  const s=state.settings.find(x=>x.id===id);if(!s)return;
+  const doc=parseInt(document.getElementById('h_doc').value)||0,pct=parseFloat(document.getElementById('h_pct').value)||0;
+  const{error}=await sb.from('egg_settings').update({actual_doc:doc,actual_hatch_pct:pct,status:'completed'}).eq('id',id);
+  if(error){toast(error.message,'error');return;}
+  // The hatch is recorded either way — a handover problem must not look like the
+  // hatch itself failed to save.
+  const res=await pushHatchToDocTracker(s,doc);
+  closeModal();await loadSettings();
+  if(res.ok)          toast('Hatch completed — '+fN(doc)+' DOC · order created in DOC Tracker'+(res.warn?' ('+res.warn+')':''),res.warn?'info':'success');
+  else if(res.error)  toast('Hatch saved ('+fN(doc)+' DOC) but not sent: '+res.error,'error');
+  else                toast('Hatch completed — '+fN(doc)+' DOC');
+}
 
 // scroll to current week in supply table
 function scrollToCurrentWeek(){const el=document.getElementById('sup-w'+isoWeek(td()));if(el){el.scrollIntoView({behavior:'smooth',block:'center'});el.style.outline='2px solid var(--gr)';setTimeout(()=>{el.style.outline='';},2000);}}

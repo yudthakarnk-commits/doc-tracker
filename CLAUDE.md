@@ -19,7 +19,11 @@
 - ⚠️ **master data ต้องตรงกัน** ไม่งั้น join ข้ามแอพไม่ได้:
   - โรงฟัก — `HATCH` ใน hatchery-os.html ต้องตรงกับ `AppConfig.hatcheries` ยกเว้น `External` (ไม่ใช่โรงฟัก ไม่ต้องมีใน HatcheryOS) · `Kota` ยังไม่ได้ตั้งค่า weekly capacity (`wc:0` → หน้า Capacity แสดง "not configured" แทนตัวเลขมั่ว)
   - สายพันธุ์ — HatcheryOS ใช้ชื่อสายเต็ม (`Ross 308`) เพราะตาราง `STD` ผูกกับสายพันธุ์ ส่วน DOC Tracker เก็บโค้ดสั้น (`ROSS`) **แปลงที่ขอบด้วย `toDocBreed()` / `fromDocBreed()`** อย่าไปแบนฝั่งใดฝั่งหนึ่ง
-- ตอนนี้ข้อมูลไหล **ทางเดียว**: HatcheryOS อ่าน `doc_targets` มาเป็น Sales Demand · ยังไม่มีเส้นทางเขียนกลับ `egg_settings` → `doc_records`
+- **ข้อมูลไหลสองทาง:**
+  - เข้า — HatcheryOS อ่าน `doc_targets` มาเป็น Sales Demand
+  - ออก — ตอน **Complete Hatch** จะสร้าง `doc_records` 1 แถวให้ลูกค้าที่ผูกไว้ตั้งแต่ตอนตั้งไข่ (`pushHatchToDocTracker()`) โดย `forecast_doc` → `u_ordered` และ `actual_doc` → `u_actual` ทำให้หน้า Order vs Actual ของ DOC Tracker อ่านได้ว่า "ตู้ฟักสัญญาไว้เท่าไร ได้จริงเท่าไร"
+  - กัน**สร้างซ้ำ**ด้วย `egg_settings.doc_record_id` — ถ้ามีค่าแล้วจะข้าม · ถ้าชน `doc_records_unique_idx` (23505) จะแจ้งว่ามีออร์เดอร์อยู่แล้วและไม่สร้างซ้ำ
+  - ลูกค้าเป็น **optional** ถ้าไม่ผูก batch นั้นอยู่แค่ใน HatcheryOS · คอลัมน์ลูกค้าถูกส่งไปเฉพาะตอนมีค่า เพื่อให้แอพยังตั้งไข่ได้แม้ยังไม่ได้รัน migration
 - HatcheryOS ธีมมืด/อังกฤษล้วน/re-render ทั้งหน้า ส่วน DOC Tracker ธีมสว่าง/TH-EN/แก้ DOM ตรงๆ — คนละแนว ตั้งใจแยกไว้ก่อน ค่อยยุบรวมทีหลัง
 
 ## Backend (Supabase)
