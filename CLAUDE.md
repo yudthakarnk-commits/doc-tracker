@@ -29,7 +29,9 @@
 ## Backend (Supabase)
 
 - URL/anon key ฝังใน `flutter_app/lib/config.dart`, `index.html` และ `hatchery-os.html`
-- ตาราง HatcheryOS: `egg_lots`, `egg_settings`, `farm_egg_plan`, `cool_room_opening_stock` (อยู่ project เดียวกับ DOC Tracker)
+- ตาราง HatcheryOS: `egg_lots`, `egg_settings`, `farm_egg_plan`, `egg_sales` (อยู่ project เดียวกับ DOC Tracker)
+- ⚠️ `cool_room_opening_stock` **เลิกใช้แล้ว** (24 ก.ย. 2026) — ตารางยังอยู่แต่ไม่มีโค้ดอ่าน/เขียน เพราะไม่มีคอลัมน์ WOP จึงคำนวณ hatchability ต่อไม่ได้ ตอนนี้หน้า Cool Room คำนวณยอดยกมาจาก `egg_lots` เอง
+- `egg_lots` เป็นต้นทางของ**ทั้ง** HE Delivery และ Cool Room Stock — import เข้าที่นี่ที่เดียวขึ้นทั้งสองหน้า · `stock_remaining` แยกจาก `qty_received` เพื่อให้ยกยอดจากระบบเดิมได้ · มี CHECK แค่ `status` ตัวเดียว ไม่ได้ล็อกรายชื่อโรงฟัก (ต่างจาก `hatchery_estimates`)
 - ตารางหลัก `doc_records`: week_no, record_date, hatchery, customer_type, customer_name, breed, m/f/u_ordered, m/f/u_actual, total_ordered/total_actual (generated — ห้าม insert), do_number, truck_plate, departure_time, location, distance_km, doa_count, delivery_status, driver_token, unit_price, vaccine_*, avg_weight_*
 - id อาจเป็น bigint หรือ uuid — โค้ด Flutter เก็บเป็น `Object?` ส่งกลับตรงๆ
 - PostgREST จำกัด 1000 แถว/ครั้ง → ต้อง paginate ด้วย `.range()` (ทำแล้วทั้งสองแอพ)

@@ -432,7 +432,7 @@ function pgSupply(){
 function pgDist(){
   const lots=sortData(state.lots,state.sortLots.col,state.sortLots.dir).filter(l=>(!state.fLotH||l.hatchery===state.fLotH)&&(!state.fLotS||l.status===state.fLotS));
   return'<div>'+
-    '<div class="fl aic jb mb12"><div></div><div style="display:flex;gap:8px"><button class="btn bsec" onclick="openDOImportModal()">'+ic('doc',12)+' Import from DO</button><button class="btn bpri" onclick="openLotModal()">'+ic('plus',12)+' Record Single Lot</button></div></div>'+
+    '<div class="fl aic jb mb12"><div></div><div style="display:flex;gap:8px"><button class="btn bsec" onclick="openEggImportModal()">'+ic('doc',12)+' Import Excel</button><button class="btn bsec" onclick="openDOImportModal()">'+ic('doc',12)+' Import from DO</button><button class="btn bpri" onclick="openLotModal()">'+ic('plus',12)+' Record Single Lot</button></div></div>'+
     '<div class="gr4 mb12">'+HATCH.map(hh=>{const hl=state.lots.filter(l=>l.hatchery===hh.name&&l.status==='cool_room');return'<div class="card kpi"><div class="kl">'+hh.name+'</div><div class="kv tg">'+fN(hl.reduce((s,l)=>s+(l.stock_remaining||0),0))+'</div><div class="ks">'+hl.length+' lots in cool room</div></div>';}).join('')+'</div>'+
     filterBar([{type:'select',key:'fLotH',label:'All Hatcheries',opts:HN},{type:'select',key:'fLotS',label:'All Status',opts:['cool_room','incubating','candling','transfer','completed']}])+
     '<div class="card"><div class="ct">All HE Lots ('+lots.length+')</div><div class="ovx"><table><thead><tr>'+
@@ -658,7 +658,10 @@ function pgReports(){const hist=state.settings.filter(s=>s.status==='completed'&
 // ══════════════════════════════════════════
 // MODALS
 // ══════════════════════════════════════════
-function showModal(h){const o=document.createElement('div');o.className='mov';o.id='activeModal';o.innerHTML='<div class="mo" onclick="event.stopPropagation()">'+h+'</div>';o.onclick=()=>closeModal();document.body.appendChild(o);}
+// Close any modal already open first — two elements sharing id="activeModal"
+// means getElementById silently returns the wrong one, so a second modal's
+// fields would be read from the first.
+function showModal(h){closeModal();const o=document.createElement('div');o.className='mov';o.id='activeModal';o.innerHTML='<div class="mo" onclick="event.stopPropagation()">'+h+'</div>';o.onclick=()=>closeModal();document.body.appendChild(o);}
 function closeModal(){document.getElementById('activeModal')?.remove();}
 
 // ── Egg sales lines inside the farm plan modal ──────────────────────────────
@@ -1196,6 +1199,251 @@ async function saveExcelImport(){
   closeModal();
   await loadLots();
   setState({page:'cool'});
+}
+
+// ══════════════════════════════════════════
+// FLAT IMPORT — egg receipts and remaining stock
+//
+// The DO import reads one delivery form at fixed cell positions. This is the
+// other job: loading many lots at once from a plain table, for opening balances
+// and historical data. Both write to egg_lots, which is what HE Delivery and
+// Cool Room Stock both read, so one import fills both pages.
+// ══════════════════════════════════════════
+const EGG_IMPORT_COLS=[
+  ['recv_date','Recv Date',        1,'YYYY-MM-DD'],
+  ['do_number','DO No',            0,''],
+  ['farm','Farm',                  1,FARMS.join(' / ')+' / External'],
+  ['external_source','External Source',0,'required when Farm = External'],
+  ['house','House',                0,'เล้า'],
+  ['flock','Flock',                0,'ฝูง'],
+  ['hatchery','Hatchery',          1,HN.join(' / ')],
+  ['breed','Breed',                1,BREEDS.join(' / ')],
+  ['wop','WOP',                    1,'24–65'],
+  ['qty_received','Qty Received',  1,'eggs'],
+  ['stock_remaining','Stock Remaining',0,'blank = same as received'],
+  ['notes','Notes',                0,'']
+];
+
+function _impDate(v){
+  if(v instanceof Date&&!isNaN(v))
+    return new Date(Date.UTC(v.getFullYear(),v.getMonth(),v.getDate())).toISOString().slice(0,10);
+  const s=String(v==null?'':v).trim();if(!s)return null;
+  let m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if(m)return m[1]+'-'+String(m[2]).padStart(2,'0')+'-'+String(m[3]).padStart(2,'0');
+  // Day-first, which is how the team writes dates. Never guess month-first:
+  // 03/04/2026 would silently become March instead of April.
+  m=s.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})$/);
+  if(m)return m[3]+'-'+String(m[2]).padStart(2,'0')+'-'+String(m[1]).padStart(2,'0');
+  return null;
+}
+function _impPick(v,list){
+  const s=String(v==null?'':v).trim();if(!s)return null;
+  return list.find(x=>x.toLowerCase()===s.toLowerCase())||null;
+}
+function _impBreed(v){
+  const s=String(v==null?'':v).trim();if(!s)return null;
+  if(BREEDS.includes(s))return s;
+  const u=s.toUpperCase();
+  if(u.startsWith('ROSS'))return 'Ross 308';
+  if(u.startsWith('COBB'))return 'Cobb 500';
+  if(u==='CUSTOM')return 'Custom';
+  return null;
+}
+function _impInt(v){
+  if(v===''||v==null)return null;
+  const n=parseInt(String(v).replace(/[,\s]/g,''),10);
+  return isNaN(n)?null:n;
+}
+
+// LOT-YYMMDD-NN, unique against what is already stored and within the batch.
+// Not derived from state.lots.length like the DO import — that repeats itself as
+// soon as a lot is deleted.
+function _impMakeLotIds(dates){
+  const used=new Set(state.lots.map(l=>l.lot_id));
+  return dates.map(dt=>{
+    const base='LOT-'+String(dt||td()).replace(/-/g,'').slice(2);
+    let k=1,id;
+    do{id=base+'-'+String(k).padStart(2,'0');k++;}while(used.has(id));
+    used.add(id);return id;
+  });
+}
+
+function downloadEggLotTemplate(){
+  if(typeof XLSX==='undefined')return toast('Excel library not loaded','error');
+  const headers=EGG_IMPORT_COLS.map(c=>c[1]);
+  const example=['2026-09-24','DO-1234','Rantau','','H3','F12','Kluang','Ross 308',32,100000,'','example row — delete before importing'];
+  const ws=XLSX.utils.aoa_to_sheet([headers,example]);
+  ws['!cols']=EGG_IMPORT_COLS.map(c=>({wch:Math.max(14,c[1].length+2)}));
+  // Valid values on a second sheet, so nobody has to guess the spelling.
+  const ref=[['Column','Required','Accepted values / format']]
+    .concat(EGG_IMPORT_COLS.map(c=>[c[1],c[2]?'YES':'',c[3]]));
+  const wsr=XLSX.utils.aoa_to_sheet(ref);
+  wsr['!cols']=[{wch:20},{wch:10},{wch:52}];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Data');
+  XLSX.utils.book_append_sheet(wb,wsr,'Reference');
+  XLSX.writeFile(wb,'HatcheryOS_EggLot_Import_Template.xlsx');
+}
+
+function openEggImportModal(){
+  const lastBatch=localStorage.getItem('hos_last_import');
+  showModal('<div class="moh"><span class="mot">Import Egg Lots</span><button class="btn bsec bsm" onclick="closeModal()">&#x2715;</button></div>'+
+    '<div class="mob">'+
+    // .al is display:flex, so the message has to be one element or every <b> and
+    // text node becomes its own flex item and the sentence breaks into columns.
+    '<div class="al abl mb12">'+ic('info',11)+'<span>One row per lot — a house of one breed and WOP arriving at one hatchery on one date. Fills both HE Delivery and Cool Room Stock. Leave <b>Stock Remaining</b> blank for a fresh receipt, or fill it in when carrying a balance over.</span></div>'+
+    '<button class="btn bsec bsm mb12" onclick="downloadEggLotTemplate()">'+ic('doc',11)+' Download template (.xlsx)</button>'+
+    '<div class="fld mb12"><label>Excel file</label><input class="inp" type="file" id="imp_file" accept=".xlsx,.xls" onchange="parseEggLotFile(this)"/></div>'+
+    '<div id="imp_preview"></div>'+
+    (lastBatch?'<div class="al aam mt12">'+ic('info',11)+' A previous import can still be undone.<br/><button class="btn bsec bsm" style="margin-top:6px" onclick="undoEggLotImport()">Undo last import</button></div>':'')+
+    '</div>'+
+    '<div class="mof"><button class="btn bsec" onclick="closeModal()">Cancel</button>'+
+    '<button class="btn bpri" id="impSaveBtn" disabled onclick="confirmEggLotImport()">Import</button></div>');
+}
+
+async function parseEggLotFile(input){
+  const file=input.files&&input.files[0];if(!file)return;
+  const prev=document.getElementById('imp_preview');
+  prev.innerHTML='<div style="color:var(--t3);font-size:12px">Reading…</div>';
+  window._impParsed=null;
+  document.getElementById('impSaveBtn').disabled=true;
+  try{
+    if(typeof XLSX==='undefined')throw new Error('Excel library not loaded — check your network connection');
+    const wb=XLSX.read(await file.arrayBuffer(),{type:'array',cellDates:true});
+    const ws=wb.Sheets['Data']||wb.Sheets[wb.SheetNames[0]];
+    const raw=XLSX.utils.sheet_to_json(ws,{defval:'',raw:false,dateNF:'yyyy-mm-dd'});
+    if(!raw.length)throw new Error('No rows found on the first sheet');
+
+    const get=(r,label)=>{
+      if(r[label]!==undefined)return r[label];
+      const k=Object.keys(r).find(x=>x.trim().toLowerCase()===label.toLowerCase());
+      return k?r[k]:'';
+    };
+    const ok=[],bad=[];
+    raw.forEach((r,i)=>{
+      const rowNo=i+2;                                  // +2: header row, 1-based
+      const notes=String(get(r,'Notes')||'').trim();
+      const errs=[];
+      const recv_date=_impDate(get(r,'Recv Date'));
+      if(!recv_date)errs.push('Recv Date missing or unreadable (use YYYY-MM-DD)');
+      const farmRaw=String(get(r,'Farm')||'').trim();
+      const farm=_impPick(farmRaw,FARMS.concat(['External']));
+      if(!farm)errs.push('Farm "'+farmRaw+'" is not one of '+FARMS.join(', ')+', External');
+      const external_source=String(get(r,'External Source')||'').trim();
+      if(farm==='External'&&!external_source)errs.push('External Source required when Farm = External');
+      const hatcheryRaw=String(get(r,'Hatchery')||'').trim();
+      const hatchery=_impPick(hatcheryRaw,HN);
+      if(!hatchery)errs.push('Hatchery "'+hatcheryRaw+'" is not one of '+HN.join(', '));
+      const breedRaw=String(get(r,'Breed')||'').trim();
+      const breed=_impBreed(breedRaw);
+      if(!breed)errs.push('Breed "'+breedRaw+'" is not one of '+BREEDS.join(', '));
+      const wop=_impInt(get(r,'WOP'));
+      if(wop===null)errs.push('WOP missing');
+      else if(wop<24||wop>65)errs.push('WOP '+wop+' outside 24–65');
+      const qty=_impInt(get(r,'Qty Received'));
+      if(qty===null||qty<=0)errs.push('Qty Received must be greater than 0');
+      let stock=_impInt(get(r,'Stock Remaining'));
+      if(stock===null)stock=qty;                        // fresh receipt: nothing used yet
+      else if(qty!==null&&(stock<0||stock>qty))errs.push('Stock Remaining '+stock+' must be between 0 and Qty Received');
+
+      if(errs.length){bad.push({rowNo,errs,raw:r});return;}
+      ok.push({rowNo,recv_date,do_number:String(get(r,'DO No')||'').trim()||null,
+        farm,external_source:farm==='External'?external_source:null,
+        house:String(get(r,'House')||'').trim()||null,
+        flock:String(get(r,'Flock')||'').trim()||null,
+        hatchery,breed,wop,qty_received:qty,stock_remaining:stock,
+        status:stock>0?'cool_room':'incubating',        // 0 left = already set
+        notes:notes||null});
+    });
+
+    // Flag rows that look like something already stored, without blocking them:
+    // the same farm can legitimately deliver the same breed and WOP twice in a day.
+    const dupKeys=new Set(state.lots.map(l=>[l.recv_date,l.farm,l.hatchery,l.breed,l.wop].join('|')));
+    const dupes=ok.filter(r=>dupKeys.has([r.recv_date,r.farm,r.hatchery,r.breed,r.wop].join('|')));
+
+    window._impParsed=ok;
+    const totalRecv=ok.reduce((s,r)=>s+r.qty_received,0),totalStock=ok.reduce((s,r)=>s+r.stock_remaining,0);
+    const byHatch={};ok.forEach(r=>{byHatch[r.hatchery]=(byHatch[r.hatchery]||0)+r.stock_remaining;});
+
+    let h='<div class="box mb8">'+
+      '<div class="row-val"><span>Rows ready</span><b class="tg">'+ok.length+'</b></div>'+
+      '<div class="row-val"><span>Rows with problems</span><b class="'+(bad.length?'tr2':'')+'">'+bad.length+'</b></div>'+
+      '<div class="sep"></div>'+
+      '<div class="row-val"><span>Total received</span><b>'+fN(totalRecv)+' HE</b></div>'+
+      '<div class="row-val"><span>Going into cool room</span><b class="tg">'+fN(totalStock)+' HE</b></div>'+
+      Object.entries(byHatch).map(([k,v])=>'<div class="row-val"><span style="padding-left:10px;color:var(--t3)">'+esc(k)+'</span><span class="mn">'+fN(v)+'</span></div>').join('')+
+      '</div>';
+    if(dupes.length)
+      h+='<div class="al aam mb8">'+ic('alert',11)+'<span>'+dupes.length+' row'+(dupes.length>1?'s':'')+' match a lot already stored (same date, farm, hatchery, breed, WOP). They will be added as separate lots — check this is a genuine second delivery and not a re-import.<br/><span style="font-size:10px;color:var(--t3)">'+dupes.slice(0,6).map(r=>'row '+r.rowNo).join(', ')+(dupes.length>6?' …':'')+'</span></span></div>';
+    if(bad.length){
+      h+='<div class="al are mb8">'+ic('alert',11)+'<span>These rows will be skipped:<div style="margin-top:6px;max-height:150px;overflow:auto">'+
+        bad.slice(0,20).map(b=>'<div style="font-size:10.5px;margin-bottom:3px"><b>Row '+b.rowNo+':</b> '+esc(b.errs.join(' · '))+'</div>').join('')+
+        (bad.length>20?'<div style="font-size:10px;color:var(--t3)">…and '+(bad.length-20)+' more</div>':'')+'</div></span></div>';
+    }
+    if(ok.length){
+      h+='<div class="ovx" style="max-height:220px;overflow:auto"><table><thead><tr><th>Row</th><th>Recv</th><th>Farm</th><th>House</th><th>Hatchery</th><th>Breed</th><th>WOP</th><th>Recv Qty</th><th>Stock</th><th>Status</th></tr></thead><tbody>'+
+        ok.map(r=>'<tr><td class="mn" style="color:var(--t3)">'+r.rowNo+'</td><td class="mn">'+fS(r.recv_date)+'</td><td>'+esc(r.farm)+'</td><td class="mn">'+esc(r.house||'—')+'</td><td>'+esc(r.hatchery)+'</td><td><span class="'+BC[bI(r.breed)]+'">'+r.breed.split(' ')[0]+'</span></td><td class="mn">'+r.wop+'w</td><td class="mn ta-r">'+fN(r.qty_received)+'</td><td class="mn ta-r tg">'+fN(r.stock_remaining)+'</td><td>'+sBdg(r.status)+'</td></tr>').join('')+
+        '</tbody></table></div>';
+    }
+    prev.innerHTML=h;
+    document.getElementById('impSaveBtn').disabled=ok.length===0;
+    document.getElementById('impSaveBtn').textContent=ok.length?'Import '+ok.length+' lots':'Nothing to import';
+  }catch(e){
+    prev.innerHTML='<div class="al are">'+esc(e.message||String(e))+'</div>';
+  }
+}
+
+async function confirmEggLotImport(){
+  const rows=window._impParsed;
+  if(!rows||!rows.length)return toast('Nothing to import','error');
+  const btn=document.getElementById('impSaveBtn');
+  if(btn){btn.textContent='Importing…';btn.disabled=true;}
+  const batch=(crypto.randomUUID&&crypto.randomUUID())||String(Date.now());
+  const ids=_impMakeLotIds(rows.map(r=>r.recv_date));
+  const payload=rows.map((r,i)=>({
+    lot_id:ids[i],farm:r.farm,hatchery:r.hatchery,breed:r.breed,wop:r.wop,
+    qty_received:r.qty_received,stock_remaining:r.stock_remaining,recv_date:r.recv_date,
+    is_external:r.farm==='External',external_source:r.external_source,status:r.status,
+    do_number:r.do_number,house:r.house,flock:r.flock,notes:r.notes,
+    import_batch:batch,created_by:state.user.id
+  }));
+  const{error}=await sb.from('egg_lots').insert(payload);
+  if(error){
+    toast(dbErrMsgHos(error),'error');
+    if(btn){btn.textContent='Import '+rows.length+' lots';btn.disabled=false;}
+    return;
+  }
+  // Remembered so a mistaken import can be undone after a reload too.
+  try{localStorage.setItem('hos_last_import',batch);}catch(e){}
+  toast('Imported '+payload.length+' lots — '+fN(payload.reduce((s,r)=>s+r.stock_remaining,0))+' HE into cool room');
+  closeModal();await loadLots();setState({page:'cool'});
+}
+
+async function undoEggLotImport(){
+  const batch=localStorage.getItem('hos_last_import');
+  if(!batch)return toast('No import to undo','error');
+  const{data,error:ce}=await sb.from('egg_lots').select('id,status').eq('import_batch',batch);
+  if(ce)return toast(ce.message,'error');
+  if(!data||!data.length){try{localStorage.removeItem('hos_last_import');}catch(e){}return toast('Those lots are already gone','info');}
+  // Refuse to unpick lots that have moved on — eggs already set carry an
+  // egg_settings row that would be left pointing at nothing.
+  const inUse=data.filter(l=>l.status!=='cool_room');
+  if(inUse.length)return toast('Cannot undo: '+inUse.length+' of these lots have already been set','error');
+  if(!confirm('Remove all '+data.length+' lots from the last import?'))return;
+  const{error}=await sb.from('egg_lots').delete().eq('import_batch',batch).eq('status','cool_room');
+  if(error)return toast(error.message,'error');
+  try{localStorage.removeItem('hos_last_import');}catch(e){}
+  toast('Import undone — '+data.length+' lots removed');
+  closeModal();await loadLots();
+}
+
+// egg_lots has a CHECK on status; anything else is reported as-is.
+function dbErrMsgHos(error){
+  const m=error?.message||'';
+  if(/egg_lots_status_check/.test(m))return 'Import rejected: an invalid status value was produced — report this, it is a bug';
+  if(error?.code==='PGRST204'||/do_number|house|flock|import_batch/.test(m))
+    return 'Import needs the 2026-09-24 database migration (do_number / house / flock / import_batch columns)';
+  return m;
 }
 
 // ── Print DO (from manual entry) ──
