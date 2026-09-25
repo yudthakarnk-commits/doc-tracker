@@ -261,7 +261,7 @@ function toast(msg,type='success'){const w=document.getElementById('toastWrap');
 // ── State ──
 let state={
   user:null,page:'db',loading:false,
-  lots:[],settings:[],farmPlans:[],docTargets:[],customers:[],eggSales:[],
+  lots:[],settings:[],farmPlans:[],docTargets:[],customers:[],eggSales:[],farmHouses:[],
   sortLots:{col:'recv_date',dir:-1},
   sortSett:{col:'hatch_date',dir:1},
   sortCool:{col:'recv_date',dir:-1},
@@ -275,8 +275,8 @@ function thS(key,col,label){const s=state[key];return '<th class="sortable'+(s.c
 
 // ── Supabase ──
 async function initSupabase(){sb=supabase.createClient(SB_URL,SB_KEY);const{data:{session}}=await sb.auth.getSession();if(session)await afterLogin(session.user);else showLogin();}
-async function afterLogin(user){setState({user,loading:true});await loadAll();setState({loading:false});sb.channel('h-os').on('postgres_changes',{event:'*',schema:'public',table:'egg_lots'},()=>loadLots()).on('postgres_changes',{event:'*',schema:'public',table:'egg_settings'},()=>loadSettings()).on('postgres_changes',{event:'*',schema:'public',table:'farm_egg_plan'},()=>loadFarmPlans()).on('postgres_changes',{event:'*',schema:'public',table:'doc_targets'},()=>loadDocTargets()).on('postgres_changes',{event:'*',schema:'public',table:'egg_sales'},()=>loadEggSales()).subscribe();}
-async function loadAll(){await Promise.all([loadLots(),loadSettings(),loadFarmPlans(),loadDocTargets(),loadCustomers(),loadEggSales()]);}
+async function afterLogin(user){setState({user,loading:true});await loadAll();setState({loading:false});sb.channel('h-os').on('postgres_changes',{event:'*',schema:'public',table:'egg_lots'},()=>loadLots()).on('postgres_changes',{event:'*',schema:'public',table:'egg_settings'},()=>loadSettings()).on('postgres_changes',{event:'*',schema:'public',table:'farm_egg_plan'},()=>loadFarmPlans()).on('postgres_changes',{event:'*',schema:'public',table:'doc_targets'},()=>loadDocTargets()).on('postgres_changes',{event:'*',schema:'public',table:'egg_sales'},()=>loadEggSales()).on('postgres_changes',{event:'*',schema:'public',table:'farm_houses'},()=>loadFarmHouses()).subscribe();}
+async function loadAll(){await Promise.all([loadLots(),loadSettings(),loadFarmPlans(),loadDocTargets(),loadCustomers(),loadEggSales(),loadFarmHouses()]);}
 // Customer reference is DOC Tracker's own table — same names, types and codes, so an
 // allocation made here lands in DOC Tracker without any translation.
 async function loadCustomers(){try{const{data,error}=await sb.from('customers').select('customer_name,customer_type,customer_code').order('customer_name',{ascending:true});if(!error)setState({customers:data||[]});}catch(e){}}
@@ -286,11 +286,22 @@ async function loadFarmPlans(){try{const{data,error}=await sb.from('farm_egg_pla
 // Eggs sold off rather than set. One row per farm+house sold in a week, because a
 // week can have several; the supply table only ever shows the weekly total.
 async function loadEggSales(){try{const{data,error}=await sb.from('egg_sales').select('*').order('week_no',{ascending:true});if(!error)setState({eggSales:data||[]});}catch(e){}}
+// Which breed each house holds. Breed is not per-lot information, so the egg lot
+// import fills it from here instead of asking for it on every row.
+async function loadFarmHouses(){try{const{data,error}=await sb.from('farm_houses').select('*').order('farm',{ascending:true}).order('house',{ascending:true});if(!error)setState({farmHouses:data||[]});}catch(e){}}
+// (farm, house) is unique, so at most one match. Returns null when the house is
+// not in the reference yet — the caller decides whether that is an error.
+function breedForHouse(farm,house){
+  const h=String(house==null?'':house).trim().toLowerCase();
+  if(!h)return null;
+  const r=(state.farmHouses||[]).find(x=>x.farm===farm&&String(x.house||'').trim().toLowerCase()===h);
+  return r?r.breed:null;
+}
 async function loadDocTargets(){try{const{data,error}=await sb.from('doc_targets').select('*').order('target_week',{ascending:true});if(!error)setState({docTargets:data||[]});}catch(e){}}
 
 function showLogin(){document.getElementById('root').innerHTML=renderLogin();document.getElementById('loginPw').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});}
 async function doLogin(){const em=document.getElementById('loginEmail').value.trim(),pw=document.getElementById('loginPw').value,err=document.getElementById('loginErr');err.style.display='none';if(!em||!pw){err.textContent='Please enter email and password.';err.style.display='flex';return;}const{data,error}=await sb.auth.signInWithPassword({email:em,password:pw});if(error){err.textContent=error.message;err.style.display='flex';return;}await afterLogin(data.user);}
-async function doLogout(){await sb.auth.signOut();setState({user:null,lots:[],settings:[],farmPlans:[],docTargets:[],customers:[],eggSales:[]});showLogin();}
+async function doLogout(){await sb.auth.signOut();setState({user:null,lots:[],settings:[],farmPlans:[],docTargets:[],customers:[],eggSales:[],farmHouses:[]});showLogin();}
 
 // ── Icons ──
 function ic(n,s=14,col=''){col=col||'currentColor';
@@ -306,8 +317,8 @@ function ic(n,s=14,col=''){col=col||'currentColor';
 function renderLogin(){return'<div class="lw"><div class="lb"><div style="display:flex;align-items:center;gap:12px;margin-bottom:26px"><div class="sb-mark">'+ic('egg',16,'#fff')+'</div><div><div style="font-size:20px;font-weight:700;letter-spacing:-.3px">HatcheryOS</div><div style="font-size:10px;color:var(--t3);font-family:var(--fm);text-transform:uppercase;letter-spacing:.6px;margin-top:2px">CPF Malaysia · Upstream</div></div></div><div id="loginErr" style="display:none" class="al are mb12"></div><div class="fld mb12"><label>Email</label><input class="inp" id="loginEmail" type="email" placeholder="you@cpf.com" autocomplete="email"/></div><div class="fld mb16"><label>Password</label><input class="inp" id="loginPw" type="password" placeholder="••••••••"/></div><button class="btn bpri w100" style="justify-content:center;padding:10px" onclick="doLogin()">Sign In</button><div style="text-align:center;margin-top:12px;font-size:11px;color:var(--t3)">Same account as DOC Tracker</div></div></div>';}
 
 // ── Nav ──
-const NAV=[{group:'Overview',items:[{id:'db',label:'Dashboard',icon:'home'}]},{group:'Upstream',items:[{id:'supply',label:'Farm Supply Plan',icon:'farm'},{id:'dist',label:'HE Delivery',icon:'truck'},{id:'cool',label:'Cool Room Stock',icon:'temp'}]},{group:'Incubation',items:[{id:'sched',label:'Setting Schedule',icon:'cal'},{id:'candle',label:'Candling',icon:'bulb'}]},{group:'Planning',items:[{id:'fc',label:'Forecast vs Demand',icon:'trend'},{id:'cap',label:'Hatchery Capacity',icon:'chart'}]},{group:'Reference',items:[{id:'std',label:'Breed Standards',icon:'egg'},{id:'res',label:'Storage Research',icon:'lab'},{id:'rep',label:'Reports',icon:'doc'}]}];
-const PT={db:'Dashboard',supply:'Farm Supply Planning',dist:'HE Egg Delivery',cool:'Cool Room Stock',sched:'Setting Schedule',candle:'Candling Results',fc:'DOC Forecast vs Sales Demand',cap:'Hatchery Capacity',std:'Breed Standards',res:'Storage Research',rep:'Reports'};
+const NAV=[{group:'Overview',items:[{id:'db',label:'Dashboard',icon:'home'}]},{group:'Upstream',items:[{id:'supply',label:'Farm Supply Plan',icon:'farm'},{id:'dist',label:'HE Delivery',icon:'truck'},{id:'cool',label:'Cool Room Stock',icon:'temp'}]},{group:'Incubation',items:[{id:'sched',label:'Setting Schedule',icon:'cal'},{id:'candle',label:'Candling',icon:'bulb'}]},{group:'Planning',items:[{id:'fc',label:'Forecast vs Demand',icon:'trend'},{id:'cap',label:'Hatchery Capacity',icon:'chart'}]},{group:'Reference',items:[{id:'houses',label:'Farm Houses',icon:'farm'},{id:'std',label:'Breed Standards',icon:'egg'},{id:'res',label:'Storage Research',icon:'lab'},{id:'rep',label:'Reports',icon:'doc'}]}];
+const PT={houses:'Farm Houses — Breed Reference',db:'Dashboard',supply:'Farm Supply Planning',dist:'HE Egg Delivery',cool:'Cool Room Stock',sched:'Setting Schedule',candle:'Candling Results',fc:'DOC Forecast vs Sales Demand',cap:'Hatchery Capacity',std:'Breed Standards',res:'Storage Research',rep:'Reports'};
 
 function computeAlerts(){const al=[];state.lots.filter(l=>l.status==='cool_room').forEach(l=>{const age=Math.max(dD(l.recv_date,td()),0);if(age>=10)al.push({t:'r',m:l.lot_id+' ('+l.hatchery+'): '+age+'d — CRITICAL storage'});else if(age>=7)al.push({t:'a',m:l.lot_id+' ('+l.hatchery+'): '+age+'d — decay accelerating'});else if(l.wop>38&&age>=5)al.push({t:'a',m:l.lot_id+' WOP '+l.wop+' old flock + '+age+'d storage'});});state.settings.filter(s=>s.status!=='completed').forEach(s=>{const d=dD(td(),s.hatch_date);if(d>=0&&d<=2)al.push({t:'g',m:s.set_id+': hatching '+(d===0?'today':'in '+d+'d')+' — '+s.hatchery});});return al;}
 
@@ -353,7 +364,7 @@ async function refreshAll(){setState({loading:true});await loadAll();setState({l
 function sBdg(s){const m={cool_room:'dm Cool Room',incubating:'db Incubating',candling:'da Candling',transfer:'dp Transfer',completed:'dg Done'};const p=(m[s]||'dm '+s).split(' ');return'<span class="bdg '+p[0]+'">'+p.slice(1).join(' ')+'</span>';}
 function aBdg(d,w){return'<span class="bdg '+(d>10?'dr':d>7||(w>38&&d>5)?'da':'dg')+'">'+d+'d'+(w>38&&d>5?' ⚠':'')+'</span>';}
 
-function renderPage(p,a){switch(p){case'db':return pgDashboard(a);case'supply':return pgSupply();case'dist':return pgDist();case'cool':return pgCool();case'sched':return pgSched();case'candle':return pgCandle();case'fc':return pgForecast();case'cap':return pgCapacity();case'std':return pgStandards();case'res':return pgResearch();case'rep':return pgReports();default:return'<div class="al abl">Page not found</div>';}}
+function renderPage(p,a){switch(p){case'db':return pgDashboard(a);case'supply':return pgSupply();case'dist':return pgDist();case'cool':return pgCool();case'sched':return pgSched();case'candle':return pgCandle();case'fc':return pgForecast();case'cap':return pgCapacity();case'houses':return pgHouses();case'std':return pgStandards();case'res':return pgResearch();case'rep':return pgReports();default:return'<div class="al abl">Page not found</div>';}}
 
 function filterBar(fields){return'<div class="fbar">'+fields.map(f=>f.type==='select'?'<select onchange="setState({'+f.key+':this.value})"><option value="">'+f.label+'</option>'+f.opts.map(o=>'<option value="'+o+'"'+(state[f.key]===o?' selected':'')+'>'+o+'</option>').join('')+'</select>':'<input type="search" placeholder="'+f.label+'" value="'+(state[f.key]||'')+'" oninput="setState({'+f.key+':this.value})"/>').join('')+'</div>';}
 
@@ -623,6 +634,160 @@ function pgForecast(){
 // CAPACITY
 // ══════════════════════════════════════════
 function pgCapacity(){return'<div><div class="gr2 mb12">'+HATCH.map(hh=>{const iu=state.settings.filter(s=>s.hatchery===hh.name&&s.status!=='completed').reduce((a,r)=>a+(r.set_qty||0),0);const u=hh.wc>0?iu/hh.wc:0;const cfg=hh.wc>0;return'<div class="card"><div class="fl aic jb mb12"><div><div style="font-size:15px;font-weight:700">'+hh.name+(hh.irregular?'<span class="bdg da" style="margin-left:6px;font-size:9px">By-product</span>':'')+'</div><div style="font-size:11px;color:var(--t3)">'+hh.typ+' Stage'+(hh.irregular?' · ceiling only, output varies':'')+'</div></div><div style="text-align:right"><div style="font-size:22px;font-weight:700;color:'+(cfg?cC(u):'var(--t3)')+'">'+(cfg?Math.round(u*100)+'%':'—')+'</div><div style="font-size:11px;color:var(--t3)">'+(cfg?cL(u):'Capacity not set')+'</div></div></div><div class="row-val"><span>Weekly Capacity</span><span class="mn'+(cfg?'':' ')+'" style="'+(cfg?'':'color:var(--am)')+'">'+(cfg?fN(hh.wc):'not configured')+'</span></div><div class="row-val"><span>In Use</span><span class="mn tg">'+fN(iu)+'</span></div><div class="row-val"><span>Available</span><span class="mn" style="color:var(--t3)">'+(cfg?fN(hh.wc-iu):'—')+'</span></div><div class="pbar mt8" style="height:6px"><div class="pbf" style="width:'+(cfg?Math.min(u*100,100):0)+'%;background:'+cC(u)+'"></div></div></div>';}).join('')+'</div></div>';}
+
+// ══════════════════════════════════════════
+// FARM HOUSES — breed reference
+//
+// A house holds one breed, so breed does not belong on every import row. The
+// egg lot import reads it from here. A wrong entry here silently changes the
+// hatchability standard for every lot from that house, so the page shows which
+// houses are actually in use and flags ones the reference has never heard of.
+// ══════════════════════════════════════════
+function pgHouses(){
+  const rows=state.farmHouses||[];
+  // Houses that appear on lots but are missing from the reference — those are
+  // the ones that will fail an import.
+  const known=new Set(rows.map(r=>r.farm+'|'+String(r.house||'').trim().toLowerCase()));
+  const unknown=[];
+  (state.lots||[]).forEach(l=>{
+    if(!l.house||l.farm==='External')return;
+    const k=l.farm+'|'+String(l.house).trim().toLowerCase();
+    if(!known.has(k)&&!unknown.some(u=>u.k===k))unknown.push({k,farm:l.farm,house:l.house});
+  });
+  const byFarm={};rows.forEach(r=>{(byFarm[r.farm]=byFarm[r.farm]||[]).push(r);});
+
+  return'<div>'+
+    '<div class="fl aic jb mb12">'+
+      '<div class="al abl" style="flex:1;margin:0;font-size:11.5px">'+ic('info',11)+'<span>One row per house. The egg lot import fills <b>Breed</b> from here, so it no longer has to be typed on every row. Eggs bought in (<b>Farm = External</b>) have no house — those rows still carry their own breed.</span></div>'+
+      '<div style="display:flex;gap:8px;margin-left:12px">'+
+      '<button class="btn bsec" onclick="openHousePasteModal()">'+ic('doc',12)+' Paste many</button>'+
+      '<button class="btn bpri" onclick="openHouseModal()">'+ic('plus',12)+' Add House</button>'+
+      '</div>'+
+    '</div>'+
+    (unknown.length?'<div class="al aam mb12">'+ic('alert',11)+'<span><b>'+unknown.length+' house'+(unknown.length>1?'s':'')+' on existing lots '+(unknown.length>1?'are':'is')+' not in this reference</b> — an import naming '+(unknown.length>1?'them':'it')+' would be rejected: '+unknown.slice(0,10).map(u=>esc(u.farm)+' / '+esc(u.house)).join(' · ')+(unknown.length>10?' …':'')+'</span></div>':'')+
+    (rows.length===0?
+      '<div class="card" style="text-align:center;padding:40px;color:var(--t3)"><div>No houses in the reference yet</div><div style="font-size:11px;margin-top:6px">Until a house is listed here, an egg lot import naming it will be rejected.</div><button class="btn bpri bsm" style="margin-top:12px" onclick="openHousePasteModal()">'+ic('plus',11)+' Paste the list</button></div>'
+      :
+      '<div class="gr2">'+FARMS.filter(f=>byFarm[f]).map(f=>
+        '<div class="card mb12"><div class="ct">'+esc(f)+' <span style="color:var(--t3);font-weight:400">· '+byFarm[f].length+' house'+(byFarm[f].length>1?'s':'')+'</span></div>'+
+        '<div class="ovx"><table><thead><tr><th>House</th><th>Breed</th><th>Notes</th><th></th></tr></thead><tbody>'+
+        byFarm[f].map(r=>'<tr>'+
+          '<td class="mn" style="font-weight:600">'+esc(r.house)+'</td>'+
+          '<td><span class="'+BC[bI(r.breed)]+'">'+esc(r.breed)+'</span></td>'+
+          '<td style="color:var(--t3);font-size:11px">'+esc(r.notes||'—')+'</td>'+
+          '<td style="white-space:nowrap"><button class="btn bsec bsm" onclick="openHouseModal(\''+r.id+'\')">Edit</button> '+
+          '<button class="btn bsec bsm" title="Delete" onclick="deleteHouse(\''+r.id+'\',\''+esc(r.farm)+' / '+esc(r.house)+'\')">&#x2715;</button></td>'+
+          '</tr>').join('')+
+        '</tbody></table></div></div>').join('')+'</div>'+
+      (byFarm['External']?'':'')
+    )+
+    '</div>';
+}
+
+function openHouseModal(id){
+  const r=id?(state.farmHouses||[]).find(x=>x.id===id):null;
+  showModal('<div class="moh"><span class="mot">'+(r?'Edit House':'Add House')+'</span><button class="btn bsec bsm" onclick="closeModal()">&#x2715;</button></div>'+
+    '<div class="mob">'+
+    '<div class="fr2 mb12">'+
+      '<div class="fld"><label>Farm</label><select class="inp" id="fh_farm">'+FARMS.map(f=>'<option'+(r&&r.farm===f?' selected':'')+'>'+esc(f)+'</option>').join('')+'</select></div>'+
+      '<div class="fld"><label>House / เล้า</label><input class="inp" id="fh_house" value="'+esc(r?.house||'')+'" placeholder="H3"/></div>'+
+    '</div>'+
+    '<div class="fld mb12"><label>Breed</label><select class="inp" id="fh_breed">'+BREEDS.map(b=>'<option'+(r&&r.breed===b?' selected':'')+'>'+esc(b)+'</option>').join('')+'</select></div>'+
+    '<div class="fld"><label>Notes</label><input class="inp" id="fh_notes" value="'+esc(r?.notes||'')+'" placeholder="optional"/></div>'+
+    (r?'<div class="al aam mt12">'+ic('alert',11)+'<span>Changing the breed changes what future imports fill in for this house. Lots already stored keep the breed they were saved with.</span></div>':'')+
+    '</div>'+
+    '<div class="mof"><button class="btn bsec" onclick="closeModal()">Cancel</button><button class="btn bpri" onclick="saveHouse(\''+(r?.id||'')+'\')">Save</button></div>');
+}
+
+async function saveHouse(id){
+  const farm=document.getElementById('fh_farm').value;
+  const house=document.getElementById('fh_house').value.trim();
+  const breed=document.getElementById('fh_breed').value;
+  const notes=document.getElementById('fh_notes').value.trim()||null;
+  if(!house)return toast('Enter the house','error');
+  const d={farm,house,breed,notes,updated_at:new Date().toISOString()};
+  let error;
+  if(id){({error}=await sb.from('farm_houses').update(d).eq('id',id));}
+  else{d.created_by=state.user.id;({error}=await sb.from('farm_houses').insert(d));}
+  if(error)return toast(houseErrMsg(error,farm,house),'error');
+  toast('Saved — '+farm+' / '+house+' = '+breed);
+  closeModal();await loadFarmHouses();
+}
+
+async function deleteHouse(id,label){
+  if(!confirm('Remove '+label+' from the reference?\n\nImports naming this house will be rejected until it is added again. Lots already stored are not affected.'))return;
+  const{error}=await sb.from('farm_houses').delete().eq('id',id);
+  if(error)return toast(error.message,'error');
+  toast('Removed '+label);await loadFarmHouses();
+}
+
+// Typing dozens of houses one modal at a time is not reasonable, so the list can
+// be pasted straight out of a spreadsheet.
+function openHousePasteModal(){
+  showModal('<div class="moh"><span class="mot">Paste House List</span><button class="btn bsec bsm" onclick="closeModal()">&#x2715;</button></div>'+
+    '<div class="mob">'+
+    '<div class="al abl mb12">'+ic('info',11)+'<span>One house per line: <b>Farm, House, Breed</b> — comma or tab separated, so a spreadsheet column selection pastes straight in. A house already in the reference is updated rather than duplicated.</span></div>'+
+    '<div class="fld mb12"><label>Lines</label><textarea class="inp" id="fh_paste" rows="10" style="font-family:var(--fm);font-size:11.5px" placeholder="Rantau, H1, Ross 308&#10;Rantau, H2, Ross 308&#10;Kluang, H1, Cobb 500" oninput="previewHousePaste()"></textarea></div>'+
+    '<div id="fh_paste_prev"></div>'+
+    '</div>'+
+    '<div class="mof"><button class="btn bsec" onclick="closeModal()">Cancel</button><button class="btn bpri" id="fhPasteBtn" disabled onclick="saveHousePaste()">Save</button></div>');
+}
+
+function _parseHouseLines(txt){
+  const ok=[],bad=[];
+  String(txt||'').split(/\r?\n/).forEach((line,i)=>{
+    const t=line.trim();if(!t)return;
+    const parts=t.split(/\t|,/).map(x=>x.trim()).filter(x=>x!=='');
+    if(parts.length<3){bad.push({n:i+1,msg:'needs Farm, House, Breed'});return;}
+    const farm=_impPick(parts[0],FARMS);
+    if(!farm){bad.push({n:i+1,msg:'farm "'+parts[0]+'" is not one of '+FARMS.join(', ')});return;}
+    const breed=_impBreed(parts[2]);
+    if(!breed){bad.push({n:i+1,msg:'breed "'+parts[2]+'" is not one of '+BREEDS.join(', ')});return;}
+    ok.push({farm,house:parts[1],breed,notes:parts[3]||null});
+  });
+  // Two lines for the same house would fight over one row, and (farm,house) is
+  // unique, so catch it here rather than letting the upsert pick a winner.
+  const seen={},dupes=[];
+  ok.forEach(r=>{const k=r.farm+'|'+r.house.toLowerCase();if(seen[k])dupes.push(r.farm+' / '+r.house);else seen[k]=1;});
+  return{ok,bad,dupes};
+}
+
+function previewHousePaste(){
+  const{ok,bad,dupes}=_parseHouseLines(document.getElementById('fh_paste').value);
+  const el=document.getElementById('fh_paste_prev'),btn=document.getElementById('fhPasteBtn');
+  const existing=new Set((state.farmHouses||[]).map(r=>r.farm+'|'+String(r.house||'').trim().toLowerCase()));
+  const upd=ok.filter(r=>existing.has(r.farm+'|'+r.house.toLowerCase())).length;
+  let h='<div class="box mb8">'+
+    '<div class="row-val"><span>New houses</span><b class="tg">'+(ok.length-upd)+'</b></div>'+
+    '<div class="row-val"><span>Existing houses updated</span><b class="ta">'+upd+'</b></div>'+
+    '<div class="row-val"><span>Lines with problems</span><b class="'+(bad.length?'tr2':'')+'">'+bad.length+'</b></div></div>';
+  if(dupes.length)h+='<div class="al are mb8">'+ic('alert',11)+'<span>The same house is listed more than once: '+esc(dupes.join(', '))+'</span></div>';
+  if(bad.length)h+='<div class="al are mb8">'+ic('alert',11)+'<span>'+bad.slice(0,10).map(b=>'Line '+b.n+': '+esc(b.msg)).join('<br/>')+(bad.length>10?'<br/>…':'')+'</span></div>';
+  if(ok.length)h+='<div class="ovx" style="max-height:160px;overflow:auto"><table><thead><tr><th>Farm</th><th>House</th><th>Breed</th></tr></thead><tbody>'+
+    ok.map(r=>'<tr><td>'+esc(r.farm)+'</td><td class="mn">'+esc(r.house)+'</td><td><span class="'+BC[bI(r.breed)]+'">'+esc(r.breed)+'</span></td></tr>').join('')+'</tbody></table></div>';
+  el.innerHTML=h;
+  window._fhPaste=(bad.length||dupes.length)?null:ok;
+  btn.disabled=!(ok.length&&!bad.length&&!dupes.length);
+}
+
+async function saveHousePaste(){
+  const rows=window._fhPaste;
+  if(!rows||!rows.length)return toast('Nothing to save','error');
+  const btn=document.getElementById('fhPasteBtn');if(btn){btn.textContent='Saving…';btn.disabled=true;}
+  const payload=rows.map(r=>({farm:r.farm,house:r.house,breed:r.breed,notes:r.notes,created_by:state.user.id,updated_at:new Date().toISOString()}));
+  const{error}=await sb.from('farm_houses').upsert(payload,{onConflict:'farm,house'});
+  if(error){toast(houseErrMsg(error),'error');if(btn){btn.textContent='Save';btn.disabled=false;}return;}
+  toast('Saved '+payload.length+' houses');closeModal();await loadFarmHouses();
+}
+
+function houseErrMsg(error,farm,house){
+  const m=error?.message||'';
+  if(error?.code==='23505'||/farm_houses_farm_house_key/.test(m))
+    return (farm?farm+' / '+house:'That house')+' is already in the reference — edit that row instead';
+  if(/farm_houses_breed_check/.test(m))return 'Breed must be one of '+BREEDS.join(', ');
+  if(error?.code==='PGRST205'||/farm_houses/.test(m))return 'Needs the 2026-09-25 database migration (farm_houses table)';
+  return m;
+}
 
 // ══════════════════════════════════════════
 // BREED STANDARDS
@@ -1214,10 +1379,10 @@ const EGG_IMPORT_COLS=[
   ['do_number','DO No',            0,''],
   ['farm','Farm',                  1,FARMS.join(' / ')+' / External'],
   ['external_source','External Source',0,'required when Farm = External'],
-  ['house','House',                0,'เล้า'],
+  ['house','House',                1,'เล้า — breed is looked up from Farm + House'],
   ['flock','Flock',                0,'ฝูง'],
   ['hatchery','Hatchery',          1,HN.join(' / ')],
-  ['breed','Breed',                1,BREEDS.join(' / ')],
+  ['breed','Breed',                0,'leave blank — filled from the reference; only needed for Farm = External'],
   ['wop','WOP',                    1,'24–65'],
   ['qty_received','Qty Received',  1,'eggs'],
   ['stock_remaining','Stock Remaining',0,'blank = same as received'],
@@ -1271,7 +1436,7 @@ function _impMakeLotIds(dates){
 function downloadEggLotTemplate(){
   if(typeof XLSX==='undefined')return toast('Excel library not loaded','error');
   const headers=EGG_IMPORT_COLS.map(c=>c[1]);
-  const example=['2026-09-24','DO-1234','Rantau','','H3','F12','Kluang','Ross 308',32,100000,'','example row — delete before importing'];
+  const example=['2026-09-24','DO-1234','Rantau','','H3','F12','Kluang','',32,100000,'','example row — delete before importing'];
   const ws=XLSX.utils.aoa_to_sheet([headers,example]);
   ws['!cols']=EGG_IMPORT_COLS.map(c=>({wch:Math.max(14,c[1].length+2)}));
   // Valid values on a second sheet, so nobody has to guess the spelling.
@@ -1334,9 +1499,19 @@ async function parseEggLotFile(input){
       const hatcheryRaw=String(get(r,'Hatchery')||'').trim();
       const hatchery=_impPick(hatcheryRaw,HN);
       if(!hatchery)errs.push('Hatchery "'+hatcheryRaw+'" is not one of '+HN.join(', '));
+      const house=String(get(r,'House')||'').trim();
       const breedRaw=String(get(r,'Breed')||'').trim();
-      const breed=_impBreed(breedRaw);
-      if(!breed)errs.push('Breed "'+breedRaw+'" is not one of '+BREEDS.join(', '));
+      const breedGiven=breedRaw?_impBreed(breedRaw):null;
+      if(breedRaw&&!breedGiven)errs.push('Breed "'+breedRaw+'" is not one of '+BREEDS.join(', '));
+      // Breed comes from the (farm, house) reference. It is only typed for eggs
+      // bought in, which have no house to look up.
+      let breed=null,breedFrom='';
+      const refBreed=farm&&farm!=='External'?breedForHouse(farm,house):null;
+      if(farm&&farm!=='External'&&!house)errs.push('House required — breed is looked up from Farm + House');
+      if(breedGiven){breed=breedGiven;breedFrom=refBreed&&refBreed!==breedGiven?'override':'given';}
+      else if(refBreed){breed=refBreed;breedFrom='reference';}
+      else if(farm==='External')errs.push('Breed required for Farm = External (no house to look it up from)');
+      else if(house)errs.push('No breed reference for '+farm+' / '+house+' — add the house under Reference → Farm Houses first');
       const wop=_impInt(get(r,'WOP'));
       if(wop===null)errs.push('WOP missing');
       else if(wop<24||wop>65)errs.push('WOP '+wop+' outside 24–65');
@@ -1349,7 +1524,8 @@ async function parseEggLotFile(input){
       if(errs.length){bad.push({rowNo,errs,raw:r});return;}
       ok.push({rowNo,recv_date,do_number:String(get(r,'DO No')||'').trim()||null,
         farm,external_source:farm==='External'?external_source:null,
-        house:String(get(r,'House')||'').trim()||null,
+        breedFrom,refBreed,
+        house:house||null,
         flock:String(get(r,'Flock')||'').trim()||null,
         hatchery,breed,wop,qty_received:qty,stock_remaining:stock,
         status:stock>0?'cool_room':'incubating',        // 0 left = already set
@@ -1375,6 +1551,9 @@ async function parseEggLotFile(input){
       '</div>';
     if(dupes.length)
       h+='<div class="al aam mb8">'+ic('alert',11)+'<span>'+dupes.length+' row'+(dupes.length>1?'s':'')+' match a lot already stored (same date, farm, hatchery, breed, WOP). They will be added as separate lots — check this is a genuine second delivery and not a re-import.<br/><span style="font-size:10px;color:var(--t3)">'+dupes.slice(0,6).map(r=>'row '+r.rowNo).join(', ')+(dupes.length>6?' …':'')+'</span></span></div>';
+    const overrides=ok.filter(r=>r.breedFrom==='override');
+    if(overrides.length)
+      h+='<div class="al aam mb8">'+ic('alert',11)+'<span>'+overrides.length+' row'+(overrides.length>1?'s':'')+' give a breed that disagrees with the Farm Houses reference. The file wins — check which is right: '+overrides.slice(0,5).map(r=>'row '+r.rowNo+' ('+esc(r.house||'')+': file '+esc(r.breed)+' vs reference '+esc(r.refBreed||'—')+')').join(' · ')+(overrides.length>5?' …':'')+'</span></div>';
     if(bad.length){
       h+='<div class="al are mb8">'+ic('alert',11)+'<span>These rows will be skipped:<div style="margin-top:6px;max-height:150px;overflow:auto">'+
         bad.slice(0,20).map(b=>'<div style="font-size:10.5px;margin-bottom:3px"><b>Row '+b.rowNo+':</b> '+esc(b.errs.join(' · '))+'</div>').join('')+
@@ -1382,7 +1561,7 @@ async function parseEggLotFile(input){
     }
     if(ok.length){
       h+='<div class="ovx" style="max-height:220px;overflow:auto"><table><thead><tr><th>Row</th><th>Recv</th><th>Farm</th><th>House</th><th>Hatchery</th><th>Breed</th><th>WOP</th><th>Recv Qty</th><th>Stock</th><th>Status</th></tr></thead><tbody>'+
-        ok.map(r=>'<tr><td class="mn" style="color:var(--t3)">'+r.rowNo+'</td><td class="mn">'+fS(r.recv_date)+'</td><td>'+esc(r.farm)+'</td><td class="mn">'+esc(r.house||'—')+'</td><td>'+esc(r.hatchery)+'</td><td><span class="'+BC[bI(r.breed)]+'">'+r.breed.split(' ')[0]+'</span></td><td class="mn">'+r.wop+'w</td><td class="mn ta-r">'+fN(r.qty_received)+'</td><td class="mn ta-r tg">'+fN(r.stock_remaining)+'</td><td>'+sBdg(r.status)+'</td></tr>').join('')+
+        ok.map(r=>'<tr><td class="mn" style="color:var(--t3)">'+r.rowNo+'</td><td class="mn">'+fS(r.recv_date)+'</td><td>'+esc(r.farm)+'</td><td class="mn">'+esc(r.house||'—')+'</td><td>'+esc(r.hatchery)+'</td><td><span class="'+BC[bI(r.breed)]+'">'+r.breed.split(' ')[0]+'</span>'+(r.breedFrom==='reference'?'<span style="font-size:9px;color:var(--t3)"> auto</span>':r.breedFrom==='override'?'<span style="font-size:9px;color:var(--am)"> ⚠</span>':'')+'</td><td class="mn">'+r.wop+'w</td><td class="mn ta-r">'+fN(r.qty_received)+'</td><td class="mn ta-r tg">'+fN(r.stock_remaining)+'</td><td>'+sBdg(r.status)+'</td></tr>').join('')+
         '</tbody></table></div>';
     }
     prev.innerHTML=h;
